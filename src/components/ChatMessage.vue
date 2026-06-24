@@ -15,7 +15,7 @@ defineProps({
       <template v-if="message.role === 'user'">你</template>
       <AppIcon v-else name="sparkles" :size="18" />
     </div>
-    <div class="bubble">
+    <div class="bubble" :class="{ pending: message.pending, error: message.error }">
       <span class="bubble-meta">{{ message.role === 'user' ? '你' : 'AI' }} · {{ message.time }}</span>
       <h3 v-if="message.heading">{{ message.heading }}</h3>
       <p>{{ message.text }}</p>

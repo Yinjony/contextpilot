@@ -1,38 +1,65 @@
 <script setup>
+import { computed, nextTick, ref, watch } from 'vue'
 import AppIcon from './AppIcon.vue'
 import ChatMessage from './ChatMessage.vue'
 
-defineProps({
-  appliedContext: { type: Array, required: true },
+const props = defineProps({
+  title: { type: String, default: 'AI 对话窗口' },
   messages: { type: Array, required: true },
+  isSending: { type: Boolean, default: false },
+  error: { type: String, default: '' },
+  modelLabel: { type: String, default: 'opencode' },
 })
+
+const emit = defineEmits(['send'])
+const draft = ref('')
+const messagesEl = ref(null)
+const canSend = computed(() => draft.value.trim().length > 0 && !props.isSending)
+
+function submitMessage() {
+  if (!canSend.value) return
+  emit('send', draft.value)
+  draft.value = ''
+}
+
+watch(
+  () => props.messages.length,
+  async () => {
+    await nextTick()
+    if (messagesEl.value) {
+      messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+    }
+  },
+)
 </script>
 
 <template>
   <section class="chat-panel" aria-label="AI 对话窗口">
     <header class="chat-header">
       <div>
-        <p class="eyebrow">AI 对话窗口</p>
-        <h2>登录接口错误原因分析与修复建议</h2>
+        <h2>{{ title }}</h2>
       </div>
-      <span class="model-chip"><i class="dot pulse"></i>opencode ready</span>
+      <span class="model-chip"><span class="dot pulse"></span>{{ modelLabel }}</span>
     </header>
 
-    <div class="applied-strip">
-      <span class="strip-label">本轮参考上下文</span>
-      <button v-for="item in appliedContext" :key="item" type="button">{{ item }}</button>
-    </div>
-
-    <div class="messages">
+    <div ref="messagesEl" class="messages">
       <ChatMessage v-for="message in messages" :key="message.id" :message="message" />
     </div>
 
-    <form class="composer" aria-label="发送消息" @submit.prevent>
-      <input type="text" value="重新运行认证测试，并只保留有效上下文" />
-      <button type="submit">
-        <AppIcon name="send" :size="16" />
-        <span>发送</span>
-      </button>
-    </form>
+    <div class="composer-shell">
+      <p v-if="error" class="composer-error">{{ error }}</p>
+      <form class="composer" aria-label="发送消息" @submit.prevent="submitMessage">
+        <input
+          v-model="draft"
+          type="text"
+          :disabled="isSending"
+          placeholder="输入消息，继续当前对话"
+        />
+        <button type="submit" :disabled="!canSend">
+          <AppIcon name="send" :size="16" />
+          <span>{{ isSending ? '发送中' : '发送' }}</span>
+        </button>
+      </form>
+    </div>
   </section>
 </template>
