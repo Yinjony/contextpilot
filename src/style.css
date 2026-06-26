@@ -736,7 +736,7 @@ kbd {
   border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--muted);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -751,13 +751,13 @@ kbd {
 }
 
 .filter-bar button .count {
-  min-width: 20px;
-  height: 20px;
+  min-width: 40px;
+  height: 60px;
   padding: 0 6px;
   border-radius: var(--radius-pill);
   display: inline-grid;
   place-items: center;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--muted);
   background: var(--surface-sunken);
 }

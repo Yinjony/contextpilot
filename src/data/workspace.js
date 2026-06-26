@@ -38,7 +38,7 @@ export const sessions = [
         heading: '错误原因分析',
         text: '根据当前上下文，500 错误不是数据库连接导致，而是登录校验中直接比较了明文密码和 hashed_password。应改为使用 CryptContext.verify，并保留测试输出作为下一轮验证依据。',
         codeBlock: {
-          file: '/backend/services/auth_service.py',
+          file: 'backend/services/auth_service.py',
           language: 'python',
           code: `+ pwd_context = CryptContext(schemes=['bcrypt'])
 + if pwd_context.verify(password, user.hashed_password):
