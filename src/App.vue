@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import {ref, computed, watch} from 'vue'
 import SessionSidebar from './components/SessionSidebar.vue'
 import ContextWorkbench from './components/ContextWorkbench.vue'
 import ChatPanel from './components/ChatPanel.vue'
@@ -16,6 +16,17 @@ const chatSessions = ref(
 const activeSessionId = ref(sessions[0]?.id)
 const activeSession = computed(
   () => chatSessions.value.find((s) => s.id === activeSessionId.value) ?? chatSessions.value[0],
+)
+
+const isChartSession = computed(() => activeSession.value?.id === 'chart')
+
+watch(
+  () => activeSession.value?.id,
+  (newId) => {
+    if (newId === 'chart') {
+      console.log('Entering chart performance test mode')
+    }
+  }
 )
 const isSending = ref(false)
 const chatError = ref('')
@@ -104,6 +115,17 @@ function currentTime() {
     />
 
     <ChatPanel
+      :title="activeSession.title"
+      :messages="activeSession.messages"
+      :is-sending="isSending"
+      :error="chatError"
+      :model-label="chatModelLabel"
+      v-if="!isChartSession"
+      @send="handleSendMessage"
+    />
+
+    <ChatPanel
+      v-if="isChartSession"
       :title="activeSession.title"
       :messages="activeSession.messages"
       :is-sending="isSending"
