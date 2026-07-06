@@ -1,8 +1,10 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import AppIcon from './AppIcon.vue'
 
-defineProps({
+const props = defineProps({
   message: {
     type: Object,
     required: true,
@@ -16,6 +18,14 @@ defineProps({
 const emit = defineEmits(['add-context'])
 const menuOpen = ref(false)
 const messageToolsEl = ref(null)
+
+// assistant 正文用 markdown 渲染（marked 解析 + DOMPurify 防 XSS）。
+marked.setOptions({ breaks: true, gfm: true })
+const renderedText = computed(() => {
+  const text = props.message.text
+  if (!text) return ''
+  return DOMPurify.sanitize(marked.parse(text))
+})
 
 function handleDocumentClick(event) {
   if (!messageToolsEl.value?.contains(event.target)) {
@@ -40,8 +50,18 @@ onBeforeUnmount(() => {
 <template>
   <article class="message" :class="message.role">
     <div class="bubble" :class="{ pending: message.pending, error: message.error }">
+      <details
+        v-if="message.role === 'assistant' && message.reasoning"
+        class="reasoning"
+        open
+      >
+        <summary class="reasoning-summary">思考过程</summary>
+        <div class="reasoning-text">{{ message.reasoning }}</div>
+      </details>
+
       <h3 v-if="message.heading">{{ message.heading }}</h3>
-      <p>{{ message.text }}</p>
+      <p v-if="message.role !== 'assistant' || message.error">{{ message.text }}</p>
+      <div v-else class="markdown-body" v-html="renderedText"></div>
 
       <div v-if="message.codeBlock" class="fix-block">
         <div class="fix-head">

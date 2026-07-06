@@ -1,6 +1,8 @@
-const OPENCODE_DEFAULT_BASE_URL = 'http://localhost:4096'
+import { createOpenCodeBridge, isAbortError } from '../lib/opencode-bridge/index.js'
+
+const OPENCODE_DEFAULT_BASE_URL = 'http://127.0.0.1:4096'
 const OPENCODE_DEFAULT_PROVIDER_ID = 'opencode'
-const OPENCODE_DEFAULT_MODEL_ID = 'north-mini-code-free'
+const OPENCODE_DEFAULT_MODEL_ID = 'deepseek-v4-flash-free'
 const OPENCODE_DEFAULT_DIRECTORY = 'C:\\Users\\LYin\\Projects\\contextpilot'
 const OPENAI_COMPATIBLE_DEFAULT_PATH = '/chat/completions'
 const OPENCODE_CHAT_SYSTEM_PROMPT =
@@ -31,6 +33,120 @@ export const chatModelLabel =
   backend === 'openai-compatible'
     ? `OpenAI Compatible · ${env.VITE_OPENAI_MODEL || 'model'}`
     : `opencode · ${opencodeModelID()}`
+
+// 流式开关：仅 opencode 后端默认开启，可用 VITE_OPENCODE_STREAMING=false 回退到同步路径。
+export const chatStreams =
+  backend === 'opencode' && (env.VITE_OPENCODE_STREAMING ?? 'true') !== 'false'
+
+export { isAbortError }
+
+// 模块级单例 client，懒加载（首次发送时才读 env，与现有 lazy 风格一致）。
+let bridgeClient
+function getBridgeClient() {
+  if (!bridgeClient) {
+    bridgeClient = createOpenCodeBridge({
+      baseUrl: trimTrailingSlash(env.VITE_OPENCODE_BASE_URL || OPENCODE_DEFAULT_BASE_URL),
+      username: env.VITE_OPENCODE_USERNAME || 'opencode',
+      password: env.VITE_OPENCODE_PASSWORD,
+      directory: env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY,
+    })
+  }
+  return bridgeClient
+}
+
+// 流式版发送：复用同步路径的 session 缓存、首轮上下文注入、禁工具 guard、provider/model 配置。
+// onDelta(delta, fullText) 由底层 runPrompt 在每个文本增量时回调；fullText 是已拼接的完整文本。
+export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning }) {
+  if (backend === 'openai-compatible') {
+    // 该后端 v1 不支持流式：走同步接口，再整体回调一次。
+    const text = await sendOpenAICompatibleMessage({ messages, signal })
+    if (onDelta) onDelta(text, text)
+    return { text, sessionID: null }
+  }
+
+  const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user')
+  if (!latestUserMessage?.text?.trim()) {
+    throw new Error('没有可发送的用户消息。')
+  }
+
+  // 复用同步路径的 session 缓存（按 client session id 映射到 opencode session id）。
+  const session = await ensureOpencodeSession(sessionId, title, signal)
+  const promptText = session.isNew ? buildSeededPrompt(messages, latestUserMessage.text) : latestUserMessage.text
+  const guard = opencodeChatPromptGuardPayload()
+  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+
+  const client = getBridgeClient()
+
+  // 内部 abort：监听到模型重试耗尽时主动终止，避免干等满 120s 超时。
+  // 外部 signal（用户停止）转发到 innerAbort，统一由 runPrompt 的 signal 处理。
+  const innerAbort = new AbortController()
+  const onExternalAbort = () => innerAbort.abort()
+  if (signal) {
+    if (signal.aborted) innerAbort.abort()
+    else signal.addEventListener('abort', onExternalAbort, { once: true })
+  }
+
+  // 收集模型重试信息（session.status: retry），失败时给出真实网关原因，而非笼统“超时”。
+  let lastRetry = null
+  const MAX_RETRY = 4
+  const handleUpdate = (update) => {
+    if (update?.type === 'status' && update.status?.type === 'retry') {
+      lastRetry = update.status
+      if (update.status.attempt >= MAX_RETRY) {
+        // 重试次数过多，主动终止——比等满 120s 超时快得多（约 30s 出结果）。
+        innerAbort.abort()
+      }
+    }
+  }
+
+  try {
+    const result = await client.runPrompt({
+      sessionID: session.id,
+      directory,
+      prompt: promptText,
+      model: {
+        providerID: opencodeProviderID(),
+        modelID: opencodeModelID(),
+      },
+      ...(env.VITE_OPENCODE_AGENT ? { agent: env.VITE_OPENCODE_AGENT } : {}),
+      ...(env.VITE_OPENCODE_MODEL_VARIANT ? { variant: env.VITE_OPENCODE_MODEL_VARIANT } : {}),
+      ...(guard.system ? { system: guard.system } : {}),
+      ...(guard.tools ? { tools: guard.tools } : {}),
+      timeoutMs: 120000,
+      signal: innerAbort.signal,
+      onUpdate: handleUpdate,
+      ...(onDelta ? { onDelta: (delta, fullText) => onDelta(delta, fullText) } : {}),
+      ...(onReasoning ? { onReasoning: (reasoningText) => onReasoning(reasoningText) } : {}),
+    })
+    return { text: result.text, reasoning: result.reasoning, sessionID: result.sessionID }
+  } catch (error) {
+    console.error(error)
+    const userAborted = Boolean(signal?.aborted)
+    // 用户主动停止：原样抛，UI 静默处理（保留已流式文本）。
+    if (userAborted && !/timed out/i.test(error.message)) {
+      throw error
+    }
+    if (isAbortError(error) || error?.name === 'AbortError') {
+      // 重试耗尽（innerAbort）或超时：若有 retry 信息，给出真实网关原因。
+      if (lastRetry) {
+        throw new Error(
+          `模型调用失败：${lastRetry.message}（已重试 ${lastRetry.attempt} 次仍失败）。建议换个模型或稍后重试。`,
+        )
+      }
+      throw new Error('模型生成超时（120 秒未完成），请稍后重试或换个模型。')
+    }
+    if (isNetworkError(error) || error?.name === 'OpenCodeSseError') {
+      throw new Error(
+        `无法连接 opencode 服务。请先启动 opencode headless server（默认地址 ${
+          env.VITE_OPENCODE_BASE_URL || OPENCODE_DEFAULT_BASE_URL
+        }），或设置 VITE_OPENCODE_BASE_URL 指向你的服务。`,
+      )
+    }
+    throw error
+  } finally {
+    if (signal) signal.removeEventListener('abort', onExternalAbort)
+  }
+}
 
 export async function sendChatMessage({ sessionId, title, messages, signal }) {
   if (backend === 'openai-compatible') {

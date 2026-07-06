@@ -31,6 +31,17 @@ watch(
     }
   },
 )
+
+// 流式时同一条消息会持续变长，监听最后一条消息的 text 即时滚到底（auto，避免 smooth 滞后）。
+watch(
+  () => props.messages.at(-1)?.text,
+  async () => {
+    await nextTick()
+    if (messagesEl.value) {
+      messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+    }
+  },
+)
 </script>
 
 <template>

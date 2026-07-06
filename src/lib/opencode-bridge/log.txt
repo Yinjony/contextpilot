@@ -1,0 +1,5755 @@
+# event(raw) @ 5244.8ms
+{
+  "payloadType": "server.connected",
+  "payload": {
+    "id": "evt_f373815810015V9ooRXk0EemE7",
+    "type": "server.connected",
+    "properties": {}
+  }
+}
+
+# event(raw) @ 5311.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "session.next.agent.switched",
+  "payload": {
+    "id": "evt_f3738159a002aAsp0zkSpcBgNZ",
+    "type": "session.next.agent.switched",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f3738159a001rqD5vjDIg1vfG7",
+      "timestamp": "2026-07-06T11:37:30.266Z",
+      "agent": "build"
+    }
+  }
+}
+
+# payload(passed filter) @ 5312.2ms
+{
+  "id": "evt_f3738159a002aAsp0zkSpcBgNZ",
+  "type": "session.next.agent.switched",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f3738159a001rqD5vjDIg1vfG7",
+    "timestamp": "2026-07-06T11:37:30.266Z",
+    "agent": "build"
+  }
+}
+
+# event(raw) @ 5312.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f3738159a002aAsp0zkSpcBgNZ",
+      "type": "session.next.agent.switched.1",
+      "seq": 1,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "messageID": "msg_f3738159a001rqD5vjDIg1vfG7",
+        "timestamp": "2026-07-06T11:37:30.266Z",
+        "agent": "build"
+      }
+    },
+    "id": "evt_f3738159a002aAsp0zkSpcBgNZ"
+  }
+}
+
+# payload(passed filter) @ 5312.4ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f3738159a002aAsp0zkSpcBgNZ",
+    "type": "session.next.agent.switched.1",
+    "seq": 1,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f3738159a001rqD5vjDIg1vfG7",
+      "timestamp": "2026-07-06T11:37:30.266Z",
+      "agent": "build"
+    }
+  },
+  "id": "evt_f3738159a002aAsp0zkSpcBgNZ"
+}
+
+# event(raw) @ 5312.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.updated",
+  "payload": {
+    "id": "evt_f373815a1001OoFUU7jfiyJCrZ",
+    "type": "message.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "msg_f3738159a001ptyCk0yGhSgowk",
+        "role": "user",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "time": {
+          "created": 1783337850266
+        },
+        "tools": {
+          "task": false,
+          "todowrite": false,
+          "edit": false,
+          "bash": false,
+          "read": false,
+          "grep": false,
+          "glob": false,
+          "lsp": false,
+          "webfetch": false,
+          "websearch": false,
+          "skill": false,
+          "question": false,
+          "plan_enter": false,
+          "plan_exit": false,
+          "external_directory": false
+        },
+        "agent": "build",
+        "model": {
+          "providerID": "opencode",
+          "modelID": "deepseek-v4-flash-free"
+        },
+        "system": "你是 ContextPilot 聊天区的普通对话助手。禁止调用工具、禁止读取或修改文件、禁止创建子任务。只用文本直接回答用户问题。"
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 5312.7ms
+{
+  "id": "evt_f373815a1001OoFUU7jfiyJCrZ",
+  "type": "message.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "info": {
+      "id": "msg_f3738159a001ptyCk0yGhSgowk",
+      "role": "user",
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "time": {
+        "created": 1783337850266
+      },
+      "tools": {
+        "task": false,
+        "todowrite": false,
+        "edit": false,
+        "bash": false,
+        "read": false,
+        "grep": false,
+        "glob": false,
+        "lsp": false,
+        "webfetch": false,
+        "websearch": false,
+        "skill": false,
+        "question": false,
+        "plan_enter": false,
+        "plan_exit": false,
+        "external_directory": false
+      },
+      "agent": "build",
+      "model": {
+        "providerID": "opencode",
+        "modelID": "deepseek-v4-flash-free"
+      },
+      "system": "你是 ContextPilot 聊天区的普通对话助手。禁止调用工具、禁止读取或修改文件、禁止创建子任务。只用文本直接回答用户问题。"
+    }
+  }
+}
+
+# event(raw) @ 5312.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373815a1001OoFUU7jfiyJCrZ",
+      "type": "message.updated.1",
+      "seq": 2,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "info": {
+          "id": "msg_f3738159a001ptyCk0yGhSgowk",
+          "role": "user",
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "time": {
+            "created": 1783337850266
+          },
+          "tools": {
+            "task": false,
+            "todowrite": false,
+            "edit": false,
+            "bash": false,
+            "read": false,
+            "grep": false,
+            "glob": false,
+            "lsp": false,
+            "webfetch": false,
+            "websearch": false,
+            "skill": false,
+            "question": false,
+            "plan_enter": false,
+            "plan_exit": false,
+            "external_directory": false
+          },
+          "agent": "build",
+          "model": {
+            "providerID": "opencode",
+            "modelID": "deepseek-v4-flash-free"
+          },
+          "system": "你是 ContextPilot 聊天区的普通对话助手。禁止调用工具、禁止读取或修改文件、禁止创建子任务。只用文本直接回答用户问题。"
+        }
+      }
+    },
+    "id": "evt_f373815a1001OoFUU7jfiyJCrZ"
+  }
+}
+
+# payload(passed filter) @ 5312.8ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373815a1001OoFUU7jfiyJCrZ",
+    "type": "message.updated.1",
+    "seq": 2,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "msg_f3738159a001ptyCk0yGhSgowk",
+        "role": "user",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "time": {
+          "created": 1783337850266
+        },
+        "tools": {
+          "task": false,
+          "todowrite": false,
+          "edit": false,
+          "bash": false,
+          "read": false,
+          "grep": false,
+          "glob": false,
+          "lsp": false,
+          "webfetch": false,
+          "websearch": false,
+          "skill": false,
+          "question": false,
+          "plan_enter": false,
+          "plan_exit": false,
+          "external_directory": false
+        },
+        "agent": "build",
+        "model": {
+          "providerID": "opencode",
+          "modelID": "deepseek-v4-flash-free"
+        },
+        "system": "你是 ContextPilot 聊天区的普通对话助手。禁止调用工具、禁止读取或修改文件、禁止创建子任务。只用文本直接回答用户问题。"
+      }
+    }
+  },
+  "id": "evt_f373815a1001OoFUU7jfiyJCrZ"
+}
+
+# event(raw) @ 5312.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.updated",
+  "payload": {
+    "id": "evt_f373815a70013XGL2F719f8qiZ",
+    "type": "message.part.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "type": "text",
+        "text": "1+1=？",
+        "messageID": "msg_f3738159a001ptyCk0yGhSgowk",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "id": "prt_f373815a0001Xfrs6pDwWj4ED3"
+      },
+      "time": 1783337850278
+    }
+  }
+}
+
+# payload(passed filter) @ 5313.0ms
+{
+  "id": "evt_f373815a70013XGL2F719f8qiZ",
+  "type": "message.part.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "part": {
+      "type": "text",
+      "text": "1+1=？",
+      "messageID": "msg_f3738159a001ptyCk0yGhSgowk",
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "id": "prt_f373815a0001Xfrs6pDwWj4ED3"
+    },
+    "time": 1783337850278
+  }
+}
+
+# event(raw) @ 5313.1ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373815a70013XGL2F719f8qiZ",
+      "type": "message.part.updated.1",
+      "seq": 3,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "part": {
+          "type": "text",
+          "text": "1+1=？",
+          "messageID": "msg_f3738159a001ptyCk0yGhSgowk",
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "id": "prt_f373815a0001Xfrs6pDwWj4ED3"
+        },
+        "time": 1783337850278
+      }
+    },
+    "id": "evt_f373815a70013XGL2F719f8qiZ"
+  }
+}
+
+# payload(passed filter) @ 5313.3ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373815a70013XGL2F719f8qiZ",
+    "type": "message.part.updated.1",
+    "seq": 3,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "type": "text",
+        "text": "1+1=？",
+        "messageID": "msg_f3738159a001ptyCk0yGhSgowk",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "id": "prt_f373815a0001Xfrs6pDwWj4ED3"
+      },
+      "time": 1783337850278
+    }
+  },
+  "id": "evt_f373815a70013XGL2F719f8qiZ"
+}
+
+# event(raw) @ 5313.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "session.updated",
+  "payload": {
+    "id": "evt_f373815ae001EEWL23iB0jUVNZ",
+    "type": "session.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "slug": "eager-nebula",
+        "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+        "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+        "path": "",
+        "title": "1+1=？",
+        "agent": "build",
+        "model": {
+          "id": "deepseek-v4-flash-free",
+          "providerID": "opencode"
+        },
+        "version": "1.17.9",
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "permission": [
+          {
+            "permission": "task",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "todowrite",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "edit",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "bash",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "read",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "grep",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "glob",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "lsp",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "webfetch",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "websearch",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "skill",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "question",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "plan_enter",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "plan_exit",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "external_directory",
+            "pattern": "*",
+            "action": "deny"
+          }
+        ],
+        "time": {
+          "created": 1783337850228,
+          "updated": 1783337850283
+        }
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 5313.4ms
+{
+  "id": "evt_f373815ae001EEWL23iB0jUVNZ",
+  "type": "session.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "info": {
+      "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "slug": "eager-nebula",
+      "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+      "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+      "path": "",
+      "title": "1+1=？",
+      "agent": "build",
+      "model": {
+        "id": "deepseek-v4-flash-free",
+        "providerID": "opencode"
+      },
+      "version": "1.17.9",
+      "cost": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "reasoning": 0,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      },
+      "permission": [
+        {
+          "permission": "task",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "todowrite",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "edit",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "bash",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "read",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "grep",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "glob",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "lsp",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "webfetch",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "websearch",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "skill",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "question",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "plan_enter",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "plan_exit",
+          "pattern": "*",
+          "action": "deny"
+        },
+        {
+          "permission": "external_directory",
+          "pattern": "*",
+          "action": "deny"
+        }
+      ],
+      "time": {
+        "created": 1783337850228,
+        "updated": 1783337850283
+      }
+    }
+  }
+}
+
+# event(raw) @ 5313.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373815ae001EEWL23iB0jUVNZ",
+      "type": "session.updated.1",
+      "seq": 4,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "info": {
+          "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "slug": "eager-nebula",
+          "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+          "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+          "path": "",
+          "title": "1+1=？",
+          "agent": "build",
+          "model": {
+            "id": "deepseek-v4-flash-free",
+            "providerID": "opencode"
+          },
+          "version": "1.17.9",
+          "cost": 0,
+          "tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "read": 0,
+              "write": 0
+            }
+          },
+          "permission": [
+            {
+              "permission": "task",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "todowrite",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "edit",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "bash",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "read",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "grep",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "glob",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "lsp",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "webfetch",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "websearch",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "skill",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "question",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "plan_enter",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "plan_exit",
+              "pattern": "*",
+              "action": "deny"
+            },
+            {
+              "permission": "external_directory",
+              "pattern": "*",
+              "action": "deny"
+            }
+          ],
+          "time": {
+            "created": 1783337850228,
+            "updated": 1783337850283
+          }
+        }
+      }
+    },
+    "id": "evt_f373815ae001EEWL23iB0jUVNZ"
+  }
+}
+
+# payload(passed filter) @ 5313.6ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373815ae001EEWL23iB0jUVNZ",
+    "type": "session.updated.1",
+    "seq": 4,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "slug": "eager-nebula",
+        "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+        "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+        "path": "",
+        "title": "1+1=？",
+        "agent": "build",
+        "model": {
+          "id": "deepseek-v4-flash-free",
+          "providerID": "opencode"
+        },
+        "version": "1.17.9",
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "permission": [
+          {
+            "permission": "task",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "todowrite",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "edit",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "bash",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "read",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "grep",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "glob",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "lsp",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "webfetch",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "websearch",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "skill",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "question",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "plan_enter",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "plan_exit",
+            "pattern": "*",
+            "action": "deny"
+          },
+          {
+            "permission": "external_directory",
+            "pattern": "*",
+            "action": "deny"
+          }
+        ],
+        "time": {
+          "created": 1783337850228,
+          "updated": 1783337850283
+        }
+      }
+    }
+  },
+  "id": "evt_f373815ae001EEWL23iB0jUVNZ"
+}
+
+# event(raw) @ 5331.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "session.updated",
+  "payload": {
+    "id": "evt_f373815b5001Quz4FxQR8I0i3k",
+    "type": "session.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "slug": "eager-nebula",
+        "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+        "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+        "path": "",
+        "title": "1+1=？",
+        "agent": "build",
+        "model": {
+          "id": "deepseek-v4-flash-free",
+          "providerID": "opencode"
+        },
+        "version": "1.17.9",
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "permission": [
+          {
+            "permission": "task",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "todowrite",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "edit",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "bash",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "read",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "grep",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "glob",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "lsp",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "webfetch",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "websearch",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "skill",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "question",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "plan_enter",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "plan_exit",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "external_directory",
+            "action": "deny",
+            "pattern": "*"
+          }
+        ],
+        "time": {
+          "created": 1783337850228,
+          "updated": 1783337850291
+        }
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 5331.3ms
+{
+  "id": "evt_f373815b5001Quz4FxQR8I0i3k",
+  "type": "session.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "info": {
+      "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "slug": "eager-nebula",
+      "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+      "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+      "path": "",
+      "title": "1+1=？",
+      "agent": "build",
+      "model": {
+        "id": "deepseek-v4-flash-free",
+        "providerID": "opencode"
+      },
+      "version": "1.17.9",
+      "cost": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "reasoning": 0,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      },
+      "permission": [
+        {
+          "permission": "task",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "todowrite",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "edit",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "bash",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "read",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "grep",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "glob",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "lsp",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "webfetch",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "websearch",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "skill",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "question",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "plan_enter",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "plan_exit",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "external_directory",
+          "action": "deny",
+          "pattern": "*"
+        }
+      ],
+      "time": {
+        "created": 1783337850228,
+        "updated": 1783337850291
+      }
+    }
+  }
+}
+
+# event(raw) @ 5331.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373815b5001Quz4FxQR8I0i3k",
+      "type": "session.updated.1",
+      "seq": 5,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "info": {
+          "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "slug": "eager-nebula",
+          "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+          "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+          "path": "",
+          "title": "1+1=？",
+          "agent": "build",
+          "model": {
+            "id": "deepseek-v4-flash-free",
+            "providerID": "opencode"
+          },
+          "version": "1.17.9",
+          "cost": 0,
+          "tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "read": 0,
+              "write": 0
+            }
+          },
+          "permission": [
+            {
+              "permission": "task",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "todowrite",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "edit",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "bash",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "read",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "grep",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "glob",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "lsp",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "webfetch",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "websearch",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "skill",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "question",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "plan_enter",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "plan_exit",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "external_directory",
+              "action": "deny",
+              "pattern": "*"
+            }
+          ],
+          "time": {
+            "created": 1783337850228,
+            "updated": 1783337850291
+          }
+        }
+      }
+    },
+    "id": "evt_f373815b5001Quz4FxQR8I0i3k"
+  }
+}
+
+# payload(passed filter) @ 5331.6ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373815b5001Quz4FxQR8I0i3k",
+    "type": "session.updated.1",
+    "seq": 5,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "slug": "eager-nebula",
+        "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+        "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+        "path": "",
+        "title": "1+1=？",
+        "agent": "build",
+        "model": {
+          "id": "deepseek-v4-flash-free",
+          "providerID": "opencode"
+        },
+        "version": "1.17.9",
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "permission": [
+          {
+            "permission": "task",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "todowrite",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "edit",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "bash",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "read",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "grep",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "glob",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "lsp",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "webfetch",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "websearch",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "skill",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "question",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "plan_enter",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "plan_exit",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "external_directory",
+            "action": "deny",
+            "pattern": "*"
+          }
+        ],
+        "time": {
+          "created": 1783337850228,
+          "updated": 1783337850291
+        }
+      }
+    }
+  },
+  "id": "evt_f373815b5001Quz4FxQR8I0i3k"
+}
+
+# event(raw) @ 5341.6ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "session.status",
+  "payload": {
+    "id": "evt_f373815d70010VbAF005R0v71p",
+    "type": "session.status",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "status": {
+        "type": "busy"
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 5341.8ms
+{
+  "id": "evt_f373815d70010VbAF005R0v71p",
+  "type": "session.status",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "status": {
+      "type": "busy"
+    }
+  }
+}
+
+# event(raw) @ 5341.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.updated",
+  "payload": {
+    "id": "evt_f373815da001i6e1pHP7F0Zzp5",
+    "type": "message.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+        "role": "assistant",
+        "mode": "build",
+        "agent": "build",
+        "path": {
+          "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+          "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+        },
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "modelID": "deepseek-v4-flash-free",
+        "providerID": "opencode",
+        "time": {
+          "created": 1783337850330
+        },
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW"
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 5342.0ms
+{
+  "id": "evt_f373815da001i6e1pHP7F0Zzp5",
+  "type": "message.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "info": {
+      "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+      "role": "assistant",
+      "mode": "build",
+      "agent": "build",
+      "path": {
+        "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+        "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+      },
+      "cost": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "reasoning": 0,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      },
+      "modelID": "deepseek-v4-flash-free",
+      "providerID": "opencode",
+      "time": {
+        "created": 1783337850330
+      },
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW"
+    }
+  }
+}
+
+# event(raw) @ 5342.1ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373815da001i6e1pHP7F0Zzp5",
+      "type": "message.updated.1",
+      "seq": 6,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "info": {
+          "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+          "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+          "role": "assistant",
+          "mode": "build",
+          "agent": "build",
+          "path": {
+            "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+            "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+          },
+          "cost": 0,
+          "tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "read": 0,
+              "write": 0
+            }
+          },
+          "modelID": "deepseek-v4-flash-free",
+          "providerID": "opencode",
+          "time": {
+            "created": 1783337850330
+          },
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW"
+        }
+      }
+    },
+    "id": "evt_f373815da001i6e1pHP7F0Zzp5"
+  }
+}
+
+# payload(passed filter) @ 5342.1ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373815da001i6e1pHP7F0Zzp5",
+    "type": "message.updated.1",
+    "seq": 6,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+        "role": "assistant",
+        "mode": "build",
+        "agent": "build",
+        "path": {
+          "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+          "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+        },
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "modelID": "deepseek-v4-flash-free",
+        "providerID": "opencode",
+        "time": {
+          "created": 1783337850330
+        },
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW"
+      }
+    }
+  },
+  "id": "evt_f373815da001i6e1pHP7F0Zzp5"
+}
+
+# event(raw) @ 6037.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "session.updated",
+  "payload": {
+    "id": "evt_f37381886001USDgsCZgBUi32o",
+    "type": "session.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "slug": "eager-nebula",
+        "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+        "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+        "path": "",
+        "title": "1+1=？",
+        "agent": "build",
+        "model": {
+          "id": "deepseek-v4-flash-free",
+          "providerID": "opencode"
+        },
+        "version": "1.17.9",
+        "summary": {
+          "additions": 0,
+          "deletions": 0,
+          "files": 0
+        },
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "permission": [
+          {
+            "permission": "task",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "todowrite",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "edit",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "bash",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "read",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "grep",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "glob",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "lsp",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "webfetch",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "websearch",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "skill",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "question",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "plan_enter",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "plan_exit",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "external_directory",
+            "action": "deny",
+            "pattern": "*"
+          }
+        ],
+        "time": {
+          "created": 1783337850228,
+          "updated": 1783337851013
+        }
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 6037.5ms
+{
+  "id": "evt_f37381886001USDgsCZgBUi32o",
+  "type": "session.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "info": {
+      "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "slug": "eager-nebula",
+      "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+      "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+      "path": "",
+      "title": "1+1=？",
+      "agent": "build",
+      "model": {
+        "id": "deepseek-v4-flash-free",
+        "providerID": "opencode"
+      },
+      "version": "1.17.9",
+      "summary": {
+        "additions": 0,
+        "deletions": 0,
+        "files": 0
+      },
+      "cost": 0,
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "reasoning": 0,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      },
+      "permission": [
+        {
+          "permission": "task",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "todowrite",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "edit",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "bash",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "read",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "grep",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "glob",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "lsp",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "webfetch",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "websearch",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "skill",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "question",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "plan_enter",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "plan_exit",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "permission": "external_directory",
+          "action": "deny",
+          "pattern": "*"
+        }
+      ],
+      "time": {
+        "created": 1783337850228,
+        "updated": 1783337851013
+      }
+    }
+  }
+}
+
+# event(raw) @ 6037.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f37381886001USDgsCZgBUi32o",
+      "type": "session.updated.1",
+      "seq": 7,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "info": {
+          "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "slug": "eager-nebula",
+          "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+          "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+          "path": "",
+          "title": "1+1=？",
+          "agent": "build",
+          "model": {
+            "id": "deepseek-v4-flash-free",
+            "providerID": "opencode"
+          },
+          "version": "1.17.9",
+          "summary": {
+            "additions": 0,
+            "deletions": 0,
+            "files": 0
+          },
+          "cost": 0,
+          "tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "read": 0,
+              "write": 0
+            }
+          },
+          "permission": [
+            {
+              "permission": "task",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "todowrite",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "edit",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "bash",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "read",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "grep",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "glob",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "lsp",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "webfetch",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "websearch",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "skill",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "question",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "plan_enter",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "plan_exit",
+              "action": "deny",
+              "pattern": "*"
+            },
+            {
+              "permission": "external_directory",
+              "action": "deny",
+              "pattern": "*"
+            }
+          ],
+          "time": {
+            "created": 1783337850228,
+            "updated": 1783337851013
+          }
+        }
+      }
+    },
+    "id": "evt_f37381886001USDgsCZgBUi32o"
+  }
+}
+
+# payload(passed filter) @ 6037.7ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f37381886001USDgsCZgBUi32o",
+    "type": "session.updated.1",
+    "seq": 7,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "slug": "eager-nebula",
+        "projectID": "adf20d906e89d21019129f4cc94c86ee7d6ed228",
+        "directory": "C:\\Users\\LYin\\Projects\\contextpilot",
+        "path": "",
+        "title": "1+1=？",
+        "agent": "build",
+        "model": {
+          "id": "deepseek-v4-flash-free",
+          "providerID": "opencode"
+        },
+        "version": "1.17.9",
+        "summary": {
+          "additions": 0,
+          "deletions": 0,
+          "files": 0
+        },
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "permission": [
+          {
+            "permission": "task",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "todowrite",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "edit",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "bash",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "read",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "grep",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "glob",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "lsp",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "webfetch",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "websearch",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "skill",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "question",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "plan_enter",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "plan_exit",
+            "action": "deny",
+            "pattern": "*"
+          },
+          {
+            "permission": "external_directory",
+            "action": "deny",
+            "pattern": "*"
+          }
+        ],
+        "time": {
+          "created": 1783337850228,
+          "updated": 1783337851013
+        }
+      }
+    }
+  },
+  "id": "evt_f37381886001USDgsCZgBUi32o"
+}
+
+# event(raw) @ 6037.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "session.diff",
+  "payload": {
+    "id": "evt_f3738188c001cBDjlIe7Bx1rjG",
+    "type": "session.diff",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "diff": []
+    }
+  }
+}
+
+# payload(passed filter) @ 6037.8ms
+{
+  "id": "evt_f3738188c001cBDjlIe7Bx1rjG",
+  "type": "session.diff",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "diff": []
+  }
+}
+
+# event(raw) @ 6038.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.updated",
+  "payload": {
+    "id": "evt_f3738188f001aaIxvEyNP5YuN6",
+    "type": "message.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1783337850266
+        },
+        "tools": {
+          "task": false,
+          "todowrite": false,
+          "edit": false,
+          "bash": false,
+          "read": false,
+          "grep": false,
+          "glob": false,
+          "lsp": false,
+          "webfetch": false,
+          "websearch": false,
+          "skill": false,
+          "question": false,
+          "plan_enter": false,
+          "plan_exit": false,
+          "external_directory": false
+        },
+        "agent": "build",
+        "model": {
+          "providerID": "opencode",
+          "modelID": "deepseek-v4-flash-free"
+        },
+        "system": "你是 ContextPilot 聊天区的普通对话助手。禁止调用工具、禁止读取或修改文件、禁止创建子任务。只用文本直接回答用户问题。",
+        "id": "msg_f3738159a001ptyCk0yGhSgowk",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "summary": {
+          "diffs": []
+        }
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 6038.0ms
+{
+  "id": "evt_f3738188f001aaIxvEyNP5YuN6",
+  "type": "message.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "info": {
+      "role": "user",
+      "time": {
+        "created": 1783337850266
+      },
+      "tools": {
+        "task": false,
+        "todowrite": false,
+        "edit": false,
+        "bash": false,
+        "read": false,
+        "grep": false,
+        "glob": false,
+        "lsp": false,
+        "webfetch": false,
+        "websearch": false,
+        "skill": false,
+        "question": false,
+        "plan_enter": false,
+        "plan_exit": false,
+        "external_directory": false
+      },
+      "agent": "build",
+      "model": {
+        "providerID": "opencode",
+        "modelID": "deepseek-v4-flash-free"
+      },
+      "system": "你是 ContextPilot 聊天区的普通对话助手。禁止调用工具、禁止读取或修改文件、禁止创建子任务。只用文本直接回答用户问题。",
+      "id": "msg_f3738159a001ptyCk0yGhSgowk",
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "summary": {
+        "diffs": []
+      }
+    }
+  }
+}
+
+# event(raw) @ 6038.1ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f3738188f001aaIxvEyNP5YuN6",
+      "type": "message.updated.1",
+      "seq": 8,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "info": {
+          "role": "user",
+          "time": {
+            "created": 1783337850266
+          },
+          "tools": {
+            "task": false,
+            "todowrite": false,
+            "edit": false,
+            "bash": false,
+            "read": false,
+            "grep": false,
+            "glob": false,
+            "lsp": false,
+            "webfetch": false,
+            "websearch": false,
+            "skill": false,
+            "question": false,
+            "plan_enter": false,
+            "plan_exit": false,
+            "external_directory": false
+          },
+          "agent": "build",
+          "model": {
+            "providerID": "opencode",
+            "modelID": "deepseek-v4-flash-free"
+          },
+          "system": "你是 ContextPilot 聊天区的普通对话助手。禁止调用工具、禁止读取或修改文件、禁止创建子任务。只用文本直接回答用户问题。",
+          "id": "msg_f3738159a001ptyCk0yGhSgowk",
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "summary": {
+            "diffs": []
+          }
+        }
+      }
+    },
+    "id": "evt_f3738188f001aaIxvEyNP5YuN6"
+  }
+}
+
+# payload(passed filter) @ 6038.2ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f3738188f001aaIxvEyNP5YuN6",
+    "type": "message.updated.1",
+    "seq": 8,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1783337850266
+        },
+        "tools": {
+          "task": false,
+          "todowrite": false,
+          "edit": false,
+          "bash": false,
+          "read": false,
+          "grep": false,
+          "glob": false,
+          "lsp": false,
+          "webfetch": false,
+          "websearch": false,
+          "skill": false,
+          "question": false,
+          "plan_enter": false,
+          "plan_exit": false,
+          "external_directory": false
+        },
+        "agent": "build",
+        "model": {
+          "providerID": "opencode",
+          "modelID": "deepseek-v4-flash-free"
+        },
+        "system": "你是 ContextPilot 聊天区的普通对话助手。禁止调用工具、禁止读取或修改文件、禁止创建子任务。只用文本直接回答用户问题。",
+        "id": "msg_f3738159a001ptyCk0yGhSgowk",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "summary": {
+          "diffs": []
+        }
+      }
+    }
+  },
+  "id": "evt_f3738188f001aaIxvEyNP5YuN6"
+}
+
+# event(raw) @ 6052.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "session.status",
+  "payload": {
+    "id": "evt_f373818ae001XUGpC22kdpfS5Q",
+    "type": "session.status",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "status": {
+        "type": "busy"
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 6053.1ms
+{
+  "id": "evt_f373818ae001XUGpC22kdpfS5Q",
+  "type": "session.status",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "status": {
+      "type": "busy"
+    }
+  }
+}
+
+# event(raw) @ 6889.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.updated",
+  "payload": {
+    "id": "evt_f37381bef0018BqUKlYxetsFET",
+    "type": "message.part.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f37381bef0014exA3LTUPYy10B",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "snapshot": "b429844e984fba522c0854cbe795fa36d15eed80",
+        "type": "step-start"
+      },
+      "time": 1783337851887
+    }
+  }
+}
+
+# payload(passed filter) @ 6889.9ms
+{
+  "id": "evt_f37381bef0018BqUKlYxetsFET",
+  "type": "message.part.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "part": {
+      "id": "prt_f37381bef0014exA3LTUPYy10B",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "snapshot": "b429844e984fba522c0854cbe795fa36d15eed80",
+      "type": "step-start"
+    },
+    "time": 1783337851887
+  }
+}
+
+# event(raw) @ 6890.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f37381bef0018BqUKlYxetsFET",
+      "type": "message.part.updated.1",
+      "seq": 9,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "part": {
+          "id": "prt_f37381bef0014exA3LTUPYy10B",
+          "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "snapshot": "b429844e984fba522c0854cbe795fa36d15eed80",
+          "type": "step-start"
+        },
+        "time": 1783337851887
+      }
+    },
+    "id": "evt_f37381bef0018BqUKlYxetsFET"
+  }
+}
+
+# payload(passed filter) @ 6890.2ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f37381bef0018BqUKlYxetsFET",
+    "type": "message.part.updated.1",
+    "seq": 9,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f37381bef0014exA3LTUPYy10B",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "snapshot": "b429844e984fba522c0854cbe795fa36d15eed80",
+        "type": "step-start"
+      },
+      "time": 1783337851887
+    }
+  },
+  "id": "evt_f37381bef0018BqUKlYxetsFET"
+}
+
+# event(raw) @ 7209.6ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.updated",
+  "payload": {
+    "id": "evt_f37381d2f001LNyM0bypT8asoj",
+    "type": "message.part.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f37381d2f0019G4YfQJdlmE2du",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "reasoning",
+        "text": "",
+        "time": {
+          "start": 1783337852207
+        }
+      },
+      "time": 1783337852207
+    }
+  }
+}
+
+# payload(passed filter) @ 7210.0ms
+{
+  "id": "evt_f37381d2f001LNyM0bypT8asoj",
+  "type": "message.part.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "part": {
+      "id": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "type": "reasoning",
+      "text": "",
+      "time": {
+        "start": 1783337852207
+      }
+    },
+    "time": 1783337852207
+  }
+}
+
+# event(raw) @ 7210.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f37381d2f001LNyM0bypT8asoj",
+      "type": "message.part.updated.1",
+      "seq": 10,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "part": {
+          "id": "prt_f37381d2f0019G4YfQJdlmE2du",
+          "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "type": "reasoning",
+          "text": "",
+          "time": {
+            "start": 1783337852207
+          }
+        },
+        "time": 1783337852207
+      }
+    },
+    "id": "evt_f37381d2f001LNyM0bypT8asoj"
+  }
+}
+
+# payload(passed filter) @ 7210.4ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f37381d2f001LNyM0bypT8asoj",
+    "type": "message.part.updated.1",
+    "seq": 10,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f37381d2f0019G4YfQJdlmE2du",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "reasoning",
+        "text": "",
+        "time": {
+          "start": 1783337852207
+        }
+      },
+      "time": 1783337852207
+    }
+  },
+  "id": "evt_f37381d2f001LNyM0bypT8asoj"
+}
+
+# event(raw) @ 7210.6ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381d34001IXwMHLqWbdWg7Y",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "我们需要"
+    }
+  }
+}
+
+# payload(passed filter) @ 7210.7ms
+{
+  "id": "evt_f37381d34001IXwMHLqWbdWg7Y",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "我们需要"
+  }
+}
+
+# event(raw) @ 7616.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec1001KsrxiDTyp04Fpu",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "回复"
+    }
+  }
+}
+
+# payload(passed filter) @ 7616.5ms
+{
+  "id": "evt_f37381ec1001KsrxiDTyp04Fpu",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "回复"
+  }
+}
+
+# event(raw) @ 7616.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec2001S9yccn9DDWGeFu",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "\""
+    }
+  }
+}
+
+# payload(passed filter) @ 7616.8ms
+{
+  "id": "evt_f37381ec2001S9yccn9DDWGeFu",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "\""
+  }
+}
+
+# event(raw) @ 7616.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec2002JJOkR712oZ0V3l",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "1"
+    }
+  }
+}
+
+# payload(passed filter) @ 7617.0ms
+{
+  "id": "evt_f37381ec2002JJOkR712oZ0V3l",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "1"
+  }
+}
+
+# event(raw) @ 7617.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec2003DQlZvf96WayAoY",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "+"
+    }
+  }
+}
+
+# payload(passed filter) @ 7617.2ms
+{
+  "id": "evt_f37381ec2003DQlZvf96WayAoY",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "+"
+  }
+}
+
+# event(raw) @ 7617.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec3001ZtsnYfhUlto5L9",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "1"
+    }
+  }
+}
+
+# payload(passed filter) @ 7617.2ms
+{
+  "id": "evt_f37381ec3001ZtsnYfhUlto5L9",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "1"
+  }
+}
+
+# event(raw) @ 7617.4ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec40011qturcxFKz4tDp",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "="
+    }
+  }
+}
+
+# payload(passed filter) @ 7617.4ms
+{
+  "id": "evt_f37381ec40011qturcxFKz4tDp",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "="
+  }
+}
+
+# event(raw) @ 7617.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec4002QJPGIPEhaFVaLl",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "？"
+    }
+  }
+}
+
+# payload(passed filter) @ 7617.5ms
+{
+  "id": "evt_f37381ec4002QJPGIPEhaFVaLl",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "？"
+  }
+}
+
+# event(raw) @ 7617.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec5001QN7xAdyrNrgA3W",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "\""
+    }
+  }
+}
+
+# payload(passed filter) @ 7617.7ms
+{
+  "id": "evt_f37381ec5001QN7xAdyrNrgA3W",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "\""
+  }
+}
+
+# event(raw) @ 7617.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec5002XPxzKSt4fSF6j6",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "这个问题"
+    }
+  }
+}
+
+# payload(passed filter) @ 7617.9ms
+{
+  "id": "evt_f37381ec5002XPxzKSt4fSF6j6",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "这个问题"
+  }
+}
+
+# event(raw) @ 7618.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec6001fp3at7uQ7ZG1R3",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "。"
+    }
+  }
+}
+
+# payload(passed filter) @ 7618.0ms
+{
+  "id": "evt_f37381ec6001fp3at7uQ7ZG1R3",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "。"
+  }
+}
+
+# event(raw) @ 7618.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec7001Tz8DEqhmOPKvtO",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "作为一个"
+    }
+  }
+}
+
+# payload(passed filter) @ 7618.2ms
+{
+  "id": "evt_f37381ec7001Tz8DEqhmOPKvtO",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "作为一个"
+  }
+}
+
+# event(raw) @ 7618.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec8001zZmCfjQdAy0FTK",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "简单的"
+    }
+  }
+}
+
+# payload(passed filter) @ 7618.3ms
+{
+  "id": "evt_f37381ec8001zZmCfjQdAy0FTK",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "简单的"
+  }
+}
+
+# event(raw) @ 7618.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec80027uRqGcC463rmXX",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "数学"
+    }
+  }
+}
+
+# payload(passed filter) @ 7618.5ms
+{
+  "id": "evt_f37381ec80027uRqGcC463rmXX",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "数学"
+  }
+}
+
+# event(raw) @ 7618.6ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec9001ENgI6G60Rqgc5i",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "问题"
+    }
+  }
+}
+
+# payload(passed filter) @ 7618.7ms
+{
+  "id": "evt_f37381ec9001ENgI6G60Rqgc5i",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "问题"
+  }
+}
+
+# event(raw) @ 7618.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ec9002qT2vrNCfRafJfV",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "，"
+    }
+  }
+}
+
+# payload(passed filter) @ 7619.0ms
+{
+  "id": "evt_f37381ec9002qT2vrNCfRafJfV",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "，"
+  }
+}
+
+# event(raw) @ 7619.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381eca001v8cAbxLor6re8o",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "答案是"
+    }
+  }
+}
+
+# payload(passed filter) @ 7619.2ms
+{
+  "id": "evt_f37381eca001v8cAbxLor6re8o",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "答案是"
+  }
+}
+
+# event(raw) @ 7644.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ee5001NS9Q0ID1DvTyld",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "2"
+    }
+  }
+}
+
+# payload(passed filter) @ 7645.1ms
+{
+  "id": "evt_f37381ee5001NS9Q0ID1DvTyld",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "2"
+  }
+}
+
+# event(raw) @ 7645.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ee60017hAWjcH2VYViVR",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "。"
+    }
+  }
+}
+
+# payload(passed filter) @ 7645.4ms
+{
+  "id": "evt_f37381ee60017hAWjcH2VYViVR",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "。"
+  }
+}
+
+# event(raw) @ 7645.4ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ee6002TLkU4KLazH6lmZ",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "但是"
+    }
+  }
+}
+
+# payload(passed filter) @ 7645.6ms
+{
+  "id": "evt_f37381ee6002TLkU4KLazH6lmZ",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "但是"
+  }
+}
+
+# event(raw) @ 7645.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ee6003AH8fAJGGJ0AZ0K",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "根据"
+    }
+  }
+}
+
+# payload(passed filter) @ 7645.7ms
+{
+  "id": "evt_f37381ee6003AH8fAJGGJ0AZ0K",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "根据"
+  }
+}
+
+# event(raw) @ 7660.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ef4001HAC8AP5VZO6Auh",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "系统"
+    }
+  }
+}
+
+# payload(passed filter) @ 7661.0ms
+{
+  "id": "evt_f37381ef4001HAC8AP5VZO6Auh",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "系统"
+  }
+}
+
+# event(raw) @ 7661.1ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ef5001gL2PG5JU4f1GpY",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "提示"
+    }
+  }
+}
+
+# payload(passed filter) @ 7661.2ms
+{
+  "id": "evt_f37381ef5001gL2PG5JU4f1GpY",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "提示"
+  }
+}
+
+# event(raw) @ 7661.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ef50023bkSSDI0lFgZJs",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "，"
+    }
+  }
+}
+
+# payload(passed filter) @ 7661.4ms
+{
+  "id": "evt_f37381ef50023bkSSDI0lFgZJs",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "，"
+  }
+}
+
+# event(raw) @ 7663.4ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ef60018mmU0RukYVU0vw",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "我应该"
+    }
+  }
+}
+
+# payload(passed filter) @ 7663.6ms
+{
+  "id": "evt_f37381ef60018mmU0RukYVU0vw",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "我应该"
+  }
+}
+
+# event(raw) @ 7663.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381ef6002VqSnLLAcSe60Hn",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "保持"
+    }
+  }
+}
+
+# payload(passed filter) @ 7663.8ms
+{
+  "id": "evt_f37381ef6002VqSnLLAcSe60Hn",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "保持"
+  }
+}
+
+# event(raw) @ 7710.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f270017NtLRQGkD5gJoG",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "简洁"
+    }
+  }
+}
+
+# payload(passed filter) @ 7711.1ms
+{
+  "id": "evt_f37381f270017NtLRQGkD5gJoG",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "简洁"
+  }
+}
+
+# event(raw) @ 7711.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f28001kTJqBsiu8oXby9",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "，"
+    }
+  }
+}
+
+# payload(passed filter) @ 7711.3ms
+{
+  "id": "evt_f37381f28001kTJqBsiu8oXby9",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "，"
+  }
+}
+
+# event(raw) @ 7711.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f28002YbFGV4NdxJDmQ5",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "直接"
+    }
+  }
+}
+
+# payload(passed filter) @ 7711.5ms
+{
+  "id": "evt_f37381f28002YbFGV4NdxJDmQ5",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "直接"
+  }
+}
+
+# event(raw) @ 7802.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f80001Xzy7ZyudSPyqbY",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "回答"
+    }
+  }
+}
+
+# payload(passed filter) @ 7802.6ms
+{
+  "id": "evt_f37381f80001Xzy7ZyudSPyqbY",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "回答"
+  }
+}
+
+# event(raw) @ 7802.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f81001BL4cSirqPLufFj",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "。"
+    }
+  }
+}
+
+# payload(passed filter) @ 7803.0ms
+{
+  "id": "evt_f37381f81001BL4cSirqPLufFj",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "。"
+  }
+}
+
+# event(raw) @ 7803.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f81002vk937RIOtwur1q",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "用户"
+    }
+  }
+}
+
+# payload(passed filter) @ 7803.3ms
+{
+  "id": "evt_f37381f81002vk937RIOtwur1q",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "用户"
+  }
+}
+
+# event(raw) @ 7803.6ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f81003ZSOb77j3IcCFkq",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "问"
+    }
+  }
+}
+
+# payload(passed filter) @ 7803.7ms
+{
+  "id": "evt_f37381f81003ZSOb77j3IcCFkq",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "问"
+  }
+}
+
+# event(raw) @ 7803.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f82001bO02ER40tKfcpk",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "的是"
+    }
+  }
+}
+
+# payload(passed filter) @ 7804.0ms
+{
+  "id": "evt_f37381f82001bO02ER40tKfcpk",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "的是"
+  }
+}
+
+# event(raw) @ 7804.1ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f82002uMYWwO96mc96s5",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "1"
+    }
+  }
+}
+
+# payload(passed filter) @ 7804.3ms
+{
+  "id": "evt_f37381f82002uMYWwO96mc96s5",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "1"
+  }
+}
+
+# event(raw) @ 7804.4ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f830017v5zHWOS6LDa8B",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "+"
+    }
+  }
+}
+
+# payload(passed filter) @ 7804.6ms
+{
+  "id": "evt_f37381f830017v5zHWOS6LDa8B",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "+"
+  }
+}
+
+# event(raw) @ 7804.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f83002vg7lGktndwtJWS",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "1"
+    }
+  }
+}
+
+# payload(passed filter) @ 7804.9ms
+{
+  "id": "evt_f37381f83002vg7lGktndwtJWS",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "1"
+  }
+}
+
+# event(raw) @ 7805.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f83003Gam0VMLmkla5cV",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "="
+    }
+  }
+}
+
+# payload(passed filter) @ 7805.1ms
+{
+  "id": "evt_f37381f83003Gam0VMLmkla5cV",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "="
+  }
+}
+
+# event(raw) @ 7805.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f84001SBL4EbFSXAqp1g",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "？"
+    }
+  }
+}
+
+# payload(passed filter) @ 7805.5ms
+{
+  "id": "evt_f37381f84001SBL4EbFSXAqp1g",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "？"
+  }
+}
+
+# event(raw) @ 7810.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f8b001Q0JMJS4GUIXReU",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "，"
+    }
+  }
+}
+
+# payload(passed filter) @ 7811.3ms
+{
+  "id": "evt_f37381f8b001Q0JMJS4GUIXReU",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "，"
+  }
+}
+
+# event(raw) @ 7811.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f8c001QT3qYJ0pZ3JTkz",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "答案是"
+    }
+  }
+}
+
+# payload(passed filter) @ 7811.7ms
+{
+  "id": "evt_f37381f8c001QT3qYJ0pZ3JTkz",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "答案是"
+  }
+}
+
+# event(raw) @ 7811.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381f8c002t6U3sVQsVJr2Ca",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "2"
+    }
+  }
+}
+
+# payload(passed filter) @ 7811.8ms
+{
+  "id": "evt_f37381f8c002t6U3sVQsVJr2Ca",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "2"
+  }
+}
+
+# event(raw) @ 7859.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381fbd0011LK6bG8ZvdGwWK",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "。\n\n"
+    }
+  }
+}
+
+# payload(passed filter) @ 7859.9ms
+{
+  "id": "evt_f37381fbd0011LK6bG8ZvdGwWK",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "。\n\n"
+  }
+}
+
+# event(raw) @ 7860.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381fbe001RMC1WVkVagt2Us",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "由于"
+    }
+  }
+}
+
+# payload(passed filter) @ 7860.1ms
+{
+  "id": "evt_f37381fbe001RMC1WVkVagt2Us",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "由于"
+  }
+}
+
+# event(raw) @ 7860.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381fbe002N8thKquJRVOJD0",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "我是"
+    }
+  }
+}
+
+# payload(passed filter) @ 7860.4ms
+{
+  "id": "evt_f37381fbe002N8thKquJRVOJD0",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "我是"
+  }
+}
+
+# event(raw) @ 7893.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37381fe0001EJpJmwvxoOMECb",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "Context"
+    }
+  }
+}
+
+# payload(passed filter) @ 7894.4ms
+{
+  "id": "evt_f37381fe0001EJpJmwvxoOMECb",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "Context"
+  }
+}
+
+# event(raw) @ 7931.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382004001CJ240WsBq1pv0w",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "P"
+    }
+  }
+}
+
+# payload(passed filter) @ 7931.2ms
+{
+  "id": "evt_f37382004001CJ240WsBq1pv0w",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "P"
+  }
+}
+
+# event(raw) @ 7931.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373820050014Mu2goh54Uw6mW",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "ilot"
+    }
+  }
+}
+
+# payload(passed filter) @ 7931.5ms
+{
+  "id": "evt_f373820050014Mu2goh54Uw6mW",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "ilot"
+  }
+}
+
+# event(raw) @ 7931.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373820060018Uptm1GyHEcWhc",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "聊天"
+    }
+  }
+}
+
+# payload(passed filter) @ 7931.5ms
+{
+  "id": "evt_f373820060018Uptm1GyHEcWhc",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "聊天"
+  }
+}
+
+# event(raw) @ 7991.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f3738203f001mENQDYcrcA0yHu",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "区的"
+    }
+  }
+}
+
+# payload(passed filter) @ 7991.7ms
+{
+  "id": "evt_f3738203f001mENQDYcrcA0yHu",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "区的"
+  }
+}
+
+# event(raw) @ 7991.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382040001KFYHoYJHecZwLO",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "普通"
+    }
+  }
+}
+
+# payload(passed filter) @ 7992.1ms
+{
+  "id": "evt_f37382040001KFYHoYJHecZwLO",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "普通"
+  }
+}
+
+# event(raw) @ 7992.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382040002TjvBRugHO533yJ",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "对话"
+    }
+  }
+}
+
+# payload(passed filter) @ 7992.5ms
+{
+  "id": "evt_f37382040002TjvBRugHO533yJ",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "对话"
+  }
+}
+
+# event(raw) @ 7992.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373820410019TL0CM4A8B6lUG",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "助手"
+    }
+  }
+}
+
+# payload(passed filter) @ 7992.9ms
+{
+  "id": "evt_f373820410019TL0CM4A8B6lUG",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "助手"
+  }
+}
+
+# event(raw) @ 7993.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382041002APMlCy8NC4cr0d",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "，"
+    }
+  }
+}
+
+# payload(passed filter) @ 7993.1ms
+{
+  "id": "evt_f37382041002APMlCy8NC4cr0d",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "，"
+  }
+}
+
+# event(raw) @ 7993.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382042001PzXs9fpD1gGURB",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "并且"
+    }
+  }
+}
+
+# payload(passed filter) @ 7993.3ms
+{
+  "id": "evt_f37382042001PzXs9fpD1gGURB",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "并且"
+  }
+}
+
+# event(raw) @ 8005.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382050001CFcIAf9yThCD5E",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "系统"
+    }
+  }
+}
+
+# payload(passed filter) @ 8006.1ms
+{
+  "id": "evt_f37382050001CFcIAf9yThCD5E",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "系统"
+  }
+}
+
+# event(raw) @ 8044.4ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382077001pRz7Jz46Si00Ly",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "强调"
+    }
+  }
+}
+
+# payload(passed filter) @ 8044.8ms
+{
+  "id": "evt_f37382077001pRz7Jz46Si00Ly",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "强调"
+  }
+}
+
+# event(raw) @ 8084.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f3738209e001bcODwbF0oJ994e",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "要"
+    }
+  }
+}
+
+# payload(passed filter) @ 8084.7ms
+{
+  "id": "evt_f3738209e001bcODwbF0oJ994e",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "要"
+  }
+}
+
+# event(raw) @ 8084.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f3738209f001LGrnqQqIRgyjdQ",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "避免"
+    }
+  }
+}
+
+# payload(passed filter) @ 8084.9ms
+{
+  "id": "evt_f3738209f001LGrnqQqIRgyjdQ",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "避免"
+  }
+}
+
+# event(raw) @ 8112.6ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373820bb0010P9Kym4pr2mGqI",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "使用"
+    }
+  }
+}
+
+# payload(passed filter) @ 8113.0ms
+{
+  "id": "evt_f373820bb0010P9Kym4pr2mGqI",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "使用"
+  }
+}
+
+# event(raw) @ 8145.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373820db001AEy1KdZEpXVJE7",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "工具"
+    }
+  }
+}
+
+# payload(passed filter) @ 8145.9ms
+{
+  "id": "evt_f373820db001AEy1KdZEpXVJE7",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "工具"
+  }
+}
+
+# event(raw) @ 8146.1ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373820dc001wo5hpe621u0Q6B",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "、"
+    }
+  }
+}
+
+# payload(passed filter) @ 8146.2ms
+{
+  "id": "evt_f373820dc001wo5hpe621u0Q6B",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "、"
+  }
+}
+
+# event(raw) @ 8183.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382101001SxexhrH6cL6Dn1",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "读取"
+    }
+  }
+}
+
+# payload(passed filter) @ 8183.7ms
+{
+  "id": "evt_f37382101001SxexhrH6cL6Dn1",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "读取"
+  }
+}
+
+# event(raw) @ 8183.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382102001qt6OGeAEm7Yn9J",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "文件"
+    }
+  }
+}
+
+# payload(passed filter) @ 8183.9ms
+{
+  "id": "evt_f37382102001qt6OGeAEm7Yn9J",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "文件"
+  }
+}
+
+# event(raw) @ 8217.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382122001yK53Bmr2IVUWkh",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "、"
+    }
+  }
+}
+
+# payload(passed filter) @ 8217.9ms
+{
+  "id": "evt_f37382122001yK53Bmr2IVUWkh",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "、"
+  }
+}
+
+# event(raw) @ 8218.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373821230017dbjUEjNfqphPy",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "修改"
+    }
+  }
+}
+
+# payload(passed filter) @ 8218.4ms
+{
+  "id": "evt_f373821230017dbjUEjNfqphPy",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "修改"
+  }
+}
+
+# event(raw) @ 8218.6ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382123002nBFfBzsXZMpnl7",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "文件"
+    }
+  }
+}
+
+# payload(passed filter) @ 8218.8ms
+{
+  "id": "evt_f37382123002nBFfBzsXZMpnl7",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "文件"
+  }
+}
+
+# event(raw) @ 8248.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382142001AzlV5T4i1BSxiN",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "或"
+    }
+  }
+}
+
+# payload(passed filter) @ 8249.1ms
+{
+  "id": "evt_f37382142001AzlV5T4i1BSxiN",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "或"
+  }
+}
+
+# event(raw) @ 8249.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382143001TTwob31Mq2BbBt",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "创建"
+    }
+  }
+}
+
+# payload(passed filter) @ 8249.4ms
+{
+  "id": "evt_f37382143001TTwob31Mq2BbBt",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "创建"
+  }
+}
+
+# event(raw) @ 8249.4ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382143002VzE8CMNnwVjSqq",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "子"
+    }
+  }
+}
+
+# payload(passed filter) @ 8249.5ms
+{
+  "id": "evt_f37382143002VzE8CMNnwVjSqq",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "子"
+  }
+}
+
+# event(raw) @ 8286.1ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382168001RhQOi3K1FLLa2c",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "任务"
+    }
+  }
+}
+
+# payload(passed filter) @ 8286.7ms
+{
+  "id": "evt_f37382168001RhQOi3K1FLLa2c",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "任务"
+  }
+}
+
+# event(raw) @ 8287.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382168002FEJlo6B62J8oA6",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "，"
+    }
+  }
+}
+
+# payload(passed filter) @ 8287.3ms
+{
+  "id": "evt_f37382168002FEJlo6B62J8oA6",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "，"
+  }
+}
+
+# event(raw) @ 8287.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382168003m8KZE9v606Soup",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "只用"
+    }
+  }
+}
+
+# payload(passed filter) @ 8287.8ms
+{
+  "id": "evt_f37382168003m8KZE9v606Soup",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "只用"
+  }
+}
+
+# event(raw) @ 8317.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382186001Tht08bVaDQaCy0",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "文本"
+    }
+  }
+}
+
+# payload(passed filter) @ 8317.2ms
+{
+  "id": "evt_f37382186001Tht08bVaDQaCy0",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "文本"
+  }
+}
+
+# event(raw) @ 8317.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382187001ezHhO9nrgz0PzT",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "直接"
+    }
+  }
+}
+
+# payload(passed filter) @ 8317.5ms
+{
+  "id": "evt_f37382187001ezHhO9nrgz0PzT",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "直接"
+  }
+}
+
+# event(raw) @ 8317.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382187002GtZjV4msFhxBUW",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "回答"
+    }
+  }
+}
+
+# payload(passed filter) @ 8317.7ms
+{
+  "id": "evt_f37382187002GtZjV4msFhxBUW",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "回答"
+  }
+}
+
+# event(raw) @ 8317.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382187003XW5G3hJ9Qm7k40",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "。"
+    }
+  }
+}
+
+# payload(passed filter) @ 8317.9ms
+{
+  "id": "evt_f37382187003XW5G3hJ9Qm7k40",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "。"
+  }
+}
+
+# event(raw) @ 8351.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373821a8001AWglSrt0Kk1DIL",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "所以我"
+    }
+  }
+}
+
+# payload(passed filter) @ 8351.7ms
+{
+  "id": "evt_f373821a8001AWglSrt0Kk1DIL",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "所以我"
+  }
+}
+
+# event(raw) @ 8352.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373821a9001QXGcKizsMkRr99",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "只需要"
+    }
+  }
+}
+
+# payload(passed filter) @ 8352.2ms
+{
+  "id": "evt_f373821a9001QXGcKizsMkRr99",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "只需要"
+  }
+}
+
+# event(raw) @ 8352.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373821a9002nAdLExvwvxmqAc",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "输出"
+    }
+  }
+}
+
+# payload(passed filter) @ 8352.6ms
+{
+  "id": "evt_f373821a9002nAdLExvwvxmqAc",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "输出"
+  }
+}
+
+# event(raw) @ 8388.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373821ce001cY3JJSWxZ0SfdE",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "答案"
+    }
+  }
+}
+
+# payload(passed filter) @ 8388.3ms
+{
+  "id": "evt_f373821ce001cY3JJSWxZ0SfdE",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "答案"
+  }
+}
+
+# event(raw) @ 8443.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f373821f7001hFYi6Ta9ZAyoRi",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "field": "text",
+      "delta": "。"
+    }
+  }
+}
+
+# payload(passed filter) @ 8444.3ms
+{
+  "id": "evt_f373821f7001hFYi6Ta9ZAyoRi",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f37381d2f0019G4YfQJdlmE2du",
+    "field": "text",
+    "delta": "。"
+  }
+}
+
+# event(raw) @ 8444.5ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.updated",
+  "payload": {
+    "id": "evt_f373821f8001VExtp3egJGN6p3",
+    "type": "message.part.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f37381d2f0019G4YfQJdlmE2du",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "reasoning",
+        "text": "我们需要回复\"1+1=？\"这个问题。作为一个简单的数学问题，答案是2。但是根据系统提示，我应该保持简洁，直接回答。用户问的是1+1=？，答案是2。\n\n由于我是ContextPilot聊天区的普通对话助手，并且系统强调要避免使用工具、读取文件、修改文件或创建子任务，只用文本直接回答。所以我只需要输出答案。",
+        "time": {
+          "start": 1783337852207,
+          "end": 1783337853432
+        }
+      },
+      "time": 1783337853432
+    }
+  }
+}
+
+# payload(passed filter) @ 8444.7ms
+{
+  "id": "evt_f373821f8001VExtp3egJGN6p3",
+  "type": "message.part.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "part": {
+      "id": "prt_f37381d2f0019G4YfQJdlmE2du",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "type": "reasoning",
+      "text": "我们需要回复\"1+1=？\"这个问题。作为一个简单的数学问题，答案是2。但是根据系统提示，我应该保持简洁，直接回答。用户问的是1+1=？，答案是2。\n\n由于我是ContextPilot聊天区的普通对话助手，并且系统强调要避免使用工具、读取文件、修改文件或创建子任务，只用文本直接回答。所以我只需要输出答案。",
+      "time": {
+        "start": 1783337852207,
+        "end": 1783337853432
+      }
+    },
+    "time": 1783337853432
+  }
+}
+
+# event(raw) @ 8444.7ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373821f8001VExtp3egJGN6p3",
+      "type": "message.part.updated.1",
+      "seq": 11,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "part": {
+          "id": "prt_f37381d2f0019G4YfQJdlmE2du",
+          "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "type": "reasoning",
+          "text": "我们需要回复\"1+1=？\"这个问题。作为一个简单的数学问题，答案是2。但是根据系统提示，我应该保持简洁，直接回答。用户问的是1+1=？，答案是2。\n\n由于我是ContextPilot聊天区的普通对话助手，并且系统强调要避免使用工具、读取文件、修改文件或创建子任务，只用文本直接回答。所以我只需要输出答案。",
+          "time": {
+            "start": 1783337852207,
+            "end": 1783337853432
+          }
+        },
+        "time": 1783337853432
+      }
+    },
+    "id": "evt_f373821f8001VExtp3egJGN6p3"
+  }
+}
+
+# payload(passed filter) @ 8444.8ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373821f8001VExtp3egJGN6p3",
+    "type": "message.part.updated.1",
+    "seq": 11,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f37381d2f0019G4YfQJdlmE2du",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "reasoning",
+        "text": "我们需要回复\"1+1=？\"这个问题。作为一个简单的数学问题，答案是2。但是根据系统提示，我应该保持简洁，直接回答。用户问的是1+1=？，答案是2。\n\n由于我是ContextPilot聊天区的普通对话助手，并且系统强调要避免使用工具、读取文件、修改文件或创建子任务，只用文本直接回答。所以我只需要输出答案。",
+        "time": {
+          "start": 1783337852207,
+          "end": 1783337853432
+        }
+      },
+      "time": 1783337853432
+    }
+  },
+  "id": "evt_f373821f8001VExtp3egJGN6p3"
+}
+
+# event(raw) @ 8444.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.updated",
+  "payload": {
+    "id": "evt_f373821fe001rD10pG71YiKaDm",
+    "type": "message.part.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f373821fe0013iDL65rGyj9OWg",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "text",
+        "text": "",
+        "time": {
+          "start": 1783337853438
+        }
+      },
+      "time": 1783337853438
+    }
+  }
+}
+
+# payload(passed filter) @ 8445.0ms
+{
+  "id": "evt_f373821fe001rD10pG71YiKaDm",
+  "type": "message.part.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "part": {
+      "id": "prt_f373821fe0013iDL65rGyj9OWg",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "type": "text",
+      "text": "",
+      "time": {
+        "start": 1783337853438
+      }
+    },
+    "time": 1783337853438
+  }
+}
+
+# event(raw) @ 8445.1ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373821fe001rD10pG71YiKaDm",
+      "type": "message.part.updated.1",
+      "seq": 12,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "part": {
+          "id": "prt_f373821fe0013iDL65rGyj9OWg",
+          "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "type": "text",
+          "text": "",
+          "time": {
+            "start": 1783337853438
+          }
+        },
+        "time": 1783337853438
+      }
+    },
+    "id": "evt_f373821fe001rD10pG71YiKaDm"
+  }
+}
+
+# payload(passed filter) @ 8445.1ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373821fe001rD10pG71YiKaDm",
+    "type": "message.part.updated.1",
+    "seq": 12,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f373821fe0013iDL65rGyj9OWg",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "text",
+        "text": "",
+        "time": {
+          "start": 1783337853438
+        }
+      },
+      "time": 1783337853438
+    }
+  },
+  "id": "evt_f373821fe001rD10pG71YiKaDm"
+}
+
+# event(raw) @ 8445.2ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.delta",
+  "payload": {
+    "id": "evt_f37382205001SGRUYx6hC3Cata",
+    "type": "message.part.delta",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "partID": "prt_f373821fe0013iDL65rGyj9OWg",
+      "field": "text",
+      "delta": "2"
+    }
+  }
+}
+
+# payload(passed filter) @ 8445.3ms
+{
+  "id": "evt_f37382205001SGRUYx6hC3Cata",
+  "type": "message.part.delta",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+    "partID": "prt_f373821fe0013iDL65rGyj9OWg",
+    "field": "text",
+    "delta": "2"
+  }
+}
+
+# event(raw) @ 8471.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.updated",
+  "payload": {
+    "id": "evt_f37382218001jdd7hl8quFbeY4",
+    "type": "message.part.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f373821fe0013iDL65rGyj9OWg",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "text",
+        "text": "2",
+        "time": {
+          "start": 1783337853438,
+          "end": 1783337853464
+        }
+      },
+      "time": 1783337853464
+    }
+  }
+}
+
+# payload(passed filter) @ 8471.7ms
+{
+  "id": "evt_f37382218001jdd7hl8quFbeY4",
+  "type": "message.part.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "part": {
+      "id": "prt_f373821fe0013iDL65rGyj9OWg",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "type": "text",
+      "text": "2",
+      "time": {
+        "start": 1783337853438,
+        "end": 1783337853464
+      }
+    },
+    "time": 1783337853464
+  }
+}
+
+# event(raw) @ 8471.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f37382218001jdd7hl8quFbeY4",
+      "type": "message.part.updated.1",
+      "seq": 13,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "part": {
+          "id": "prt_f373821fe0013iDL65rGyj9OWg",
+          "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "type": "text",
+          "text": "2",
+          "time": {
+            "start": 1783337853438,
+            "end": 1783337853464
+          }
+        },
+        "time": 1783337853464
+      }
+    },
+    "id": "evt_f37382218001jdd7hl8quFbeY4"
+  }
+}
+
+# payload(passed filter) @ 8472.1ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f37382218001jdd7hl8quFbeY4",
+    "type": "message.part.updated.1",
+    "seq": 13,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f373821fe0013iDL65rGyj9OWg",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "text",
+        "text": "2",
+        "time": {
+          "start": 1783337853438,
+          "end": 1783337853464
+        }
+      },
+      "time": 1783337853464
+    }
+  },
+  "id": "evt_f37382218001jdd7hl8quFbeY4"
+}
+
+# event(raw) @ 9405.9ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.part.updated",
+  "payload": {
+    "id": "evt_f373825c0001FCXl7TNrg6PDXI",
+    "type": "message.part.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f373825c00015lI6qGsxxt7Qa4",
+        "reason": "stop",
+        "snapshot": "b429844e984fba522c0854cbe795fa36d15eed80",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "step-finish",
+        "tokens": {
+          "total": 2897,
+          "input": 2813,
+          "output": 2,
+          "reasoning": 82,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "cost": 0
+      },
+      "time": 1783337854400
+    }
+  }
+}
+
+# payload(passed filter) @ 9406.2ms
+{
+  "id": "evt_f373825c0001FCXl7TNrg6PDXI",
+  "type": "message.part.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "part": {
+      "id": "prt_f373825c00015lI6qGsxxt7Qa4",
+      "reason": "stop",
+      "snapshot": "b429844e984fba522c0854cbe795fa36d15eed80",
+      "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "type": "step-finish",
+      "tokens": {
+        "total": 2897,
+        "input": 2813,
+        "output": 2,
+        "reasoning": 82,
+        "cache": {
+          "write": 0,
+          "read": 0
+        }
+      },
+      "cost": 0
+    },
+    "time": 1783337854400
+  }
+}
+
+# event(raw) @ 9406.3ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373825c0001FCXl7TNrg6PDXI",
+      "type": "message.part.updated.1",
+      "seq": 14,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "part": {
+          "id": "prt_f373825c00015lI6qGsxxt7Qa4",
+          "reason": "stop",
+          "snapshot": "b429844e984fba522c0854cbe795fa36d15eed80",
+          "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "type": "step-finish",
+          "tokens": {
+            "total": 2897,
+            "input": 2813,
+            "output": 2,
+            "reasoning": 82,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0
+        },
+        "time": 1783337854400
+      }
+    },
+    "id": "evt_f373825c0001FCXl7TNrg6PDXI"
+  }
+}
+
+# payload(passed filter) @ 9406.3ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373825c0001FCXl7TNrg6PDXI",
+    "type": "message.part.updated.1",
+    "seq": 14,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "part": {
+        "id": "prt_f373825c00015lI6qGsxxt7Qa4",
+        "reason": "stop",
+        "snapshot": "b429844e984fba522c0854cbe795fa36d15eed80",
+        "messageID": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "type": "step-finish",
+        "tokens": {
+          "total": 2897,
+          "input": 2813,
+          "output": 2,
+          "reasoning": 82,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "cost": 0
+      },
+      "time": 1783337854400
+    }
+  },
+  "id": "evt_f373825c0001FCXl7TNrg6PDXI"
+}
+
+# event(raw) @ 9406.4ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.updated",
+  "payload": {
+    "id": "evt_f373825c5001lDjpEUUMODNypE",
+    "type": "message.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+        "role": "assistant",
+        "mode": "build",
+        "agent": "build",
+        "path": {
+          "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+          "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 2897,
+          "input": 2813,
+          "output": 2,
+          "reasoning": 82,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "deepseek-v4-flash-free",
+        "providerID": "opencode",
+        "time": {
+          "created": 1783337850330
+        },
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "finish": "stop"
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 9406.5ms
+{
+  "id": "evt_f373825c5001lDjpEUUMODNypE",
+  "type": "message.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "info": {
+      "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+      "role": "assistant",
+      "mode": "build",
+      "agent": "build",
+      "path": {
+        "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+        "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+      },
+      "cost": 0,
+      "tokens": {
+        "total": 2897,
+        "input": 2813,
+        "output": 2,
+        "reasoning": 82,
+        "cache": {
+          "write": 0,
+          "read": 0
+        }
+      },
+      "modelID": "deepseek-v4-flash-free",
+      "providerID": "opencode",
+      "time": {
+        "created": 1783337850330
+      },
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "finish": "stop"
+    }
+  }
+}
+
+# event(raw) @ 9406.6ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373825c5001lDjpEUUMODNypE",
+      "type": "message.updated.1",
+      "seq": 15,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "info": {
+          "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+          "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+          "role": "assistant",
+          "mode": "build",
+          "agent": "build",
+          "path": {
+            "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+            "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+          },
+          "cost": 0,
+          "tokens": {
+            "total": 2897,
+            "input": 2813,
+            "output": 2,
+            "reasoning": 82,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "modelID": "deepseek-v4-flash-free",
+          "providerID": "opencode",
+          "time": {
+            "created": 1783337850330
+          },
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "finish": "stop"
+        }
+      }
+    },
+    "id": "evt_f373825c5001lDjpEUUMODNypE"
+  }
+}
+
+# payload(passed filter) @ 9406.7ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373825c5001lDjpEUUMODNypE",
+    "type": "message.updated.1",
+    "seq": 15,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+        "role": "assistant",
+        "mode": "build",
+        "agent": "build",
+        "path": {
+          "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+          "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 2897,
+          "input": 2813,
+          "output": 2,
+          "reasoning": 82,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "deepseek-v4-flash-free",
+        "providerID": "opencode",
+        "time": {
+          "created": 1783337850330
+        },
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "finish": "stop"
+      }
+    }
+  },
+  "id": "evt_f373825c5001lDjpEUUMODNypE"
+}
+
+# event(raw) @ 10222.0ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "message.updated",
+  "payload": {
+    "id": "evt_f373828e5001irFZy3LY6hUMOg",
+    "type": "message.updated",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+        "role": "assistant",
+        "mode": "build",
+        "agent": "build",
+        "path": {
+          "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+          "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 2897,
+          "input": 2813,
+          "output": 2,
+          "reasoning": 82,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "deepseek-v4-flash-free",
+        "providerID": "opencode",
+        "time": {
+          "created": 1783337850330,
+          "completed": 1783337855204
+        },
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "finish": "stop"
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 10222.3ms
+{
+  "id": "evt_f373828e5001irFZy3LY6hUMOg",
+  "type": "message.updated",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "info": {
+      "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+      "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+      "role": "assistant",
+      "mode": "build",
+      "agent": "build",
+      "path": {
+        "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+        "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+      },
+      "cost": 0,
+      "tokens": {
+        "total": 2897,
+        "input": 2813,
+        "output": 2,
+        "reasoning": 82,
+        "cache": {
+          "write": 0,
+          "read": 0
+        }
+      },
+      "modelID": "deepseek-v4-flash-free",
+      "providerID": "opencode",
+      "time": {
+        "created": 1783337850330,
+        "completed": 1783337855204
+      },
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "finish": "stop"
+    }
+  }
+}
+
+# event(raw) @ 10222.4ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "sync",
+  "payload": {
+    "type": "sync",
+    "syncEvent": {
+      "id": "evt_f373828e5001irFZy3LY6hUMOg",
+      "type": "message.updated.1",
+      "seq": 16,
+      "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "data": {
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "info": {
+          "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+          "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+          "role": "assistant",
+          "mode": "build",
+          "agent": "build",
+          "path": {
+            "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+            "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+          },
+          "cost": 0,
+          "tokens": {
+            "total": 2897,
+            "input": 2813,
+            "output": 2,
+            "reasoning": 82,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "modelID": "deepseek-v4-flash-free",
+          "providerID": "opencode",
+          "time": {
+            "created": 1783337850330,
+            "completed": 1783337855204
+          },
+          "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+          "finish": "stop"
+        }
+      }
+    },
+    "id": "evt_f373828e5001irFZy3LY6hUMOg"
+  }
+}
+
+# payload(passed filter) @ 10222.5ms
+{
+  "type": "sync",
+  "syncEvent": {
+    "id": "evt_f373828e5001irFZy3LY6hUMOg",
+    "type": "message.updated.1",
+    "seq": 16,
+    "aggregateID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "data": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "info": {
+        "id": "msg_f373815da001SKPDRVPp4MFxnZ",
+        "parentID": "msg_f3738159a001ptyCk0yGhSgowk",
+        "role": "assistant",
+        "mode": "build",
+        "agent": "build",
+        "path": {
+          "cwd": "C:\\Users\\LYin\\Projects\\contextpilot",
+          "root": "C:\\Users\\LYin\\Projects\\contextpilot"
+        },
+        "cost": 0,
+        "tokens": {
+          "total": 2897,
+          "input": 2813,
+          "output": 2,
+          "reasoning": 82,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "deepseek-v4-flash-free",
+        "providerID": "opencode",
+        "time": {
+          "created": 1783337850330,
+          "completed": 1783337855204
+        },
+        "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+        "finish": "stop"
+      }
+    }
+  },
+  "id": "evt_f373828e5001irFZy3LY6hUMOg"
+}
+
+# event(raw) @ 10222.6ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "session.status",
+  "payload": {
+    "id": "evt_f373828e9001QssUJ1UEiz6cIF",
+    "type": "session.status",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "status": {
+        "type": "busy"
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 10222.7ms
+{
+  "id": "evt_f373828e9001QssUJ1UEiz6cIF",
+  "type": "session.status",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "status": {
+      "type": "busy"
+    }
+  }
+}
+
+# event(raw) @ 10222.8ms
+{
+  "eventDirectory": "C:\\Users\\LYin\\Projects\\contextpilot",
+  "payloadType": "session.status",
+  "payload": {
+    "id": "evt_f373828ed001vmPTLliathkqMn",
+    "type": "session.status",
+    "properties": {
+      "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+      "status": {
+        "type": "idle"
+      }
+    }
+  }
+}
+
+# payload(passed filter) @ 10223.0ms
+{
+  "id": "evt_f373828ed001vmPTLliathkqMn",
+  "type": "session.status",
+  "properties": {
+    "sessionID": "ses_0c8c7ea8bffeucOXN09047xhJW",
+    "status": {
+      "type": "idle"
+    }
+  }
+}

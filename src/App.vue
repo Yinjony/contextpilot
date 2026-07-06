@@ -1,10 +1,10 @@
 <script setup>
-import {ref, computed, watch} from 'vue'
+import {reactive, ref, computed, watch} from 'vue'
 import SessionSidebar from './components/SessionSidebar.vue'
 import ContextWorkbench from './components/ContextWorkbench.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import { sessions, totalSessions, contextCards } from './data/workspace.js'
-import { chatModelLabel, sendChatMessage } from './model/chatAdapter.js'
+import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError } from './model/chatAdapter.js'
 
 const baseContextCards = ref(contextCards.map((card) => ({ ...card })))
 const defaultContextCategories = [...new Set(contextCards.map((card) => card.category))]
@@ -38,6 +38,9 @@ watch(
 )
 const isSending = ref(false)
 const chatError = ref('')
+
+// 当前生成请求的 AbortController，供后续“停止生成”按钮调用 abort()。
+let activeAbortController = null
 
 // 两侧栏收起状态
 const sidebarCollapsed = ref(false)
@@ -144,9 +147,11 @@ async function handleSendMessage(text) {
 
   chatError.value = ''
   const userMessage = createMessage('user', content)
-  const assistantMessage = createMessage('assistant', '正在连接模型并生成回复...', {
-    pending: true,
-  })
+  // 用 reactive 包裹：后续流式 onDelta 频繁改 text 必须经过 proxy 才能触发 UI 更新。
+  // 否则 push 进响应式数组后，局部变量仍是原始对象，改它不会重渲染（气泡会卡在占位文本）。
+  const assistantMessage = reactive(
+    createMessage('assistant', '正在连接模型并生成回复...', { pending: true, reasoning: '' }),
+  )
 
   session.messages.push(userMessage, assistantMessage)
   if (session.isDraft) {
@@ -157,23 +162,73 @@ async function handleSendMessage(text) {
   }
   isSending.value = true
 
+  // rAF 节流：onDelta/onReasoning 高频触发，用局部变量收敛，每帧至多写一次响应式字段。
+  let pendingText = ''
+  let pendingReasoning = ''
+  let rafScheduled = false
+  let rafId = 0
+  const flush = () => {
+    rafScheduled = false
+    rafId = 0
+    assistantMessage.text = pendingText
+    assistantMessage.reasoning = pendingReasoning
+  }
+
+  activeAbortController = new AbortController()
+
   try {
-    const reply = await sendChatMessage({
-      sessionId: session.id,
-      title: session.title,
-      messages: session.messages,
-    })
-    assistantMessage.text = reply
-    refreshSessionContext(session, userMessage, assistantMessage)
+    if (chatStreams) {
+      const { text: reply, reasoning } = await sendChatMessageStream({
+        sessionId: session.id,
+        title: session.title,
+        messages: session.messages,
+        signal: activeAbortController.signal,
+        onDelta: (delta, fullText) => {
+          pendingText = fullText
+          if (!rafScheduled) {
+            rafScheduled = true
+            rafId = requestAnimationFrame(flush)
+          }
+        },
+        onReasoning: (reasoningText) => {
+          pendingReasoning = reasoningText
+          if (!rafScheduled) {
+            rafScheduled = true
+            rafId = requestAnimationFrame(flush)
+          }
+        },
+      })
+      assistantMessage.text = reply
+      if (reasoning) assistantMessage.reasoning = reasoning
+      refreshSessionContext(session, userMessage, assistantMessage)
+    } else {
+      const reply = await sendChatMessage({
+        sessionId: session.id,
+        title: session.title,
+        messages: session.messages,
+      })
+      assistantMessage.text = reply
+      refreshSessionContext(session, userMessage, assistantMessage)
+    }
   } catch (error) {
-    const message = error instanceof Error ? error.message : '模型调用失败。'
-    assistantMessage.text = message
-    assistantMessage.error = true
-    chatError.value = message
-    refreshSessionContext(session, userMessage, assistantMessage)
+    if (isAbortError(error) && !/超时|timed out/i.test(error.message)) {
+      // 用户主动停止：保留已流式文本；若几乎没内容则标记为已停止。
+      if (!assistantMessage.text || assistantMessage.text.startsWith('正在连接')) {
+        assistantMessage.text = '(已停止)'
+      }
+      refreshSessionContext(session, userMessage, assistantMessage)
+    } else {
+      const message = error instanceof Error ? error.message : '模型调用失败。'
+      assistantMessage.text = message
+      assistantMessage.error = true
+      chatError.value = message
+      refreshSessionContext(session, userMessage, assistantMessage)
+    }
   } finally {
+    if (rafId) cancelAnimationFrame(rafId)
     assistantMessage.pending = false
     isSending.value = false
+    activeAbortController = null
   }
 }
 
