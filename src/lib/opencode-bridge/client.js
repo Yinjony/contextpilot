@@ -182,6 +182,17 @@ export class OpenCodeBridgeClient {
     return this.request('GET', '/global/health', { signal })
   }
 
+  listSessions(input = {}, signal) {
+    return this.request('GET', '/session', {
+      query: {
+        ...this.workspaceQuery(input),
+        limit: input.limit,
+        before: input.before,
+      },
+      signal,
+    })
+  }
+
   createSession(input = {}, signal) {
     const { directory, workspace, ...body } = input
     return this.request('POST', '/session', {

@@ -148,6 +148,97 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
   }
 }
 
+// 启动时从 opencode 加载真实历史会话（仅当前项目 directory）。
+// 返回 UI session 数组；失败或为空返回 null，由调用方回退 mock。
+export async function loadHistory() {
+  if (backend !== 'opencode') return null
+  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const client = getBridgeClient()
+  try {
+    const list = await client.listSessions({ directory })
+    if (!Array.isArray(list) || list.length === 0) return null
+
+    const result = []
+    for (const oc of list) {
+      // 预填 session 缓存：历史会话续聊时 ensureOpencodeSession 直接命中，复用 opencode session。
+      opencodeSessions.set(oc.id, { id: oc.id })
+
+      let messages = []
+      try {
+        const withParts = await client.messages({ sessionID: oc.id, directory })
+        if (Array.isArray(withParts)) messages = withParts.map(toUIMessage).filter(Boolean)
+      } catch {
+        // 单个会话消息加载失败则保留空消息列表，不中断整体加载。
+      }
+
+      const firstUser = messages.find((m) => m.role === 'user')
+      result.push({
+        id: oc.id,
+        title: oc.title || '未命名对话',
+        time: formatRelative(oc.time?.updated || oc.time?.created),
+        summary: firstUser?.text || oc.title || '等待模型回复',
+        status: '进行中',
+        tone: 'progress',
+        isDraft: false,
+        messages,
+        contextCards: [],
+      })
+    }
+    return result
+  } catch (error) {
+    console.warn('[chatAdapter] loadHistory 失败，回退 mock：', error?.message || error)
+    return null
+  }
+}
+
+// opencode WithParts → UI message：text/reasoning 分别从 parts 提取拼接。
+function toUIMessage(withParts) {
+  if (!withParts || typeof withParts !== 'object') return null
+  const info = withParts.info || {}
+  const parts = Array.isArray(withParts.parts) ? withParts.parts : []
+  const text = parts
+    .filter((p) => p && p.type === 'text' && typeof p.text === 'string')
+    .map((p) => p.text)
+    .join('\n')
+  const reasoning = parts
+    .filter((p) => p && p.type === 'reasoning' && typeof p.text === 'string')
+    .map((p) => p.text)
+    .join('\n')
+  return {
+    id: info.id,
+    role: info.role === 'user' ? 'user' : 'assistant',
+    time: formatClock(info.time?.created),
+    text,
+    ...(reasoning ? { reasoning } : {}),
+  }
+}
+
+// 毫秒时间戳 → 相对时间（与 mock「2 分钟前」风格一致）。
+function formatRelative(ts) {
+  if (!ts || typeof ts !== 'number') return '未知'
+  const diff = Date.now() - ts
+  if (diff < 0) return '刚刚'
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return '刚刚'
+  if (min < 60) return `${min} 分钟前`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr} 小时前`
+  const day = Math.floor(hr / 24)
+  if (day === 1) return '昨天'
+  if (day < 7) return `${day} 天前`
+  const d = new Date(ts)
+  return `${d.getMonth() + 1}-${d.getDate()}`
+}
+
+// 毫秒时间戳 → HH:mm。
+function formatClock(ts) {
+  if (!ts || typeof ts !== 'number') return ''
+  const d = new Date(ts)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return `${hh}:${mm}`
+}
+
 export async function sendChatMessage({ sessionId, title, messages, signal }) {
   if (backend === 'openai-compatible') {
     return sendOpenAICompatibleMessage({ messages, signal })

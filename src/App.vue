@@ -1,10 +1,10 @@
 <script setup>
-import {reactive, ref, computed, watch} from 'vue'
+import {onMounted, reactive, ref, computed, watch} from 'vue'
 import SessionSidebar from './components/SessionSidebar.vue'
 import ContextWorkbench from './components/ContextWorkbench.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import { sessions, totalSessions, contextCards } from './data/workspace.js'
-import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError } from './model/chatAdapter.js'
+import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory } from './model/chatAdapter.js'
 
 const baseContextCards = ref(contextCards.map((card) => ({ ...card })))
 const defaultContextCategories = [...new Set(contextCards.map((card) => card.category))]
@@ -17,6 +17,21 @@ const chatSessions = ref(
   })),
 )
 const activeSessionId = ref(sessions[0]?.id)
+
+// 启动时从 opencode 加载真实历史会话；失败/为空则保留 mock（sessions）。
+const isLoadingHistory = ref(true)
+onMounted(async () => {
+  try {
+    const real = await loadHistory()
+    if (real && real.length) {
+      chatSessions.value = real
+      activeSessionId.value = real[0]?.id ?? activeSessionId.value
+    }
+  } finally {
+    isLoadingHistory.value = false
+  }
+})
+
 const activeSession = computed(
   () => chatSessions.value.find((s) => s.id === activeSessionId.value) ?? chatSessions.value[0],
 )
