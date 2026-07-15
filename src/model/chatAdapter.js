@@ -7,6 +7,8 @@ const OPENCODE_DEFAULT_DIRECTORY = 'C:\\Users\\LYin\\Projects\\contextpilot'
 const OPENAI_COMPATIBLE_DEFAULT_PATH = '/chat/completions'
 const OPENCODE_CHAT_SYSTEM_PROMPT =
   '你是 ContextPilot 聊天区的普通对话助手。禁止调用工具、禁止读取或修改文件、禁止创建子任务。只用文本直接回答用户问题。'
+const SUPERVISOR_SYSTEM_PROMPT =
+  '你是 ContextPilot 的上下文监督助手。你的职责是把主对话按主题总结成结构化上下文卡片，供用户在工作台勾选后注入后续对话。严格按用户指令的 JSON 数组格式输出，不要输出任何解释或多余文字。'
 const OPENCODE_CHAT_DISABLED_TOOLS = [
   'task',
   'todowrite',
@@ -28,6 +30,8 @@ const OPENCODE_CHAT_DISABLED_TOOLS = [
 const env = import.meta.env
 const backend = (env.VITE_CHAT_BACKEND || 'opencode').toLowerCase()
 const opencodeSessions = new Map()
+// 主对话 sessionID → 监督 sessionID（监督对话独立存在于 opencode，专门做卡片总结）。
+const supervisorSessions = new Map()
 
 export const chatModelLabel =
   backend === 'openai-compatible'
@@ -56,7 +60,7 @@ function getBridgeClient() {
 
 // 流式版发送：复用同步路径的 session 缓存、首轮上下文注入、禁工具 guard、provider/model 配置。
 // onDelta(delta, fullText) 由底层 runPrompt 在每个文本增量时回调；fullText 是已拼接的完整文本。
-export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning }) {
+export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning, selectedCards }) {
   if (backend === 'openai-compatible') {
     // 该后端 v1 不支持流式：走同步接口，再整体回调一次。
     const text = await sendOpenAICompatibleMessage({ messages, signal })
@@ -71,7 +75,10 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
 
   // 复用同步路径的 session 缓存（按 client session id 映射到 opencode session id）。
   const session = await ensureOpencodeSession(sessionId, title, signal)
-  const promptText = session.isNew ? buildSeededPrompt(messages, latestUserMessage.text) : latestUserMessage.text
+  // 选中卡片作为上下文前置注入（补上工作台勾选 → 主对话的链路）。
+  const basePrompt = session.isNew ? buildSeededPrompt(messages, latestUserMessage.text) : latestUserMessage.text
+  const cardContext = selectedCards?.length ? buildContextFromCards(selectedCards) : ''
+  const promptText = cardContext ? `${cardContext}\n\n${basePrompt}` : basePrompt
   const guard = opencodeChatPromptGuardPayload()
   const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
 
@@ -172,6 +179,8 @@ export async function loadHistory() {
       }
 
       const firstUser = messages.find((m) => m.role === 'user')
+      const metadata = oc.metadata && typeof oc.metadata === 'object' ? oc.metadata : {}
+      const contextCards = Array.isArray(metadata.contextCards) ? metadata.contextCards : []
       result.push({
         id: oc.id,
         title: oc.title || '未命名对话',
@@ -181,7 +190,8 @@ export async function loadHistory() {
         tone: 'progress',
         isDraft: false,
         messages,
-        contextCards: [],
+        metadata,
+        contextCards,
       })
     }
     return result
@@ -204,6 +214,139 @@ export async function deleteRemoteSession(sessionId, signal) {
     console.warn('[chatAdapter] deleteRemoteSession 失败：', error?.message || error)
     return false
   }
+}
+
+// 把卡片写回 opencode session 的 metadata（持久化在 opencode.db，跨设备同步）。
+// baseMetadata 传入该 session 现有 metadata，避免覆盖其他字段；失败返回 false（不抛）。
+export async function saveRemoteCards(sessionId, cards, baseMetadata, signal) {
+  if (backend !== 'opencode') return false
+  const client = getBridgeClient()
+  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const metadata = { ...(baseMetadata || {}), contextCards: cards || [] }
+  try {
+    await client.updateSession({ sessionID: sessionId, directory, body: { metadata } }, signal)
+    return true
+  } catch (error) {
+    console.warn('[chatAdapter] saveRemoteCards 失败：', error?.message || error)
+    return false
+  }
+}
+
+// 监督总结：用独立的监督 opencode session 把主对话总结成卡片。失败返回 []（不抛）。
+export async function runSupervisorSummary({ mainSessionId, messages, cards, signal }) {
+  if (backend !== 'opencode') return []
+  const client = getBridgeClient()
+  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+
+  let supervisorId
+  try {
+    supervisorId = await ensureSupervisorSession(mainSessionId, signal)
+  } catch (error) {
+    console.warn('[chatAdapter] ensureSupervisorSession 失败：', error?.message || error)
+    return []
+  }
+
+  const prompt = buildSupervisorPrompt(messages, cards)
+  // 60s 超时，避免同步 /message 卡死。
+  const timeout = new AbortController()
+  const timer = setTimeout(() => timeout.abort(), 60000)
+  if (signal) {
+    if (signal.aborted) timeout.abort()
+    else signal.addEventListener('abort', () => timeout.abort(), { once: true })
+  }
+  try {
+    const result = await client.prompt(
+      {
+        sessionID: supervisorId,
+        directory,
+        model: { providerID: opencodeProviderID(), modelID: opencodeModelID() },
+        system: SUPERVISOR_SYSTEM_PROMPT,
+        parts: [{ type: 'text', text: prompt }],
+      },
+      timeout.signal,
+    )
+    const text = extractOpencodeAssistantText(result, { allowIncomplete: true })
+    return parseCardsFromText(text)
+  } catch (error) {
+    console.warn('[chatAdapter] runSupervisorSummary 失败：', error?.message || error)
+    return []
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+// 为主对话创建/复用监督 session（缓存 mainId → supervisorId）。
+async function ensureSupervisorSession(mainSessionId, signal) {
+  const cached = supervisorSessions.get(mainSessionId)
+  if (cached) return cached
+  const client = getBridgeClient()
+  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const session = await client.createSession(
+    { directory, model: { id: opencodeModelID(), providerID: opencodeProviderID() } },
+    signal,
+  )
+  supervisorSessions.set(mainSessionId, session.id)
+  return session.id
+}
+
+// 构造发给监督 session 的 prompt：主对话历史 + 现有卡片，要求输出卡片 JSON。
+function buildSupervisorPrompt(messages, cards) {
+  const transcript = normalizeMessages(messages)
+    .map((m) => `${m.role === 'user' ? '用户' : 'AI'}：${m.content}`)
+    .join('\n')
+  const cardsBlock =
+    Array.isArray(cards) && cards.length
+      ? cards.map((c) => `- topic: ${c.topic || c.title}\n  title: ${c.title}\n  body: ${c.body}`).join('\n')
+      : '（暂无）'
+  return [
+    '下面是用户与 AI 的主对话记录，以及现有的上下文卡片。请按主题把对话总结成若干上下文卡片，供后续对话参考。',
+    '',
+    '要求：',
+    '1. 只输出一个 JSON 数组，每个元素形如 {"topic":"","category":"","title":"","body":""}。',
+    '2. topic 是稳定主题键（英文短词或中文短语），同一主题跨轮保持一致，便于增量更新。',
+    '3. category 从 [问题分析, 修复方案, 关键报错, 旧假设, 概念说明, 进展] 里选最接近的，必要时可自拟。',
+    '4. title 一句话概括主题，body 写该主题的关键信息或要点。',
+    '5. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
+    '',
+    '现有卡片（请在此基础上更新或新增，保留仍相关的话题）：',
+    cardsBlock,
+    '',
+    '主对话记录：',
+    transcript,
+  ].join('\n')
+}
+
+// 从模型输出中提取卡片 JSON 数组（容错：处理 ```json 包裹、前后多余文字）。
+function parseCardsFromText(text) {
+  if (!text || typeof text !== 'string') return []
+  let jsonText = text
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  if (fence) jsonText = fence[1]
+  const start = jsonText.indexOf('[')
+  const end = jsonText.lastIndexOf(']')
+  if (start === -1 || end === -1 || end <= start) return []
+  try {
+    const arr = JSON.parse(jsonText.slice(start, end + 1))
+    if (!Array.isArray(arr)) return []
+    return arr
+      .filter((c) => c && typeof c === 'object')
+      .map((c) => ({
+        topic: String(c.topic || c.title || '').trim(),
+        category: String(c.category || '其他').trim(),
+        title: String(c.title || '').trim(),
+        body: String(c.body || '').trim(),
+      }))
+      .filter((c) => c.title || c.body)
+  } catch {
+    return []
+  }
+}
+
+// 选中的卡片 → 注入主对话的上下文文本块。
+function buildContextFromCards(selectedCards) {
+  if (!Array.isArray(selectedCards) || selectedCards.length === 0) return ''
+  const blocks = selectedCards.map((c) => `【${c.title}】\n${c.body}`)
+  return `以下是用户在工作台选定的上下文模块，回答时请参考这些内容：\n\n${blocks.join('\n\n')}`
 }
 
 // opencode WithParts → UI message：text/reasoning 分别从 parts 提取拼接。

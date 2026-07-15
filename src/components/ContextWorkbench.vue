@@ -6,19 +6,10 @@ import ContextCard from './ContextCard.vue'
 const props = defineProps({
   cards: { type: Array, required: true },
   collapsed: { type: Boolean, default: false },
+  isSummarizing: { type: Boolean, default: false },
 })
 
-defineEmits(['collapse', 'expand', 'update-priority'])
-
-// 上下文片段选择状态（默认取数据里的 selected）
-const selectedIds = ref(new Set(props.cards.filter((c) => c.selected).map((c) => c.id)))
-
-function toggleCard(id) {
-  const next = new Set(selectedIds.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  selectedIds.value = next
-}
+defineEmits(['collapse', 'expand', 'update-priority', 'toggle'])
 
 // 类型筛选：按 category 动态生成，计数对应实际卡片；点击可过滤列表
 const activeFilter = ref('全部')
@@ -46,10 +37,10 @@ const filteredCards = computed(() =>
     : props.cards.filter((c) => c.category === activeFilter.value),
 )
 
+// 当前筛选分类被清空时回退到「全部」。
 watch(
-  () => props.cards.map((card) => `${card.id}:${card.selected}`).join('|'),
+  () => props.cards.map((card) => card.category).join('|'),
   () => {
-    selectedIds.value = new Set(props.cards.filter((c) => c.selected).map((c) => c.id))
     if (
       activeFilter.value !== '全部' &&
       !props.cards.some((c) => c.category === activeFilter.value)
@@ -123,7 +114,7 @@ function handleFilterPointerUp() {
 // 顶部指标随选择状态联动：总片段数 = 已选中 + 隐藏（基于全部片段）
 const metrics = computed(() => {
   const total = props.cards.length
-  const selected = selectedIds.value.size
+  const selected = props.cards.filter((c) => c.selected).length
   return [
     { label: '总片段数', value: String(total), icon: 'layers', tone: 'violet' },
     { label: '已选中', value: String(selected), icon: 'check', tone: 'green' },
@@ -214,20 +205,25 @@ const metrics = computed(() => {
       </div>
     </div>
 
+    <div v-if="isSummarizing" class="context-status" aria-live="polite">
+      <span class="status-dot pulse"></span>
+      监督助手正在总结本轮对话…
+    </div>
+
     <div v-if="filteredCards.length" class="context-list">
       <ContextCard
         v-for="card in filteredCards"
         :key="card.id"
         :card="card"
-        :selected="selectedIds.has(card.id)"
-        @toggle="toggleCard(card.id)"
+        :selected="card.selected"
+        @toggle="$emit('toggle', card.id)"
         @update-priority="$emit('update-priority', $event)"
       />
     </div>
-    <div v-else class="context-empty" aria-live="polite">
+    <div v-else-if="!isSummarizing" class="context-empty" aria-live="polite">
       <span class="empty-icon"><AppIcon name="layers" :size="22" /></span>
       <h3>暂无上下文数据</h3>
-      <p>发送第一条消息后，这里会加载本轮对话的关键片段。</p>
+      <p>发送第一条消息后，监督助手会自动总结成本卡片。</p>
     </div>
     </template>
   </section>

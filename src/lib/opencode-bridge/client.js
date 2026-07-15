@@ -200,6 +200,15 @@ export class OpenCodeBridgeClient {
     })
   }
 
+  updateSession(input, signal) {
+    const { sessionID, directory, workspace, ...body } = input
+    return this.request('PATCH', `/session/${encodeURIComponent(sessionID)}`, {
+      query: this.workspaceQuery({ directory, workspace }),
+      body,
+      signal,
+    })
+  }
+
   createSession(input = {}, signal) {
     const { directory, workspace, ...body } = input
     return this.request('POST', '/session', {

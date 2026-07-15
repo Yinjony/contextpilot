@@ -976,6 +976,32 @@ kbd {
   background: var(--surface-soft);
 }
 
+/* 监督总结进行中状态条 */
+.context-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 6px 8px 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand-text);
+  font-size: 13px;
+}
+.context-status .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+.context-status .status-dot.pulse {
+  animation: oc-pulse 1.2s ease-in-out infinite;
+}
+@keyframes oc-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
 /* 上下文卡片 */
 .context-list {
   min-height: 0;

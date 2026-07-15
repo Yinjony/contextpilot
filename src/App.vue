@@ -4,7 +4,7 @@ import SessionSidebar from './components/SessionSidebar.vue'
 import ContextWorkbench from './components/ContextWorkbench.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import { sessions, totalSessions, contextCards } from './data/workspace.js'
-import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, deleteRemoteSession } from './model/chatAdapter.js'
+import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, deleteRemoteSession, runSupervisorSummary, saveRemoteCards } from './model/chatAdapter.js'
 
 const baseContextCards = ref(contextCards.map((card) => ({ ...card })))
 const defaultContextCategories = [...new Set(contextCards.map((card) => card.category))]
@@ -24,6 +24,7 @@ onMounted(async () => {
   try {
     const real = await loadHistory()
     if (real && real.length) {
+      // 卡片已随 session.metadata 从 opencode.db 读回（loadHistory 内处理）。
       chatSessions.value = real
       activeSessionId.value = real[0]?.id ?? activeSessionId.value
     }
@@ -76,6 +77,7 @@ function buildNewSession() {
     time: '刚刚',
     summary: '等待第一条消息',
     messages: [],
+    metadata: {},
     contextCards: [],
     isDraft: true,
   }
@@ -156,6 +158,75 @@ function updateContextPriority({ id, priority }) {
   const card = activeContextCards.value.find((item) => item.id === id)
   if (!card || !['高', '中', '低'].includes(priority)) return
   card.priority = priority
+  const session = activeSession.value
+  if (session) saveRemoteCards(session.id, session.contextCards || [], session.metadata)
+}
+
+// —— 监督总结（工作台卡片自动生成）——
+const summarizingIds = ref(new Set())
+const isSummarizing = computed(() => summarizingIds.value.has(activeSessionId.value))
+
+// 主对话 idle 后后台触发：让监督 session 总结对话 → 更新工作台卡片（不阻塞 UI）。
+async function runSupervisor(session) {
+  if (!session || summarizingIds.value.has(session.id)) return
+  summarizingIds.value = new Set(summarizingIds.value).add(session.id)
+  try {
+    const incoming = await runSupervisorSummary({
+      mainSessionId: session.id,
+      messages: session.messages,
+      cards: session.contextCards,
+    })
+    if (incoming.length) {
+      session.contextCards = mergeCards(session.contextCards || [], incoming)
+      saveRemoteCards(session.id, session.contextCards, session.metadata)
+    }
+  } finally {
+    const next = new Set(summarizingIds.value)
+    next.delete(session.id)
+    summarizingIds.value = next
+  }
+}
+
+// 按 topic 增量合并：已有的更新 title/body/category，保留 selected/priority；新的追加。
+function mergeCards(existing, incoming) {
+  const result = [...(existing || [])]
+  const byTopic = new Map(result.map((c, i) => [c.topic || c.title, i]))
+  for (const card of incoming) {
+    const idx = byTopic.get(card.topic)
+    if (idx !== undefined) {
+      result[idx] = {
+        ...result[idx],
+        topic: card.topic,
+        category: card.category,
+        title: card.title,
+        body: card.body,
+        time: `今天 ${currentTime()}`,
+      }
+    } else {
+      byTopic.set(card.topic, result.length)
+      result.push({
+        id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        topic: card.topic,
+        category: card.category,
+        title: card.title,
+        body: card.body,
+        time: `今天 ${currentTime()}`,
+        source: 'AI 总结',
+        priority: '中',
+        selected: false,
+      })
+    }
+  }
+  return result
+}
+
+// 工作台勾选回写：选中后注入主对话下一轮 prompt。
+function toggleCardSelection(id) {
+  const card = activeContextCards.value.find((item) => item.id === id)
+  if (!card) return
+  card.selected = !card.selected
+  const session = activeSession.value
+  if (session) saveRemoteCards(session.id, session.contextCards || [], session.metadata)
 }
 
 async function handleSendMessage(text) {
@@ -196,11 +267,13 @@ async function handleSendMessage(text) {
 
   try {
     if (chatStreams) {
+      const selectedCards = (session.contextCards || []).filter((c) => c.selected)
       const { text: reply, reasoning } = await sendChatMessageStream({
         sessionId: session.id,
         title: session.title,
         messages: session.messages,
         signal: activeAbortController.signal,
+        selectedCards,
         onDelta: (delta, fullText) => {
           pendingText = fullText
           if (!rafScheduled) {
@@ -218,7 +291,8 @@ async function handleSendMessage(text) {
       })
       assistantMessage.text = reply
       if (reasoning) assistantMessage.reasoning = reasoning
-      refreshSessionContext(session, userMessage, assistantMessage)
+      // 后台触发监督总结，更新工作台卡片（不阻塞 UI）。
+      runSupervisor(session)
     } else {
       const reply = await sendChatMessage({
         sessionId: session.id,
@@ -226,7 +300,7 @@ async function handleSendMessage(text) {
         messages: session.messages,
       })
       assistantMessage.text = reply
-      refreshSessionContext(session, userMessage, assistantMessage)
+      runSupervisor(session)
     }
   } catch (error) {
     if (isAbortError(error) && !/超时|timed out/i.test(error.message)) {
@@ -293,34 +367,9 @@ function createContextBody(message) {
   return text.length > 84 ? `${text.slice(0, 84)}...` : text
 }
 
-function refreshSessionContext(session, userMessage, assistantMessage) {
-  const now = `今天 ${currentTime()}`
-  const assistantText = assistantMessage.text || '等待模型回复'
-  const hasError = Boolean(assistantMessage.error)
-
-  session.contextCards = [
-    {
-      id: `${session.id}-intent`,
-      category: '问题分析',
-      title: '本轮用户需求',
-      body: userMessage.text,
-      time: now,
-      source: '对话',
-      priority: '中',
-      selected: true,
-    },
-    {
-      id: `${session.id}-reply`,
-      category: hasError ? '关键报错' : '修复方案',
-      title: hasError ? '模型连接异常' : 'AI 初步响应',
-      body: assistantText,
-      time: now,
-      source: hasError ? '系统' : '对话',
-      priority: hasError ? '高' : '中',
-      selected: true,
-    },
-  ]
-}
+// 监督总结接管工作台卡片生成，这里不再硬编码覆盖 contextCards。
+// 保留签名兼容历史调用点（chatError banner 已负责展示错误，无需卡片）。
+function refreshSessionContext() {}
 </script>
 
 <template>
@@ -345,9 +394,11 @@ function refreshSessionContext(session, userMessage, assistantMessage) {
 
     <ContextWorkbench
       :cards="activeContextCards"
+      :is-summarizing="isSummarizing"
       :collapsed="contextCollapsed"
       @collapse="contextCollapsed = true"
       @expand="contextCollapsed = false"
+      @toggle="toggleCardSelection"
       @update-priority="updateContextPriority"
     />
 
