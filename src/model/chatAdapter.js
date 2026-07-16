@@ -33,6 +33,37 @@ const opencodeSessions = new Map()
 // 主对话 sessionID → 监督 sessionID（监督对话独立存在于 opencode，专门做卡片总结）。
 const supervisorSessions = new Map()
 
+function normalizeMetadata(metadata) {
+  return metadata && typeof metadata === 'object' && !Array.isArray(metadata) ? metadata : {}
+}
+
+function buildMainMetadata(baseMetadata, supervisorSessionId, cards) {
+  const metadata = { ...normalizeMetadata(baseMetadata), type: 'main' }
+  if (supervisorSessionId) metadata.supervisorSessionId = supervisorSessionId
+  if (cards !== undefined) metadata.contextCards = cards || []
+  return metadata
+}
+
+function buildSupervisorMetadata(mainSessionId) {
+  return { type: 'supervisor', mainSessionId }
+}
+
+function rememberOpencodeSession(cacheKey, session) {
+  if (!session?.id) return
+  opencodeSessions.set(cacheKey || session.id, session)
+  opencodeSessions.set(session.id, session)
+}
+
+function rememberSupervisorSession(mainSessionId, supervisorId, alias) {
+  if (!mainSessionId || !supervisorId) return
+  supervisorSessions.set(mainSessionId, supervisorId)
+  if (alias && alias !== mainSessionId) supervisorSessions.set(alias, supervisorId)
+}
+
+async function updateSessionMetadata(client, directory, sessionID, metadata, signal) {
+  return client.updateSession({ sessionID, directory, metadata }, signal)
+}
+
 export const chatModelLabel =
   backend === 'openai-compatible'
     ? `OpenAI Compatible · ${env.VITE_OPENAI_MODEL || 'model'}`
@@ -165,17 +196,26 @@ export async function loadHistory() {
     const list = await client.listSessions({ directory })
     if (!Array.isArray(list) || list.length === 0) return null
 
+    const supervisorByMainId = new Map()
+    for (const oc of list) {
+      const metadata = normalizeMetadata(oc.metadata)
+      if (metadata.type === 'supervisor' && metadata.mainSessionId) {
+        supervisorByMainId.set(metadata.mainSessionId, oc.id)
+      }
+    }
+
     const result = []
     for (const oc of list) {
-      const metadata = oc.metadata && typeof oc.metadata === 'object' ? oc.metadata : {}
+      const metadata = normalizeMetadata(oc.metadata)
       // 监督 session（副进程）不进侧栏，跳过。
       if (metadata.type === 'supervisor') continue
 
+      const supervisorSessionId = metadata.supervisorSessionId || supervisorByMainId.get(oc.id)
       // 预填 session 缓存：历史会话续聊时 ensureOpencodeSession 直接命中，复用 opencode session。
-      opencodeSessions.set(oc.id, { id: oc.id })
+      rememberOpencodeSession(oc.id, { id: oc.id })
       // 重建主→监督映射：刷新后 supervisorSessions 不丢，监督 session 长期复用。
-      if (metadata.supervisorSessionId) {
-        supervisorSessions.set(oc.id, metadata.supervisorSessionId)
+      if (supervisorSessionId) {
+        rememberSupervisorSession(oc.id, supervisorSessionId)
       }
 
       let messages = []
@@ -187,7 +227,28 @@ export async function loadHistory() {
       }
 
       const firstUser = messages.find((m) => m.role === 'user')
-      const contextCards = Array.isArray(metadata.contextCards) ? metadata.contextCards : []
+      let contextCards = []
+      if (supervisorSessionId) {
+        contextCards = await getSupervisorCards(supervisorSessionId)
+      }
+      if (!contextCards.length && Array.isArray(metadata.contextCards)) {
+        contextCards = metadata.contextCards
+      }
+      const uiMetadata = buildMainMetadata(metadata, supervisorSessionId)
+      if (supervisorSessionId && (metadata.type !== 'main' || metadata.supervisorSessionId !== supervisorSessionId)) {
+        try {
+          await updateSessionMetadata(client, directory, oc.id, uiMetadata)
+        } catch (error) {
+          console.warn('[chatAdapter] 补写主 session metadata 失败：', error?.message || error)
+        }
+      }
+      if (supervisorSessionId && supervisorByMainId.get(oc.id) !== supervisorSessionId) {
+        try {
+          await updateSessionMetadata(client, directory, supervisorSessionId, buildSupervisorMetadata(oc.id))
+        } catch (error) {
+          console.warn('[chatAdapter] 补写监督 session metadata 失败：', error?.message || error)
+        }
+      }
       result.push({
         id: oc.id,
         title: oc.title || '未命名对话',
@@ -197,7 +258,7 @@ export async function loadHistory() {
         tone: 'progress',
         isDraft: false,
         messages,
-        metadata,
+        metadata: uiMetadata,
         contextCards,
       })
     }
@@ -234,8 +295,9 @@ export async function saveRemoteCards(sessionId, cards, baseMetadata, signal) {
   try {
     // sessionId 可能是前端 UI id（新建会话），先映射到 opencode session id，避免 PATCH 404。
     const oc = await ensureOpencodeSession(sessionId, undefined, signal)
-    const metadata = { ...(baseMetadata || {}), contextCards: cards || [] }
-    await client.updateSession({ sessionID: oc.id, directory, body: { metadata } }, signal)
+    const supervisorId = normalizeMetadata(baseMetadata).supervisorSessionId || supervisorSessions.get(oc.id) || supervisorSessions.get(sessionId)
+    const metadata = buildMainMetadata(baseMetadata, supervisorId, cards)
+    await updateSessionMetadata(client, directory, oc.id, metadata, signal)
     return true
   } catch (error) {
     console.warn('[chatAdapter] saveRemoteCards 失败：', error?.message || error)
@@ -291,29 +353,38 @@ export async function runSupervisorSummary({ mainSessionId, messages, cards, mai
 // 创建时给监督 session 打标 type=supervisor（便于 loadHistory 过滤），并把绑定关系
 // 持久化进主 session metadata（刷新后可重建映射，监督 session 长期复用）。
 async function ensureSupervisorSession(mainSessionId, mainMetadata, signal) {
-  const cached = supervisorSessions.get(mainSessionId)
-  if (cached) return cached
   const client = getBridgeClient()
   const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const main = await ensureOpencodeSession(mainSessionId, undefined, signal)
+  const mainId = main.id
+  const baseMainMetadata = normalizeMetadata(mainMetadata)
+  const cached = baseMainMetadata.supervisorSessionId || supervisorSessions.get(mainId) || supervisorSessions.get(mainSessionId)
+  if (cached) {
+    rememberSupervisorSession(mainId, cached, mainSessionId)
+    try {
+      await updateSessionMetadata(client, directory, mainId, buildMainMetadata(baseMainMetadata, cached), signal)
+    } catch (error) {
+      console.warn('[chatAdapter] 写主 session supervisorSessionId 失败：', error?.message || error)
+    }
+    try {
+      await updateSessionMetadata(client, directory, cached, buildSupervisorMetadata(mainId), signal)
+    } catch (error) {
+      console.warn('[chatAdapter] 写监督 session mainSessionId 失败：', error?.message || error)
+    }
+    return cached
+  }
+
   const sup = await client.createSession(
     {
       directory,
       model: { id: opencodeModelID(), providerID: opencodeProviderID() },
-      metadata: { type: 'supervisor', mainSessionId },
+      metadata: buildSupervisorMetadata(mainId),
     },
     signal,
   )
-  supervisorSessions.set(mainSessionId, sup.id)
+  rememberSupervisorSession(mainId, sup.id, mainSessionId)
   try {
-    const main = await ensureOpencodeSession(mainSessionId, undefined, signal)
-    await client.updateSession(
-      {
-        sessionID: main.id,
-        directory,
-        body: { metadata: { ...(mainMetadata || {}), supervisorSessionId: sup.id } },
-      },
-      signal,
-    )
+    await updateSessionMetadata(client, directory, mainId, buildMainMetadata(baseMainMetadata, sup.id), signal)
   } catch (error) {
     console.warn('[chatAdapter] 写主 session supervisorSessionId 失败：', error?.message || error)
   }
@@ -488,13 +559,14 @@ async function ensureOpencodeSession(clientSessionId, title, signal) {
   if (!id) throw new Error(`opencode 未返回会话 ID：${title || cacheKey}`)
 
   const session = { id }
-  opencodeSessions.set(cacheKey, session)
+  rememberOpencodeSession(cacheKey, session)
   return { ...session, isNew: true }
 }
 
 function buildOpencodeSessionPayload(title) {
   return {
     ...(title ? { title } : {}),
+    metadata: { type: 'main' },
     ...(env.VITE_OPENCODE_AGENT ? { agent: env.VITE_OPENCODE_AGENT } : {}),
     ...opencodeChatPermissionPayload(),
     model: {

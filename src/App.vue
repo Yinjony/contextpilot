@@ -24,7 +24,7 @@ onMounted(async () => {
   try {
     const real = await loadHistory()
     if (real && real.length) {
-      // 卡片已随 session.metadata 从 opencode.db 读回（loadHistory 内处理）。
+      // 历史消息和监督卡片都在 loadHistory 内从对应 session 读回。
       chatSessions.value = real
       activeSessionId.value = real[0]?.id ?? activeSessionId.value
     }
@@ -74,6 +74,7 @@ async function refreshSupervisorCards(sessionId) {
   if (!session) return
   const supervisorId = session.metadata?.supervisorSessionId
   if (!supervisorId) return
+  session.metadata = { ...(session.metadata || {}), type: 'main', supervisorSessionId: supervisorId }
   try {
     localStorage.setItem(`contextpilot:supervisor:${sessionId}`, supervisorId)
   } catch { /* localStorage 不可用时静默 */ }
@@ -94,7 +95,7 @@ function buildNewSession() {
     time: '刚刚',
     summary: '等待第一条消息',
     messages: [],
-    metadata: {},
+    metadata: { type: 'main' },
     contextCards: [],
     isDraft: true,
   }
@@ -196,7 +197,7 @@ async function runSupervisor(session) {
     })
     // 同步前端 metadata 的 supervisorSessionId，避免后续 saveRemoteCards 用旧 metadata 覆盖掉绑定。
     if (supervisorId) {
-      session.metadata = { ...(session.metadata || {}), supervisorSessionId: supervisorId }
+      session.metadata = { ...(session.metadata || {}), type: 'main', supervisorSessionId: supervisorId }
     }
     if (incoming?.length) {
       session.contextCards = mergeCards(session.contextCards || [], incoming)
