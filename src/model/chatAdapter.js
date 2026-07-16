@@ -305,9 +305,9 @@ export async function saveRemoteCards(sessionId, cards, baseMetadata, signal) {
   }
 }
 
-// 监督总结：用独立的监督 opencode session 把主对话总结成卡片。
+// 监督总结：用独立的监督 opencode session 基于「过去卡片 + 本轮对话」增量总结成卡片。
 // 返回 { cards, supervisorId }；失败时 cards 为 []（不抛）。
-export async function runSupervisorSummary({ mainSessionId, messages, cards, mainMetadata, signal }) {
+export async function runSupervisorSummary({ mainSessionId, turnMessages, messages, cards, mainMetadata, signal }) {
   if (backend !== 'opencode') return { cards: [], supervisorId: null }
   const client = getBridgeClient()
   const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
@@ -320,7 +320,7 @@ export async function runSupervisorSummary({ mainSessionId, messages, cards, mai
     return { cards: [], supervisorId: null }
   }
 
-  const prompt = buildSupervisorPrompt(messages, cards)
+  const prompt = buildSupervisorPrompt(turnMessages || messages, cards)
   // 60s 超时，避免同步 /message 卡死。
   const timeout = new AbortController()
   const timer = setTimeout(() => timeout.abort(), 60000)
@@ -413,29 +413,36 @@ export async function getSupervisorCards(supervisorId, signal) {
   }
 }
 
-// 构造发给监督 session 的 prompt：主对话历史 + 现有卡片，要求输出卡片 JSON。
-function buildSupervisorPrompt(messages, cards) {
-  const transcript = normalizeMessages(messages)
+// 构造发给监督 session 的 prompt：本轮对话 + 现有卡片，要求输出更新后的完整卡片 JSON。
+function buildSupervisorPrompt(turnMessages, cards) {
+  const transcript = normalizeMessages(turnMessages || [])
     .map((m) => `${m.role === 'user' ? '用户' : 'AI'}：${m.content}`)
     .join('\n')
   const cardsBlock =
     Array.isArray(cards) && cards.length
-      ? cards.map((c) => `- topic: ${c.topic || c.title}\n  title: ${c.title}\n  body: ${c.body}`).join('\n')
+      ? cards
+          .map(
+            (c) =>
+              `- id: ${c.id || ''}\n  topic: ${c.topic || c.title}\n  category: ${c.category || ''}\n  title: ${c.title || ''}\n  body: ${c.body || ''}`,
+          )
+          .join('\n')
       : '（暂无）'
   return [
-    '下面是用户与 AI 的主对话记录，以及现有的上下文卡片。请按主题把对话总结成若干上下文卡片，供后续对话参考。',
+    '下面是用户与 AI 的本轮对话上下文，以及这个主对话过去已经沉淀出的上下文卡片。请只基于本轮对话对卡片做增量更新。',
     '',
     '要求：',
-    '1. 只输出一个 JSON 数组，每个元素形如 {"topic":"","category":"","title":"","body":""}。',
-    '2. topic 是稳定主题键（英文短词或中文短语），同一主题跨轮保持一致，便于增量更新。',
-    '3. category 从 [问题分析, 修复方案, 关键报错, 旧假设, 概念说明, 进展] 里选最接近的，必要时可自拟。',
-    '4. title 一句话概括主题，body 写该主题的关键信息或要点。',
-    '5. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
+    '1. 只输出更新后的完整 JSON 数组，每个元素形如 {"id":"","topic":"","category":"","title":"","body":""}。',
+    '2. 先判断本轮对话是否符合某个已有卡片主题；符合时只更新那个已有卡片，必须保留它原来的 id 和 topic，不要新增重复卡片。',
+    '3. 如果本轮对话不符合任何已有卡片主题，才追加一个新卡片；新卡片可以省略 id 或把 id 留空，topic 要稳定。',
+    '4. 与本轮无关的旧卡片原样保留在数组里。',
+    '5. category 从 [问题分析, 修复方案, 关键报错, 旧假设, 概念说明, 进展] 里选最接近的，必要时可自拟。',
+    '6. title 一句话概括主题，body 写该主题的关键信息或要点。',
+    '7. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
     '',
-    '现有卡片（请在此基础上更新或新增，保留仍相关的话题）：',
+    '过去卡片：',
     cardsBlock,
     '',
-    '主对话记录：',
+    '本轮对话上下文：',
     transcript,
   ].join('\n')
 }
@@ -455,6 +462,7 @@ function parseCardsFromText(text) {
     return arr
       .filter((c) => c && typeof c === 'object')
       .map((c) => ({
+        id: String(c.id || '').trim(),
         topic: String(c.topic || c.title || '').trim(),
         category: String(c.category || '其他').trim(),
         title: String(c.title || '').trim(),

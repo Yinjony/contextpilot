@@ -185,14 +185,14 @@ const summarizingIds = ref(new Set())
 const isSummarizing = computed(() => summarizingIds.value.has(activeSessionId.value))
 
 // 主对话 idle 后后台触发：让监督 session 总结对话 → 更新工作台卡片（不阻塞 UI）。
-async function runSupervisor(session) {
+async function runSupervisor(session, turnMessages) {
   if (!session || summarizingIds.value.has(session.id)) return
   summarizingIds.value = new Set(summarizingIds.value).add(session.id)
   try {
     const { cards: incoming, supervisorId } = await runSupervisorSummary({
       mainSessionId: session.id,
-      messages: session.messages,
-      cards: session.contextCards,
+      turnMessages,
+      cards: session.contextCards || [],
       mainMetadata: session.metadata,
     })
     // 同步前端 metadata 的 supervisorSessionId，避免后续 saveRemoteCards 用旧 metadata 覆盖掉绑定。
@@ -213,23 +213,40 @@ async function runSupervisor(session) {
 // 按 topic 增量合并：已有的更新 title/body/category，保留 selected/priority；新的追加。
 function mergeCards(existing, incoming) {
   const result = [...(existing || [])]
-  const byTopic = new Map(result.map((c, i) => [c.topic || c.title, i]))
+  const byId = new Map()
+  const byTopic = new Map()
+  const remember = (card, index) => {
+    if (card.id) byId.set(card.id, index)
+    const topicKey = normalizeCardKey(card.topic || card.title)
+    if (topicKey) byTopic.set(topicKey, index)
+  }
+  result.forEach(remember)
+
   for (const card of incoming) {
-    const idx = byTopic.get(card.topic)
+    const topicKey = normalizeCardKey(card.topic || card.title)
+    const titleKey = normalizeCardKey(card.title)
+    const idIdx = card.id ? byId.get(card.id) : undefined
+    const idx = idIdx ?? byTopic.get(topicKey) ?? byTopic.get(titleKey)
     if (idx !== undefined) {
+      const nextTopic = card.topic || result[idx].topic || card.title
+      const changed =
+        result[idx].topic !== nextTopic ||
+        result[idx].category !== card.category ||
+        result[idx].title !== card.title ||
+        result[idx].body !== card.body
       result[idx] = {
         ...result[idx],
-        topic: card.topic,
+        topic: nextTopic,
         category: card.category,
         title: card.title,
         body: card.body,
-        time: `今天 ${currentTime()}`,
+        time: changed ? `今天 ${currentTime()}` : result[idx].time,
       }
+      remember(result[idx], idx)
     } else {
-      byTopic.set(card.topic, result.length)
       result.push({
-        id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        topic: card.topic,
+        id: card.id || `card-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        topic: card.topic || card.title,
         category: card.category,
         title: card.title,
         body: card.body,
@@ -238,9 +255,14 @@ function mergeCards(existing, incoming) {
         priority: '中',
         selected: false,
       })
+      remember(result[result.length - 1], result.length - 1)
     }
   }
   return result
+}
+
+function normalizeCardKey(value) {
+  return String(value || '').trim().toLowerCase()
 }
 
 // 工作台勾选回写：选中后注入主对话下一轮 prompt。
@@ -315,7 +337,7 @@ async function handleSendMessage(text) {
       assistantMessage.text = reply
       if (reasoning) assistantMessage.reasoning = reasoning
       // 后台触发监督总结，更新工作台卡片（不阻塞 UI）。
-      runSupervisor(session)
+      runSupervisor(session, buildSupervisorTurn(userMessage, assistantMessage))
     } else {
       const reply = await sendChatMessage({
         sessionId: session.id,
@@ -323,7 +345,7 @@ async function handleSendMessage(text) {
         messages: session.messages,
       })
       assistantMessage.text = reply
-      runSupervisor(session)
+      runSupervisor(session, buildSupervisorTurn(userMessage, assistantMessage))
     }
   } catch (error) {
     if (isAbortError(error) && !/超时|timed out/i.test(error.message)) {
@@ -355,6 +377,13 @@ function createMessage(role, text, extra = {}) {
     text,
     ...extra,
   }
+}
+
+function buildSupervisorTurn(userMessage, assistantMessage) {
+  return [
+    { ...userMessage, pending: false, error: false },
+    { ...assistantMessage, pending: false, error: false },
+  ]
 }
 
 function currentTime() {
