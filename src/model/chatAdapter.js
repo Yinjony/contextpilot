@@ -164,8 +164,10 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
   const session = await ensureOpencodeSession(sessionId, title, signal, chatConfig)
   // 选中卡片作为上下文前置注入（补上工作台勾选 → 主对话的链路）。
   const basePrompt = session.isNew ? buildSeededPrompt(messages, latestUserMessage.text) : latestUserMessage.text
-  const cardContext = selectedCards?.length ? buildContextFromCards(selectedCards) : ''
-  const promptText = cardContext ? `${cardContext}\n\n${basePrompt}` : basePrompt
+  const promptParts = buildContextPromptParts({
+    prompt: basePrompt,
+    selectedCards,
+  })
   const guard = opencodeChatPromptGuardPayload(chatConfig)
   const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
 
@@ -197,7 +199,7 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
     const result = await client.runPrompt({
       sessionID: session.id,
       directory,
-      prompt: promptText,
+      parts: promptParts,
       model: {
         providerID: opencodeProviderID(),
         modelID: opencodeModelID(),
@@ -212,7 +214,12 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
       ...(onDelta ? { onDelta: (delta, fullText) => onDelta(delta, fullText) } : {}),
       ...(onReasoning ? { onReasoning: (reasoningText) => onReasoning(reasoningText) } : {}),
     })
-    return { text: result.text, reasoning: result.reasoning, sessionID: result.sessionID }
+    return {
+      text: result.text,
+      reasoning: result.reasoning,
+      sessionID: result.sessionID,
+      partIDs: normalizePartIDs(Object.keys(result.partText || {})),
+    }
   } catch (error) {
     console.error(error)
     const userAborted = Boolean(signal?.aborted)
@@ -402,7 +409,8 @@ export async function runSupervisorSummary({ mainSessionId, turnMessages, messag
     return { cards: [], supervisorId: null }
   }
 
-  const prompt = buildSupervisorPrompt(turnMessages || messages, cards)
+  const sourceParts = await getLatestTurnPartReferences(client, mainSessionId, directory, signal)
+  const prompt = buildSupervisorPrompt(turnMessages || messages, cards, sourceParts)
   // 60s 超时，避免同步 /message 卡死。
   const timeout = new AbortController()
   const timer = setTimeout(() => timeout.abort(), 60000)
@@ -496,7 +504,7 @@ export async function getSupervisorCards(supervisorId, signal) {
 }
 
 // 构造发给监督 session 的 prompt：本轮对话 + 现有卡片，要求输出更新后的完整卡片 JSON。
-function buildSupervisorPrompt(turnMessages, cards) {
+function buildSupervisorPrompt(turnMessages, cards, sourceParts) {
   const transcript = normalizeMessages(turnMessages || [])
     .map((m) => `${m.role === 'user' ? '用户' : 'AI'}：${m.content}`)
     .join('\n')
@@ -505,7 +513,7 @@ function buildSupervisorPrompt(turnMessages, cards) {
       ? cards
           .map(
             (c) =>
-              `- id: ${c.id || ''}\n  topic: ${c.topic || c.title}\n  category: ${c.category || ''}\n  title: ${c.title || ''}\n  body: ${c.body || ''}`,
+              `- id: ${c.id || ''}\n  topic: ${c.topic || c.title}\n  category: ${c.category || ''}\n  title: ${c.title || ''}\n  body: ${c.body || ''}\n  partIDs: ${JSON.stringify(normalizePartIDs(c.partIDs))}`,
           )
           .join('\n')
       : '（暂无）'
@@ -513,19 +521,23 @@ function buildSupervisorPrompt(turnMessages, cards) {
     '下面是用户与 AI 的本轮对话上下文，以及这个主对话过去已经沉淀出的上下文卡片。请只基于本轮对话对卡片做增量更新。',
     '',
     '要求：',
-    '1. 只输出更新后的完整 JSON 数组，每个元素形如 {"id":"","topic":"","category":"","title":"","body":""}。',
-    '2. 先判断本轮对话是否符合某个已有卡片主题；符合时只更新那个已有卡片，必须保留它原来的 id 和 topic，不要新增重复卡片。',
+    '1. 只输出更新后的完整 JSON 数组，每个元素形如 {"id":"","topic":"","category":"","title":"","body":"","partIDs":[]}。',
+    '2. 先判断本轮对话是否符合某个已有卡片主题；符合时只更新那个已有卡片，必须保留它原来的 id、topic 和 partIDs，并把真正支撑本轮更新的 source partID 追加进 partIDs，不要新增重复卡片。',
     '3. 如果本轮对话不符合任何已有卡片主题，才追加一个新卡片；新卡片可以省略 id 或把 id 留空，topic 要稳定。',
     '4. 与本轮无关的旧卡片原样保留在数组里。',
     '5. category 从 [问题分析, 修复方案, 关键报错, 旧假设, 概念说明, 进展] 里选最接近的，必要时可自拟。',
     '6. title 一句话概括主题，body 写该主题的关键信息或要点。',
-    '7. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
+    '7. partIDs 只能使用“本轮可关联 source parts”中给出的 partID，或保留已有卡片原有的 partIDs；不得编造。与本轮无关的旧卡片必须原样保留其 partIDs。',
+    '8. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
     '',
     '过去卡片：',
     cardsBlock,
     '',
     '本轮对话上下文：',
     transcript,
+    '',
+    '本轮可关联 source parts（卡片必须用这里的 partID 关联原始对话）：',
+    sourceParts.length ? JSON.stringify(sourceParts) : '[]',
   ].join('\n')
 }
 
@@ -549,6 +561,7 @@ function parseCardsFromText(text) {
         category: String(c.category || '其他').trim(),
         title: String(c.title || '').trim(),
         body: String(c.body || '').trim(),
+        partIDs: normalizePartIDs(c.partIDs || c.part_ids),
       }))
       .filter((c) => c.title || c.body)
   } catch {
@@ -563,13 +576,73 @@ function buildContextFromCards(selectedCards) {
   return `以下是用户在工作台选定的上下文模块，回答时请参考这些内容：\n\n${blocks.join('\n\n')}`
 }
 
+function normalizePartIDs(value) {
+  if (!Array.isArray(value)) return []
+  return [...new Set(value.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()))]
+}
+
+function buildContextPromptParts({ prompt, selectedCards }) {
+  const cardContext = buildContextFromCards(selectedCards)
+  return [
+    ...(cardContext ? [{ type: 'text', text: cardContext, synthetic: true }] : []),
+    { type: 'text', text: prompt },
+    {
+      type: 'text',
+      text: '',
+      synthetic: true,
+      ignored: true,
+      metadata: {
+        'contextpilot.context-part-ids': normalizePartIDs((selectedCards || []).flatMap((card) => card.partIDs || [])),
+      },
+    },
+  ]
+}
+
+async function getLatestTurnPartReferences(client, sessionID, directory, signal) {
+  try {
+    const history = await client.messages({ sessionID, directory }, signal)
+    if (!Array.isArray(history)) return []
+    const userIndex = history.findLastIndex(
+      (message) => message?.info?.role === 'user' && !(message.parts || []).some((part) => part?.type === 'compaction'),
+    )
+    if (userIndex < 0) return []
+    return history
+      .slice(userIndex)
+      .filter(
+        (message) =>
+          ['user', 'assistant'].includes(message?.info?.role) && !(message.parts || []).some((part) => part?.type === 'compaction'),
+      )
+      .flatMap((message) =>
+        (message.parts || [])
+          .filter(
+            (part) =>
+              part?.type === 'text' &&
+              !part.synthetic &&
+              !part.ignored &&
+              typeof part.id === 'string' &&
+              typeof part.text === 'string' &&
+              part.text.trim(),
+          )
+          .map((part) => ({
+            partID: part.id,
+            messageID: message.info.id,
+            role: message.info.role,
+            text: part.text.slice(0, 12000),
+          })),
+      )
+  } catch (error) {
+    console.warn('[chatAdapter] 获取本轮 source parts 失败：', error?.message || error)
+    return []
+  }
+}
+
 // opencode WithParts → UI message：text/reasoning 分别从 parts 提取拼接。
 function toUIMessage(withParts) {
   if (!withParts || typeof withParts !== 'object') return null
   const info = withParts.info || {}
   const parts = Array.isArray(withParts.parts) ? withParts.parts : []
   const text = parts
-    .filter((p) => p && p.type === 'text' && typeof p.text === 'string')
+    .filter((p) => p && p.type === 'text' && !p.synthetic && !p.ignored && typeof p.text === 'string')
     .map((p) => p.text)
     .join('\n')
   const reasoning = parts
@@ -581,6 +654,11 @@ function toUIMessage(withParts) {
     role: info.role === 'user' ? 'user' : 'assistant',
     time: formatClock(info.time?.created),
     text,
+    partIDs: normalizePartIDs(
+      parts
+        .filter((p) => p && p.type === 'text' && !p.synthetic && !p.ignored && typeof p.id === 'string')
+        .map((p) => p.id),
+    ),
     ...(reasoning ? { reasoning } : {}),
   }
 }
@@ -611,15 +689,15 @@ function formatClock(ts) {
   return `${hh}:${mm}`
 }
 
-export async function sendChatMessage({ sessionId, title, messages, signal, chatConfig }) {
+export async function sendChatMessage({ sessionId, title, messages, signal, selectedCards, chatConfig }) {
   if (backend === 'openai-compatible') {
     return sendOpenAICompatibleMessage({ messages, signal, chatConfig })
   }
 
-  return sendOpencodeMessage({ sessionId, title, messages, signal, chatConfig })
+  return sendOpencodeMessage({ sessionId, title, messages, signal, selectedCards, chatConfig })
 }
 
-async function sendOpencodeMessage({ sessionId, title, messages, signal, chatConfig }) {
+async function sendOpencodeMessage({ sessionId, title, messages, signal, selectedCards, chatConfig }) {
   const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user')
   if (!latestUserMessage?.text?.trim()) {
     throw new Error('没有可发送的用户消息。')
@@ -629,7 +707,7 @@ async function sendOpencodeMessage({ sessionId, title, messages, signal, chatCon
   const promptText = session.isNew ? buildSeededPrompt(messages, latestUserMessage.text) : latestUserMessage.text
   const response = await requestOpencode(withOpencodeDirectory(`/session/${encodeURIComponent(session.id)}/message`), {
     method: 'POST',
-    body: buildOpencodePromptPayload(promptText, chatConfig),
+    body: buildOpencodePromptPayload(buildContextPromptParts({ prompt: promptText, selectedCards }), chatConfig),
     signal,
   })
   return extractOpencodeAssistantText(response)
@@ -667,7 +745,7 @@ function buildOpencodeSessionPayload(title, chatConfig) {
   }
 }
 
-function buildOpencodePromptPayload(text, chatConfig) {
+function buildOpencodePromptPayload(parts, chatConfig) {
   return {
     ...(env.VITE_OPENCODE_AGENT ? { agent: env.VITE_OPENCODE_AGENT } : {}),
     ...(env.VITE_OPENCODE_MODEL_VARIANT ? { variant: env.VITE_OPENCODE_MODEL_VARIANT } : {}),
@@ -676,7 +754,7 @@ function buildOpencodePromptPayload(text, chatConfig) {
       providerID: opencodeProviderID(),
       modelID: opencodeModelID(),
     },
-    parts: [{ type: 'text', text }],
+    parts,
   }
 }
 

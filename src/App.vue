@@ -220,6 +220,7 @@ function addContextFromMessage({ category, message }) {
     category,
     title: createContextTitle(category, message),
     body: createContextBody(message),
+    partIDs: normalizePartIDs(message.partIDs),
     time: `今天 ${currentTime()}`,
     source: message.role === 'user' ? '对话' : 'AI',
     priority: '中',
@@ -295,6 +296,7 @@ function mergeCards(existing, incoming) {
         category: card.category,
         title: card.title,
         body: card.body,
+        partIDs: normalizePartIDs([...(result[idx].partIDs || []), ...(card.partIDs || [])]),
         time: changed ? `今天 ${currentTime()}` : result[idx].time,
       }
       remember(result[idx], idx)
@@ -305,6 +307,7 @@ function mergeCards(existing, incoming) {
         category: card.category,
         title: card.title,
         body: card.body,
+        partIDs: normalizePartIDs(card.partIDs),
         time: `今天 ${currentTime()}`,
         source: 'AI 总结',
         priority: '中',
@@ -318,6 +321,11 @@ function mergeCards(existing, incoming) {
 
 function normalizeCardKey(value) {
   return String(value || '').trim().toLowerCase()
+}
+
+function normalizePartIDs(value) {
+  if (!Array.isArray(value)) return []
+  return [...new Set(value.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()))]
 }
 
 // 工作台勾选回写：选中后注入主对话下一轮 prompt。
@@ -366,9 +374,9 @@ async function handleSendMessage(text) {
   activeAbortController = new AbortController()
 
   try {
+    const selectedCards = (session.contextCards || []).filter((c) => c.selected)
     if (chatStreams) {
-      const selectedCards = (session.contextCards || []).filter((c) => c.selected)
-      const { text: reply, reasoning } = await sendChatMessageStream({
+      const { text: reply, reasoning, partIDs } = await sendChatMessageStream({
         sessionId: session.id,
         title: session.title,
         messages: session.messages,
@@ -392,6 +400,7 @@ async function handleSendMessage(text) {
       })
       assistantMessage.text = reply
       if (reasoning) assistantMessage.reasoning = reasoning
+      assistantMessage.partIDs = normalizePartIDs(partIDs)
       // 后台触发监督总结，更新工作台卡片（不阻塞 UI）。
       runSupervisor(session, buildSupervisorTurn(userMessage, assistantMessage))
     } else {
@@ -399,6 +408,7 @@ async function handleSendMessage(text) {
         sessionId: session.id,
         title: session.title,
         messages: session.messages,
+        selectedCards,
         chatConfig: session.metadata?.chatConfig,
       })
       assistantMessage.text = reply
