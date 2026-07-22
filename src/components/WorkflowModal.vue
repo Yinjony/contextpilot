@@ -1,12 +1,11 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import AppIcon from './AppIcon.vue'
+import ActionIcon from './ActionIcon.vue'
 
 const props = defineProps({
   sessionTitle: { type: String, default: '当前对话' },
   messages: { type: Array, default: () => [] },
-  cards: { type: Array, default: () => [] },
-  isSummarizing: { type: Boolean, default: false },
 })
 
 defineEmits(['close'])
@@ -16,21 +15,18 @@ const actionFilter = ref('all')
 const selectedNode = ref(null)
 
 const typeMeta = {
-  UserRequest: { label: '用户请求', short: '用', group: 'model' },
-  Think: { label: '模型思考', short: '思', group: 'model' },
-  Response: { label: '生成回复', short: '答', group: 'model' },
-  Read: { label: '读取', short: '读', group: 'tool' },
-  Write: { label: '写入', short: '写', group: 'tool' },
-  Shell: { label: '命令', short: '终', group: 'tool' },
-  Search: { label: '搜索', short: '搜', group: 'tool' },
-  Plan: { label: '计划', short: '计', group: 'tool' },
-  Subagent: { label: '子代理', short: '代', group: 'tool' },
-  Skill: { label: '技能', short: '技', group: 'tool' },
-  Compaction: { label: '上下文压缩', short: '压', group: 'model' },
-  Tool: { label: '工具调用', short: '工', group: 'tool' },
-  Context: { label: '上下文卡片', short: '卡', group: 'context' },
-  Supervisor: { label: '监督总结', short: '监', group: 'supervisor' },
-  Persist: { label: '卡片写回', short: '存', group: 'supervisor' },
+  UserRequest: { label: '用户请求', group: 'model' },
+  Think: { label: '模型思考', group: 'model' },
+  Response: { label: '生成回复', group: 'model' },
+  Read: { label: '读取', group: 'tool' },
+  Write: { label: '写入', group: 'tool' },
+  Shell: { label: '命令', group: 'tool' },
+  Search: { label: '搜索', group: 'tool' },
+  Plan: { label: '计划', group: 'tool' },
+  Subagent: { label: '子代理', group: 'tool' },
+  Skill: { label: '技能', group: 'tool' },
+  Compaction: { label: '上下文压缩', group: 'model' },
+  Tool: { label: '工具调用', group: 'tool' },
 }
 
 const filters = [
@@ -63,7 +59,6 @@ function makeAction(type, message, part, index, detail) {
     id: `${message.id || 'message'}:${part?.id || type}:${index}`,
     type,
     label: meta.label,
-    short: meta.short,
     group: meta.group,
     status: actionStatus(message, part),
     detail: detail || part?.text || message.text || '暂无详情',
@@ -112,6 +107,24 @@ const conversationActions = computed(() => {
   return actions
 })
 
+// 动作分布：按类型聚合计数，用来在主对话下方做一览（不受筛选影响，反映整段对话的构成）
+const typeBreakdown = computed(() => {
+  const counts = new Map()
+  conversationActions.value.forEach((action) => {
+    counts.set(action.type, (counts.get(action.type) || 0) + 1)
+  })
+  return [...counts.entries()]
+    .map(([type, count]) => ({
+      type,
+      count,
+      label: typeMeta[type]?.label || type,
+      group: typeMeta[type]?.group || 'tool',
+    }))
+    .sort((a, b) => b.count - a.count)
+})
+
+const totalActionCount = computed(() => conversationActions.value.length)
+
 const filteredActions = computed(() => {
   const source = actionFilter.value === 'all'
     ? conversationActions.value
@@ -149,64 +162,50 @@ const actionRows = computed(() => {
   return rows
 })
 
-const contextNodes = computed(() =>
-  props.cards.slice(0, 10).map((card, index) => ({
-    id: `context:${card.id || index}`,
-    type: 'Context',
-    label: card.title || '未命名卡片',
-    short: '卡',
-    group: 'context',
-    status: card.selected ? 'included' : 'excluded',
-    detail: card.body || '暂无卡片内容',
-    time: card.time || '未知时间',
-    partIDs: Array.isArray(card.partIDs) ? card.partIDs : [],
-    priority: card.priority || '中',
-    category: card.category || '未分类',
-  })),
-)
+const DEFAULT_CONTEXT_LIMIT = 1_000_000
+const configuredContextLimit = Number(import.meta.env.VITE_OPENCODE_CONTEXT_LIMIT)
+const contextLimit = Number.isFinite(configuredContextLimit) && configuredContextLimit > 0
+  ? configuredContextLimit
+  : DEFAULT_CONTEXT_LIMIT
 
-const selectedCards = computed(() => props.cards.filter((card) => card.selected))
-const selectedPartIDs = computed(() => [
-  ...new Set(selectedCards.value.flatMap((card) => Array.isArray(card.partIDs) ? card.partIDs : [])),
-])
-const relatedPartIDs = computed(() => [
-  ...new Set(props.cards.flatMap((card) => Array.isArray(card.partIDs) ? card.partIDs : [])),
-])
+function normalizeUsage(usage) {
+  if (!usage || typeof usage !== 'object') return null
+  const number = (value) => Number.isFinite(value) ? Math.max(0, value) : 0
+  const input = number(usage.input)
+  const output = number(usage.output)
+  const reasoning = number(usage.reasoning)
+  const cacheRead = number(usage.cache?.read)
+  const cacheWrite = number(usage.cache?.write)
+  const total = Number.isFinite(usage.total)
+    ? Math.max(0, usage.total)
+    : input + output + reasoning + cacheRead + cacheWrite
+  return { input, output, reasoning, cacheRead, cacheWrite, total }
+}
 
-const supervisorNodes = computed(() => {
-  const hasAssistant = props.messages.some((message) => message.role === 'assistant')
-  return [
-    {
-      id: 'supervisor:summary',
-      type: 'Supervisor',
-      label: props.isSummarizing ? '正在总结本轮' : '监督总结',
-      short: '监',
-      group: 'supervisor',
-      status: props.isSummarizing ? 'running' : hasAssistant ? 'completed' : 'pending',
-      detail: '主对话进入空闲后，监督会话提取稳定事实，并要求只关联真实存在的 source partID。',
-      time: props.isSummarizing ? '进行中' : '空闲后触发',
-    },
-    {
-      id: 'supervisor:persist',
-      type: 'Persist',
-      label: `写回 ${props.cards.length} 张卡片`,
-      short: '存',
-      group: 'supervisor',
-      status: props.isSummarizing ? 'running' : props.cards.length ? 'completed' : 'pending',
-      detail: '监督结果按主题合并并持久化；已有卡片会保留选择状态、优先级和历史 part 关联。',
-      time: '总结完成后',
-    },
-  ]
+const usages = computed(() => props.messages
+  .map((message) => normalizeUsage(message.usage))
+  .filter(Boolean))
+
+const totalTokenUsage = computed(() => usages.value.reduce((total, usage) => total + usage.total, 0))
+const latestUsage = computed(() => usages.value.at(-1))
+const contextRemaining = computed(() => {
+  const used = latestUsage.value ? latestUsage.value.input + latestUsage.value.cacheRead : 0
+  return Math.max(0, contextLimit - used)
 })
 
+function formatTokenCount(value) {
+  if (!Number.isFinite(value)) return '—'
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value % 1_000_000 ? 1 : 0)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value % 1_000 ? 1 : 0)}K`
+  return String(Math.round(value))
+}
+
 const metrics = computed(() => [
-  { label: '动作', value: conversationActions.value.length },
-  { label: '模型轮次', value: props.messages.filter((message) => message.role === 'user').length },
-  { label: '已选卡片', value: `${selectedCards.value.length}/${props.cards.length}` },
-  { label: '注入 part', value: selectedPartIDs.value.length },
+  { label: 'Token 消耗', value: formatTokenCount(totalTokenUsage.value) },
+  { label: '上下文剩余', value: formatTokenCount(contextRemaining.value) },
 ])
 
-const detailNode = computed(() => selectedNode.value || filteredActions.value.at(-1) || supervisorNodes.value[0])
+const detailNode = computed(() => selectedNode.value || filteredActions.value.at(-1))
 
 function selectNode(node) {
   selectedNode.value = node
@@ -215,7 +214,6 @@ function selectNode(node) {
 function statusText(status) {
   return {
     completed: '已完成', running: '进行中', pending: '待触发', error: '失败',
-    included: '下一轮可见', excluded: '下一轮隔离',
   }[status] || status
 }
 
@@ -260,10 +258,10 @@ onBeforeUnmount(() => {
         <div>
           <div class="workflow-title-row">
             <span class="workflow-title-icon"><AppIcon name="workflow" :size="19" /></span>
-            <h2 id="workflow-title">工作流查看</h2>
+            <h2 id="workflow-title">执行追踪&项目概况</h2>
             <span>{{ sessionTitle }}</span>
           </div>
-          <p>把 OpenCode 消息 part 映射成标准动作，并同时显化卡片选择对下一轮上下文的影响。</p>
+          <p>将 OpenCode 消息 part 映射为可追溯的执行动作。</p>
         </div>
         <button type="button" class="icon-btn workflow-close" aria-label="关闭工作流" @click="$emit('close')">
           <AppIcon name="x" :size="18" />
@@ -297,7 +295,6 @@ onBeforeUnmount(() => {
         <div class="workflow-legend" aria-label="状态图例">
           <span><i class="completed"></i>完成</span>
           <span><i class="running"></i>进行中</span>
-          <span><i class="excluded"></i>已隔离</span>
         </div>
       </div>
 
@@ -322,7 +319,7 @@ onBeforeUnmount(() => {
                         :title="`${node.label} · ${brief(node.tool || node.detail)}`"
                         @click="selectNode(node)"
                       >
-                        <span class="workflow-chip-glyph">{{ node.short }}</span>
+                        <ActionIcon :type="node.type" :size="20" :prefix="node.id" />
                       </button>
                       <span v-if="i < row.length - 1" class="workflow-chip-connector" aria-hidden="true"></span>
                     </template>
@@ -339,64 +336,36 @@ onBeforeUnmount(() => {
             </div>
           </section>
 
-          <section class="workflow-lane context-lane">
-            <div class="workflow-lane-label">
-              <strong>上下文选择</strong>
-              <span>决定下一轮可见 part</span>
+          <section class="workflow-breakdown" aria-label="动作分布">
+            <div class="workflow-breakdown-head">
+              <strong>动作分布</strong>
+              <span>共 {{ totalActionCount }} 个动作</span>
             </div>
-            <div v-if="contextNodes.length" class="workflow-context-grid">
-              <button
-                v-for="node in contextNodes"
-                :key="node.id"
-                type="button"
-                class="workflow-context-node"
-                :class="[{ selected: detailNode?.id === node.id }, `status-${node.status}`]"
-                @click="selectNode(node)"
-              >
-                <span class="workflow-node-icon">{{ node.short }}</span>
-                <span>
-                  <strong>{{ brief(node.label, 18) }}</strong>
-                  <small>{{ node.partIDs.length }} 个 part · {{ statusText(node.status) }}</small>
-                </span>
-              </button>
-              <div class="workflow-context-gate">
-                <AppIcon name="arrow-right" :size="16" />
-                <span><strong>{{ selectedPartIDs.length }}</strong> 个关联 part 注入下一轮</span>
-              </div>
+            <div class="workflow-breakdown-grid">
+              <template v-if="typeBreakdown.length">
+                <div
+                  v-for="item in typeBreakdown"
+                  :key="item.type"
+                  class="workflow-breakdown-pill"
+                  :data-type="item.type"
+                  :title="`${item.label} · ${item.count} 次`"
+                >
+                  <ActionIcon :type="item.type" :size="16" :prefix="`bd-${item.type}`" />
+                  <span class="workflow-breakdown-name">{{ item.label }}</span>
+                  <span class="workflow-breakdown-count">{{ item.count }}</span>
+                </div>
+              </template>
+              <div v-else class="workflow-breakdown-empty">暂无动作数据</div>
             </div>
-            <div v-else class="workflow-lane-empty">尚无总结卡片；完成一轮对话后由监督流程生成</div>
           </section>
 
-          <section class="workflow-lane supervisor-lane">
-            <div class="workflow-lane-label">
-              <strong>监督流程</strong>
-              <span>主会话 idle 后运行</span>
-            </div>
-            <div class="workflow-track">
-              <template v-for="(node, index) in supervisorNodes" :key="node.id">
-                <button
-                  type="button"
-                  class="workflow-node"
-                  :class="[{ selected: detailNode?.id === node.id }, `status-${node.status}`]"
-                  :data-type="node.type"
-                  @click="selectNode(node)"
-                >
-                  <span class="workflow-node-icon">{{ node.short }}</span>
-                  <span class="workflow-node-copy">
-                    <strong>{{ node.label }}</strong>
-                    <small>{{ statusText(node.status) }}</small>
-                  </span>
-                  <em>{{ node.time }}</em>
-                </button>
-                <span v-if="index < supervisorNodes.length - 1" class="workflow-connector" aria-hidden="true"></span>
-              </template>
-            </div>
-          </section>
         </div>
 
         <aside v-if="detailNode" class="workflow-detail" aria-live="polite">
           <div class="workflow-detail-heading">
-            <span class="workflow-node-icon" :data-type="detailNode.type">{{ detailNode.short }}</span>
+            <span class="workflow-node-icon" :data-type="detailNode.type">
+              <ActionIcon :type="detailNode.type" :size="18" :prefix="`detail-${detailNode.id}`" />
+            </span>
             <div>
               <small>{{ typeMeta[detailNode.type]?.label || '动作详情' }}</small>
               <h3>{{ detailNode.label }}</h3>
@@ -413,14 +382,10 @@ onBeforeUnmount(() => {
             <template v-if="detailNode.durationMs !== null && detailNode.durationMs !== undefined"><dt>耗时</dt><dd>{{ formatDuration(detailNode.durationMs) }}</dd></template>
             <template v-if="detailNode.partIDs?.length"><dt>关联 parts</dt><dd class="workflow-part-list"><code v-for="partID in detailNode.partIDs" :key="partID">{{ partID }}</code></dd></template>
           </dl>
-          <div v-if="detailNode.status === 'excluded'" class="workflow-detail-note">
-            此卡片未被选择，它关联的 part 不会进入模型下一轮上下文。
-          </div>
         </aside>
       </div>
 
-      <footer class="workflow-footer">
-        <p>共关联 {{ relatedPartIDs.length }} 个历史 part；当前实际注入 {{ selectedPartIDs.length }} 个。</p>
+      <footer class="workflow-footer workflow-footer--simple">
         <button type="button" class="secondary-action" @click="$emit('close')">关闭</button>
       </footer>
     </section>

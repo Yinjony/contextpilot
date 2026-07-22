@@ -620,8 +620,6 @@ function refreshSessionContext() {}
       v-if="isWorkflowOpen && activeSession"
       :session-title="activeSession.title"
       :messages="activeSession.messages"
-      :cards="activeContextCards"
-      :is-summarizing="isSummarizing"
       @close="isWorkflowOpen = false"
     />
   </main>

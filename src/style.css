@@ -2377,20 +2377,34 @@ kbd {
 .workflow-metrics {
   margin: 16px 26px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
 .workflow-metrics > div {
+  position: relative;
   min-height: 62px;
-  padding: 10px 13px;
+  padding: 12px 14px 12px 18px;
   border: 1px solid var(--line);
   border-radius: 10px;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  background: var(--surface-soft);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-soft) 100%);
+  box-shadow: 0 1px 2px rgba(24, 34, 62, 0.04);
+  overflow: hidden;
+}
+
+.workflow-metrics > div::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  bottom: 11px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--brand-grad);
 }
 
 .workflow-metrics strong {
@@ -2474,7 +2488,7 @@ kbd {
 }
 
 .workflow-content {
-  min-height: 440px;
+  min-height: 380px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 264px;
 }
@@ -2482,6 +2496,8 @@ kbd {
 .workflow-stage {
   min-width: 0;
   padding: 4px 0;
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
 }
 
@@ -2499,7 +2515,8 @@ kbd {
 
 /* 主对话 lane：视觉主导，更高更突出，承载 chip 流。 */
 .workflow-main-lane {
-  min-height: 198px;
+  flex: 0 0 auto;
+  min-height: 176px;
   padding: 26px 20px 26px 0;
   background: linear-gradient(180deg, #fbfcff 0%, #f4f7fc 100%);
 }
@@ -2510,7 +2527,106 @@ kbd {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  justify-content: center;
 }
+
+/* 动作分布：吸收主对话下方的剩余高度，把"空着"变成有信息量的概览 */
+.workflow-breakdown {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 18px 26px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface);
+}
+
+.workflow-breakdown-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.workflow-breakdown-head strong {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text);
+}
+
+.workflow-breakdown-head span {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--subtle);
+}
+
+.workflow-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 8px;
+}
+
+.workflow-breakdown-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.workflow-breakdown-pill:hover {
+  transform: translateY(-1px);
+  border-color: var(--brand-line);
+  box-shadow: var(--shadow-sm);
+}
+
+.workflow-breakdown-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.workflow-breakdown-count {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.workflow-breakdown-empty {
+  grid-column: 1 / -1;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  text-align: center;
+  color: var(--subtle);
+  background: var(--surface-soft);
+  font-size: 12px;
+}
+
+/* 分布胶囊：图标按动作类型取色（颜色只作用在图标上，名称/计数保持中性） */
+.workflow-breakdown-pill[data-type='UserRequest'] { color: #64748b; }
+.workflow-breakdown-pill[data-type='Think'],
+.workflow-breakdown-pill[data-type='Plan'] { color: #2f9e7e; }
+.workflow-breakdown-pill[data-type='Response'],
+.workflow-breakdown-pill[data-type='Write'] { color: #c2589c; }
+.workflow-breakdown-pill[data-type='Read'],
+.workflow-breakdown-pill[data-type='Shell'],
+.workflow-breakdown-pill[data-type='Search'],
+.workflow-breakdown-pill[data-type='Tool'] { color: #5170b8; }
+.workflow-breakdown-pill[data-type='Subagent'] { color: #b08800; }
+.workflow-breakdown-pill[data-type='Skill'] { color: #6c9b2f; }
+.workflow-breakdown-pill[data-type='Compaction'] { color: #9c7a4d; }
 
 .workflow-chip-row {
   display: flex;
@@ -2536,8 +2652,9 @@ kbd {
   font-size: 12px;
 }
 
-/* 思/答 等简单小方块：只放单字 + 类型底色，细箭头串联，匹配参考图风格。 */
+/* 思/答 等简单小方块：只放动作图标 + 类型底色，细箭头串联，匹配参考图风格。 */
 .workflow-chip {
+  position: relative;
   width: 50px;
   height: 50px;
   border: 1px solid #9ca8b8;
@@ -2549,13 +2666,39 @@ kbd {
   background: #eef2f6;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(24, 34, 62, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.workflow-chip-glyph {
-  font-size: 17px;
-  font-weight: 850;
-  line-height: 1;
+/* 顶部高光层：叠在底色之上、图标之下，给方块一点立体感 */
+.workflow-chip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 48%);
+}
+
+.workflow-chip .action-icon {
+  position: relative;
+  z-index: 1;
+}
+
+/* 动作图标：span 定尺寸，svg 填满；颜色由外层 color 透传（图标内部用 currentColor） */
+.action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: inherit;
+}
+
+.action-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .workflow-chip-connector {
@@ -2682,7 +2825,8 @@ kbd {
 .workflow-node.selected,
 .workflow-context-node.selected,
 .workflow-chip.selected {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16), var(--shadow-sm);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3), 0 4px 10px rgba(99, 102, 241, 0.16);
+  transform: translateY(-1px);
 }
 
 :is(.workflow-node, .workflow-chip)[data-type='UserRequest'] { border-color: #64748b; background: #ffffff; }
@@ -2984,6 +3128,10 @@ kbd {
 .workflow-footer p {
   color: var(--muted);
   font-size: 11px;
+}
+
+.workflow-footer--simple {
+  justify-content: flex-end;
 }
 
 @media (max-width: 900px) {

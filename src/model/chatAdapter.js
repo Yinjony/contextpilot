@@ -756,6 +756,26 @@ function toUIMessage(withParts) {
   if (!withParts || typeof withParts !== 'object') return null
   const info = withParts.info || {}
   const parts = Array.isArray(withParts.parts) ? withParts.parts : []
+  const usageFromSteps = parts
+    .filter((part) => part?.type === 'step-finish' && part.tokens && typeof part.tokens === 'object')
+    .map((part) => part.tokens)
+    .reduce(
+      (total, tokens) => ({
+        input: total.input + (Number.isFinite(tokens.input) ? tokens.input : 0),
+        output: total.output + (Number.isFinite(tokens.output) ? tokens.output : 0),
+        reasoning: total.reasoning + (Number.isFinite(tokens.reasoning) ? tokens.reasoning : 0),
+        cache: {
+          read: total.cache.read + (Number.isFinite(tokens.cache?.read) ? tokens.cache.read : 0),
+          write: total.cache.write + (Number.isFinite(tokens.cache?.write) ? tokens.cache.write : 0),
+        },
+      }),
+      { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+    )
+  const usage = info.tokens && typeof info.tokens === 'object'
+    ? info.tokens
+    : parts.some((part) => part?.type === 'step-finish')
+      ? usageFromSteps
+      : null
   const text = parts
     .filter((p) => p && p.type === 'text' && !p.synthetic && !p.ignored && typeof p.text === 'string')
     .map((p) => p.text)
@@ -790,6 +810,7 @@ function toUIMessage(withParts) {
         error: typeof part.state?.error === 'string' ? part.state.error.slice(0, 240) : '',
       }]
     }),
+    ...(usage ? { usage } : {}),
     ...(reasoning ? { reasoning } : {}),
   }
 }
