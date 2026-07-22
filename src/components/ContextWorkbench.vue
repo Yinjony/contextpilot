@@ -9,7 +9,7 @@ const props = defineProps({
   isSummarizing: { type: Boolean, default: false },
 })
 
-defineEmits(['collapse', 'expand', 'update-priority', 'toggle', 'configure', 'workflow'])
+defineEmits(['collapse', 'expand', 'update-priority', 'toggle'])
 
 // 类型筛选：按 category 动态生成，计数对应实际卡片；点击可过滤列表
 const activeFilter = ref('全部')
@@ -159,23 +159,13 @@ const metrics = computed(() => {
         class="metric"
         :data-tone="m.tone"
       >
-        <span class="metric-ico"><AppIcon :name="m.icon" :size="18" /></span>
+        <span class="metric-ico"><AppIcon :name="m.icon" :size="14" /></span>
         <div class="metric-body">
           <span class="metric-value">{{ m.value }}<small v-if="m.unit">{{ m.unit }}</small></span>
           <span class="metric-label">{{ m.label }}</span>
         </div>
       </div>
     </div>
-
-    <button type="button" class="primary-action config-action" @click="$emit('configure')">
-      <AppIcon name="sliders" :size="16" />
-      <span>对话底盘配置</span>
-    </button>
-
-    <button type="button" class="primary-action config-action" @click="$emit('workflow')">
-      <AppIcon name="workflow" :size="16" />
-      <span>工作流查看</span>
-    </button>
 
     <div
       ref="filterBarRef"

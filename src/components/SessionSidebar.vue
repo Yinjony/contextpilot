@@ -8,7 +8,17 @@ defineProps({
   collapsed: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['select', 'create', 'share', 'rename', 'delete', 'collapse', 'expand'])
+const emit = defineEmits([
+  'select',
+  'create',
+  'share',
+  'rename',
+  'delete',
+  'collapse',
+  'expand',
+  'configure',
+  'workflow',
+])
 const openMenuId = ref('')
 
 function toggleMenu(id) {
@@ -127,10 +137,20 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <button type="button" class="all-sessions">
-        <span>查看全部会话 ({{ sessions.length }})</span>
-        <AppIcon name="arrow-right" :size="16" />
-      </button>
+      <div class="sidebar-footer-actions" aria-label="会话辅助操作">
+        <button type="button" class="sidebar-utility-action" @click="$emit('configure')">
+          <AppIcon name="sliders" :size="16" />
+          <span>对话底盘配置</span>
+        </button>
+        <button type="button" class="sidebar-utility-action" @click="$emit('workflow')">
+          <AppIcon name="workflow" :size="16" />
+          <span>工作流查看</span>
+        </button>
+        <button type="button" class="all-sessions">
+          <span>查看全部会话 ({{ sessions.length }})</span>
+          <AppIcon name="arrow-right" :size="16" />
+        </button>
+      </div>
     </template>
   </aside>
 </template>

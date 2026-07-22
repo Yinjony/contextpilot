@@ -4,9 +4,8 @@
 
 :root {
   /* 背景与表面 */
-  --bg: #f4f6fb;
-  --bg-mesh: radial-gradient(1200px 600px at 0% 0%, #eef2ff 0%, rgba(238, 242, 255, 0) 55%),
-    radial-gradient(1000px 500px at 100% 0%, #eaf2ff 0%, rgba(234, 242, 255, 0) 50%);
+  --bg: #f7f8fb;
+  --bg-mesh: linear-gradient(#f7f8fb, #f7f8fb);
   --surface: #ffffff;
   --surface-soft: #fafbfd;
   --surface-sunken: #f3f5fa;
@@ -55,8 +54,8 @@
   --shadow: 0 4px 14px rgba(15, 23, 42, 0.06), 0 12px 30px rgba(15, 23, 42, 0.06);
   --shadow-lg: 0 10px 24px rgba(15, 23, 42, 0.08), 0 28px 60px rgba(15, 23, 42, 0.1);
 
-  --radius: 16px;
-  --radius-sm: 12px;
+  --radius: 12px;
+  --radius-sm: 10px;
   --radius-pill: 999px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -84,6 +83,8 @@ body,
 body {
   margin: 0;
   background: var(--bg);
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 button,
@@ -186,8 +187,8 @@ kbd {
   width: 100%;
   height: 100svh;
   display: grid;
-  --col-sidebar: 288px;
-  --col-context: minmax(440px, 520px);
+  --col-sidebar: 276px;
+  --col-context: minmax(420px, 500px);
   grid-template-columns: var(--col-sidebar) var(--col-context) minmax(520px, 1fr);
   overflow: hidden;
   background: var(--bg-mesh), var(--bg);
@@ -206,10 +207,10 @@ kbd {
 .sidebar {
   height: 100%;
   min-height: 0;
-  padding: 22px 18px;
+  padding: 18px 14px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   background: var(--sidebar);
   border-right: 1px solid var(--line);
   overflow: hidden;
@@ -224,7 +225,7 @@ kbd {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 44px;
+  min-height: 38px;
 }
 
 .sidebar-title {
@@ -236,8 +237,8 @@ kbd {
   flex: 1;
   min-width: 0;
   color: var(--text);
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 760;
   line-height: 1;
   letter-spacing: 0;
   text-transform: lowercase;
@@ -328,15 +329,15 @@ kbd {
 .sidebar h1 {
   margin-top: 4px;
   color: var(--text);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .sidebar h1.brand-word {
   margin-top: 0;
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 760;
   line-height: 1;
   letter-spacing: 0;
 }
@@ -396,7 +397,7 @@ kbd {
 
 .quick-actions button {
   width: 100%;
-  min-height: 42px;
+  min-height: 38px;
   padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -405,7 +406,7 @@ kbd {
   gap: 10px;
   color: var(--text);
   background: var(--surface);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -432,11 +433,11 @@ kbd {
 .quick-actions .primary-action {
   justify-content: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: 40px;
   color: #ffffff;
   background: var(--brand-grad);
   border: 0;
-  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.3);
+  box-shadow: none;
   font-weight: 700;
 }
 
@@ -444,8 +445,8 @@ kbd {
   color: #ffffff;
   background: var(--brand-grad);
   border-color: transparent;
-  transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.38);
+  transform: none;
+  box-shadow: none;
 }
 
 .quick-actions .primary-action:active {
@@ -460,20 +461,20 @@ kbd {
   align-items: center;
   justify-content: space-between;
   color: var(--text);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 
 .section-heading strong {
-  min-width: 24px;
-  height: 24px;
+  min-width: 22px;
+  height: 22px;
   padding: 0 8px;
   border-radius: var(--radius-pill);
   display: grid;
   place-items: center;
   color: var(--brand-text);
   background: var(--brand-soft);
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
 .session-list {
@@ -481,15 +482,15 @@ kbd {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   overflow-y: auto;
 }
 
 .session-item {
   position: relative;
   width: 100%;
-  min-height: 72px;
-  padding: 8px 8px 8px 14px;
+  min-height: 62px;
+  padding: 6px 8px 6px 12px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   display: grid;
@@ -515,12 +516,12 @@ kbd {
 
 .session-main {
   min-width: 0;
-  min-height: 52px;
+  min-height: 48px;
   padding: 0;
   border: 0;
   display: grid;
   align-content: center;
-  gap: 6px;
+  gap: 4px;
   color: var(--muted);
   background: transparent;
   text-align: left;
@@ -637,8 +638,8 @@ kbd {
 .session-item strong,
 .session-main strong {
   color: var(--text);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 680;
   line-height: 1.35;
 }
 
@@ -652,13 +653,13 @@ kbd {
 .session-item em,
 .session-main em {
   color: var(--subtle);
-  font-size: 11.5px;
+  font-size: 11px;
   font-style: normal;
 }
 
 .all-sessions {
   width: 100%;
-  min-height: 40px;
+  min-height: 36px;
   padding: 0 14px;
   border: 1px dashed var(--line);
   border-radius: var(--radius-sm);
@@ -668,7 +669,7 @@ kbd {
   gap: 8px;
   color: var(--brand-text);
   background: transparent;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 
@@ -676,6 +677,32 @@ kbd {
   border-color: var(--brand-line);
   border-style: solid;
   background: var(--brand-soft);
+}
+
+.sidebar-footer-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.sidebar-utility-action {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #ffffff;
+  background: var(--brand-grad);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.sidebar-utility-action:hover {
+  color: #ffffff;
+  background: var(--brand-grad);
 }
 
 /* ----------------------------- 中栏：上下文工作台 ----------------------------- */
@@ -689,37 +716,10 @@ kbd {
 }
 
 .context-panel {
-  padding: 22px;
-  gap: 14px;
+  padding: 18px;
+  gap: 11px;
   background: transparent;
   border-right: 1px solid var(--line-soft);
-}
-
-.config-action {
-  width: 100%;
-  min-height: 44px;
-  padding: 0 16px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: #ffffff;
-  background: var(--brand-grad);
-  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.3);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.config-action:hover {
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.38);
-}
-
-.config-action:active {
-  transform: translateY(0);
 }
 
 .context-panel.collapsed {
@@ -731,29 +731,29 @@ kbd {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
 }
 
 .panel-header h2,
 .chat-header h2 {
-  margin-top: 5px;
+  margin-top: 3px;
   color: var(--text);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.3;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .ghost-button,
 .model-chip {
   flex: 0 0 auto;
-  min-height: 34px;
-  padding: 0 12px;
+  min-height: 30px;
+  padding: 0 10px;
   border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 
@@ -771,25 +771,26 @@ kbd {
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .metric {
   min-width: 0;
-  padding: 14px;
+  min-height: 58px;
+  padding: 8px 10px;
   border: 1px solid var(--line-soft);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
 }
 
 .metric-ico {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -819,10 +820,10 @@ kbd {
 .metric-value {
   display: block;
   color: var(--text);
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 19px;
+  font-weight: 760;
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 
@@ -837,7 +838,7 @@ kbd {
   display: block;
   margin-top: 2px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -849,11 +850,11 @@ kbd {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  min-height: 52px;
-  padding: 8px 2px 10px;
+  min-height: 42px;
+  padding: 5px 2px 7px;
   scrollbar-width: none;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
@@ -884,14 +885,14 @@ kbd {
   border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--muted);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .filter-bar button {
   flex: 0 0 auto;
-  min-height: 34px;
-  padding: 8px 14px;
+  min-height: 32px;
+  padding: 6px 12px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -903,7 +904,7 @@ kbd {
   min-width: 16px;
   padding: 0;
   display: inline;
-  font-size: 14px;
+  font-size: 12.5px;
   line-height: 1;
   color: var(--muted);
   background: transparent;
@@ -952,13 +953,13 @@ kbd {
 
 .search-box input {
   width: 100%;
-  min-height: 44px;
+  min-height: 40px;
   padding: 0 46px 0 42px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   color: var(--text);
   background: var(--surface);
-  box-shadow: var(--shadow-xs);
+  box-shadow: none;
 }
 
 .search-box input::placeholder {
@@ -987,7 +988,7 @@ kbd {
 }
 
 .context-toolbar button {
-  padding: 7px 12px;
+  padding: 6px 10px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1033,7 +1034,7 @@ kbd {
 .context-list {
   min-height: 0;
   display: grid;
-  gap: 10px;
+  gap: 8px;
   overflow: auto;
   padding: 2px 6px 2px 0;
 }
@@ -1086,9 +1087,9 @@ kbd {
 }
 
 .context-card {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border: 1px solid var(--line-soft);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: none;
   transition: border-color 0.18s var(--ease), background 0.18s var(--ease);
@@ -1109,7 +1110,7 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .card-actions {
@@ -1121,19 +1122,19 @@ kbd {
 
 .source-pill,
 .state-pill {
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: var(--radius-pill);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
 }
 
 .category-pill {
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--line);
   background: var(--surface-sunken);
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
 }
 
@@ -1196,18 +1197,18 @@ kbd {
 }
 
 .context-card h3 {
-  margin-top: 10px;
+  margin-top: 8px;
   color: var(--text);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 14.5px;
+  font-weight: 680;
   line-height: 1.35;
 }
 
 .context-card p {
-  margin-top: 7px;
+  margin-top: 5px;
   color: var(--muted);
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .priority,
@@ -1275,7 +1276,7 @@ kbd {
 }
 
 .chat-header {
-  padding: 22px 26px 16px;
+  padding: 18px 22px 14px;
   border-bottom: 1px solid var(--line-soft);
 }
 
@@ -1323,10 +1324,10 @@ kbd {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 24px 26px;
+  padding: 20px 22px;
   display: grid;
   align-content: start;
-  gap: 18px;
+  gap: 14px;
 }
 
 .messages.empty {
@@ -1351,9 +1352,9 @@ kbd {
 
 .bubble {
   max-width: min(720px, 82%);
-  padding: 13px 15px;
+  padding: 10px 13px;
   border: 1px solid var(--line-soft);
-  border-radius: 16px;
+  border-radius: 12px;
   border-top-left-radius: 5px;
   color: var(--text);
   background: var(--surface);
@@ -1377,22 +1378,22 @@ kbd {
   color: #ffffff;
   background: var(--brand-grad);
   border-color: transparent;
-  border-radius: 16px;
+  border-radius: 12px;
   border-top-right-radius: 5px;
   box-shadow: none;
 }
 
 .bubble p {
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: 14px;
+  line-height: 1.6;
   /* 保留 AI 回复里的换行与连续空格，同时让长行/长 URL 自动换行不撑破气泡 */
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .bubble h3 {
-  margin-bottom: 8px;
-  font-size: 16.5px;
+  margin-bottom: 7px;
+  font-size: 15px;
   font-weight: 700;
 }
 
@@ -1441,8 +1442,8 @@ kbd {
 
 /* —— markdown 正文渲染 —— */
 .markdown-body {
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: 14px;
+  line-height: 1.6;
 }
 .markdown-body > :first-child {
   margin-top: 0;
@@ -1463,10 +1464,10 @@ kbd {
   line-height: 1.3;
   font-weight: 700;
 }
-.markdown-body h1 { font-size: 18px; }
-.markdown-body h2 { font-size: 17px; }
-.markdown-body h3 { font-size: 16px; }
-.markdown-body h4 { font-size: 15px; }
+.markdown-body h1 { font-size: 17px; }
+.markdown-body h2 { font-size: 16px; }
+.markdown-body h3 { font-size: 15px; }
+.markdown-body h4 { font-size: 14px; }
 .markdown-body ul,
 .markdown-body ol {
   margin: 0 0 10px;
@@ -1663,15 +1664,15 @@ kbd {
 
 /* 输入框 */
 .composer-shell {
-  padding: 0 26px 22px;
+  padding: 0 22px 18px;
   border-top: 1px solid var(--line-soft);
   background: var(--surface);
 }
 
 .composer {
-  padding-top: 16px;
+  padding-top: 14px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .composer-error {
@@ -1684,8 +1685,8 @@ kbd {
 .composer input {
   flex: 1;
   min-width: 0;
-  min-height: 46px;
-  padding: 0 16px;
+  min-height: 42px;
+  padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -1703,12 +1704,12 @@ kbd {
 }
 
 .composer button {
-  min-width: 96px;
+  min-width: 86px;
   border: 0;
   border-radius: var(--radius-sm);
   color: #ffffff;
   background: var(--brand-grad);
-  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.3);
+  box-shadow: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1717,8 +1718,8 @@ kbd {
 }
 
 .composer button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.38);
+  transform: none;
+  box-shadow: none;
 }
 
 .composer button:disabled,
@@ -1729,7 +1730,7 @@ kbd {
 
 .composer button:disabled:hover {
   transform: none;
-  box-shadow: 0 8px 18px rgba(99, 102, 241, 0.3);
+  box-shadow: none;
 }
 
 /* ----------------------------- 滚动条 ----------------------------- */

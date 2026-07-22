@@ -568,6 +568,8 @@ function refreshSessionContext() {}
       @delete="deleteSession"
       @collapse="sidebarCollapsed = true"
       @expand="sidebarCollapsed = false"
+      @configure="openChatConfig"
+      @workflow="openWorkflow"
     />
 
     <ContextWorkbench
@@ -578,8 +580,6 @@ function refreshSessionContext() {}
       @expand="contextCollapsed = false"
       @toggle="toggleCardSelection"
       @update-priority="updateContextPriority"
-      @configure="openChatConfig"
-      @workflow="openWorkflow"
     />
 
     <ChatPanel
