@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import AppIcon from './AppIcon.vue'
 
 const props = defineProps({
@@ -126,6 +126,29 @@ const hiddenActionCount = computed(() => {
   return Math.max(0, sourceCount - filteredActions.value.length)
 })
 
+// 蛇形布局：按容器宽度算每行 chip 数，再把动作切成多行；奇偶行方向交替实现「拐弯」。
+const flowRef = ref(null)
+const chipsPerRow = ref(8)
+let resizeObserver = null
+
+function recalcPerRow() {
+  const el = flowRef.value
+  if (!el) return
+  const contentWidth = Math.max(0, el.clientWidth - 36) // 减去左右 18px 内边距
+  const n = Math.floor((contentWidth + 16) / 66) // 每 chip 50 + 连接器约 16
+  chipsPerRow.value = Math.max(3, Math.min(12, n))
+}
+
+const actionRows = computed(() => {
+  const list = filteredActions.value
+  const size = chipsPerRow.value
+  const rows = []
+  for (let i = 0; i < list.length; i += size) {
+    rows.push(list.slice(i, i + size))
+  }
+  return rows
+})
+
 const contextNodes = computed(() =>
   props.cards.slice(0, 10).map((card, index) => ({
     id: `context:${card.id || index}`,
@@ -209,6 +232,16 @@ function brief(value, max = 24) {
 onMounted(async () => {
   await nextTick()
   modalRef.value?.focus()
+  recalcPerRow()
+  if (flowRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(recalcPerRow)
+    resizeObserver.observe(flowRef.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
 })
 </script>
 
@@ -270,33 +303,40 @@ onMounted(async () => {
 
       <div class="workflow-content">
         <div class="workflow-stage">
-          <section class="workflow-lane">
+          <section class="workflow-lane workflow-main-lane">
             <div class="workflow-lane-label">
               <strong>主对话</strong>
-              <span>按 part 时间排序</span>
+              <span>按 part 时间排序 · 点击方块查看详情</span>
             </div>
-            <div v-if="filteredActions.length" class="workflow-track">
-              <span v-if="hiddenActionCount" class="workflow-overflow-note">较早 {{ hiddenActionCount }} 项</span>
-              <template v-for="(node, index) in filteredActions" :key="node.id">
-                <button
-                  type="button"
-                  class="workflow-node"
-                  :class="[{ selected: detailNode?.id === node.id }, `status-${node.status}`]"
-                  :data-type="node.type"
-                  :title="node.detail"
-                  @click="selectNode(node)"
-                >
-                  <span class="workflow-node-icon">{{ node.short }}</span>
-                  <span class="workflow-node-copy">
-                    <strong>{{ node.label }}</strong>
-                    <small>{{ brief(node.tool || node.detail) }}</small>
-                  </span>
-                  <em>{{ node.time }}</em>
-                </button>
-                <span v-if="index < filteredActions.length - 1" class="workflow-connector" aria-hidden="true"></span>
+            <div ref="flowRef" class="workflow-main-flow">
+              <span v-if="hiddenActionCount && filteredActions.length" class="workflow-overflow-note">较早 {{ hiddenActionCount }} 项</span>
+              <template v-if="filteredActions.length">
+                <template v-for="(row, rowIdx) in actionRows" :key="`flow-row-${rowIdx}`">
+                  <div class="workflow-chip-row" :class="{ reverse: rowIdx % 2 === 1 }">
+                    <template v-for="(node, i) in row" :key="node.id">
+                      <button
+                        type="button"
+                        class="workflow-chip"
+                        :class="[{ selected: detailNode?.id === node.id }, `status-${node.status}`]"
+                        :data-type="node.type"
+                        :title="`${node.label} · ${brief(node.tool || node.detail)}`"
+                        @click="selectNode(node)"
+                      >
+                        <span class="workflow-chip-glyph">{{ node.short }}</span>
+                      </button>
+                      <span v-if="i < row.length - 1" class="workflow-chip-connector" aria-hidden="true"></span>
+                    </template>
+                  </div>
+                  <div
+                    v-if="rowIdx < actionRows.length - 1"
+                    class="workflow-chip-uturn"
+                    :class="rowIdx % 2 === 1 ? 'is-left' : 'is-right'"
+                    aria-hidden="true"
+                  ></div>
+                </template>
               </template>
+              <div v-else class="workflow-main-empty">当前筛选下暂无动作</div>
             </div>
-            <div v-else class="workflow-lane-empty">当前筛选下暂无动作</div>
           </section>
 
           <section class="workflow-lane context-lane">

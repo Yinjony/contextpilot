@@ -163,7 +163,9 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
   // 复用同步路径的 session 缓存（按 client session id 映射到 opencode session id）。
   const session = await ensureOpencodeSession(sessionId, title, signal, chatConfig)
   // 选中卡片作为上下文前置注入（补上工作台勾选 → 主对话的链路）。
-  const basePrompt = session.isNew ? buildSeededPrompt(messages, latestUserMessage.text) : latestUserMessage.text
+  // 新建远端 session 时也只发送本轮问题。过去内容只能通过选中卡片进入，
+  // 否则旧的整段 UI 历史注入会让未选中内容绕过 part 过滤。
+  const basePrompt = latestUserMessage.text
   const promptParts = buildContextPromptParts({
     prompt: basePrompt,
     selectedCards,
@@ -282,23 +284,40 @@ export async function loadHistory() {
       }
 
       let messages = []
+      let withParts = []
+      let loadedParts = false
       try {
-        const withParts = await client.messages({ sessionID: oc.id, directory })
-        if (Array.isArray(withParts)) messages = withParts.map(toUIMessage).filter(Boolean)
+        const loaded = await client.messages({ sessionID: oc.id, directory })
+        if (Array.isArray(loaded)) {
+          withParts = loaded
+          loadedParts = true
+          messages = withParts.map(toUIMessage).filter(Boolean)
+        }
       } catch {
         // 单个会话消息加载失败则保留空消息列表，不中断整体加载。
       }
 
       const firstUser = messages.find((m) => m.role === 'user')
-      let contextCards = []
+      let supervisorCards = []
       if (supervisorSessionId) {
-        contextCards = await getSupervisorCards(supervisorSessionId)
+        supervisorCards = await getSupervisorCards(supervisorSessionId)
       }
-      if (!contextCards.length && Array.isArray(metadata.contextCards)) {
-        contextCards = metadata.contextCards
-      }
-      const uiMetadata = buildMainMetadata(metadata, supervisorSessionId)
-      if (supervisorSessionId && (metadata.type !== 'main' || metadata.supervisorSessionId !== supervisorSessionId)) {
+      const validPartIDs = loadedParts
+        ? new Set(withParts.flatMap((message) => (message.parts || []).map((part) => part?.id).filter(Boolean)))
+        : null
+      // 监督输出不携带 selected/priority；必须与主 session metadata 合并，否则刷新后
+      // 所有勾选状态都会丢失。partID 同时按主会话真实 part 表做一次存在性校验。
+      const contextCards = mergeLoadedContextCards(
+        supervisorCards,
+        Array.isArray(metadata.contextCards) ? metadata.contextCards : [],
+        validPartIDs,
+      )
+      const uiMetadata = buildMainMetadata(metadata, supervisorSessionId, contextCards)
+      const cardsChanged = JSON.stringify(metadata.contextCards || []) !== JSON.stringify(contextCards)
+      if (
+        cardsChanged ||
+        (supervisorSessionId && (metadata.type !== 'main' || metadata.supervisorSessionId !== supervisorSessionId))
+      ) {
         try {
           await updateSessionMetadata(client, directory, oc.id, uiMetadata)
         } catch (error) {
@@ -397,19 +416,22 @@ export async function saveSessionChatConfig(sessionId, title, chatConfig, baseMe
 // 监督总结：用独立的监督 opencode session 基于「过去卡片 + 本轮对话」增量总结成卡片。
 // 返回 { cards, supervisorId }；失败时 cards 为 []（不抛）。
 export async function runSupervisorSummary({ mainSessionId, turnMessages, messages, cards, mainMetadata, signal }) {
-  if (backend !== 'opencode') return { cards: [], supervisorId: null }
+  if (backend !== 'opencode') return { cards: [], supervisorId: null, sourceParts: [] }
   const client = getBridgeClient()
   const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
 
   let supervisorId
+  let main
   try {
+    main = await ensureOpencodeSession(mainSessionId, undefined, signal)
     supervisorId = await ensureSupervisorSession(mainSessionId, mainMetadata, signal)
   } catch (error) {
     console.warn('[chatAdapter] ensureSupervisorSession 失败：', error?.message || error)
-    return { cards: [], supervisorId: null }
+    return { cards: [], supervisorId: null, sourceParts: [] }
   }
 
-  const sourceParts = await getLatestTurnPartReferences(client, mainSessionId, directory, signal)
+  // mainSessionId 可能只是前端临时 ID；查询 parts 必须使用 ensure 后的真实 OpenCode ID。
+  const sourceParts = await getLatestTurnPartReferences(client, main.id, directory, signal)
   const prompt = buildSupervisorPrompt(turnMessages || messages, cards, sourceParts)
   // 60s 超时，避免同步 /message 卡死。
   const timeout = new AbortController()
@@ -430,10 +452,15 @@ export async function runSupervisorSummary({ mainSessionId, turnMessages, messag
       timeout.signal,
     )
     const text = extractOpencodeAssistantText(result, { allowIncomplete: true })
-    return { cards: parseCardsFromText(text), supervisorId }
+    const parsed = parseCardsFromText(text)
+    return {
+      cards: validateSupervisorCardPartIDs(parsed, cards, sourceParts),
+      supervisorId,
+      sourceParts,
+    }
   } catch (error) {
     console.warn('[chatAdapter] runSupervisorSummary 失败：', error?.message || error)
-    return { cards: [], supervisorId }
+    return { cards: [], supervisorId, sourceParts }
   } finally {
     clearTimeout(timer)
   }
@@ -581,6 +608,94 @@ function normalizePartIDs(value) {
   return [...new Set(value.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()))]
 }
 
+function cardIdentity(card) {
+  return [card?.id, card?.topic, card?.title]
+    .map((value) => String(value || '').trim().toLowerCase())
+    .filter(Boolean)
+}
+
+function findMatchingCard(cards, target) {
+  const identities = new Set(cardIdentity(target))
+  if (!identities.size) return null
+  return (cards || []).find((card) => cardIdentity(card).some((key) => identities.has(key))) || null
+}
+
+function filterExistingPartIDs(partIDs, validPartIDs) {
+  const normalized = normalizePartIDs(partIDs)
+  return validPartIDs instanceof Set ? normalized.filter((id) => validPartIDs.has(id)) : normalized
+}
+
+// 监督 session 保存的是“内容最新版”，主 session metadata 保存的是 UI 状态最新版。
+// 两者恢复时以监督内容为底、以主 session 的 selected/priority 为准。
+function mergeLoadedContextCards(supervisorCards, storedCards, validPartIDs) {
+  const supervisor = Array.isArray(supervisorCards) ? supervisorCards : []
+  const stored = Array.isArray(storedCards) ? storedCards : []
+  const result = supervisor.map((card) => {
+    const saved = findMatchingCard(stored, card)
+    return {
+      ...card,
+      ...(saved
+        ? {
+            id: saved.id || card.id,
+            selected: Boolean(saved.selected),
+            priority: saved.priority || card.priority || '中',
+            source: saved.source || card.source || 'AI 总结',
+            time: saved.time || card.time,
+          }
+        : {
+            // 主 session 尚未持久化到的监督新卡片，按新增卡片规则默认加入上下文。
+            selected: true,
+            priority: card.priority || '中',
+            source: card.source || 'AI 总结',
+          }),
+      partIDs: filterExistingPartIDs(
+        // 主 session 中的卡片已经通过写入前校验，是恢复时的关联真值；
+        // 有保存态时不要再把监督原始输出里的未校验 ID 合并回来。
+        saved ? saved.partIDs : card.partIDs,
+        validPartIDs,
+      ),
+    }
+  })
+
+  for (const card of stored) {
+    if (findMatchingCard(result, card)) continue
+    result.push({
+      ...card,
+      selected: Boolean(card.selected),
+      priority: card.priority || '中',
+      partIDs: filterExistingPartIDs(card.partIDs, validPartIDs),
+    })
+  }
+  return result
+}
+
+// 不信任模型直接返回的 ID：新关联只能来自本轮真实 source parts；旧关联只能
+// 来自该卡片之前已经持有的 partIDs，避免 hallucinated / 串卡 ID 写进数据库。
+function validateSupervisorCardPartIDs(incomingCards, existingCards, sourceParts) {
+  const sourceIDs = new Set((sourceParts || []).map((part) => part.partID).filter(Boolean))
+  return (incomingCards || []).map((card) => {
+    const previous = findMatchingCard(existingCards, card)
+    const allowed = new Set([...sourceIDs, ...normalizePartIDs(previous?.partIDs)])
+    const changedByThisTurn =
+      !previous ||
+      ['topic', 'category', 'title', 'body'].some(
+        (field) => String(previous?.[field] || '').trim() !== String(card?.[field] || '').trim(),
+      )
+    const accepted = normalizePartIDs(card.partIDs).filter((id) => allowed.has(id))
+    // 模型即便漏填 partIDs，也不能让新卡片/本轮更新后的卡片失去关联。
+    // 这类内容必然由本轮 transcript 产生，因此回退关联本轮全部真实文本 parts。
+    const deterministicIDs = changedByThisTurn ? [...sourceIDs] : []
+    return {
+      ...card,
+      partIDs: normalizePartIDs([
+        ...normalizePartIDs(previous?.partIDs),
+        ...accepted,
+        ...deterministicIDs,
+      ]),
+    }
+  })
+}
+
 function buildContextPromptParts({ prompt, selectedCards }) {
   const cardContext = buildContextFromCards(selectedCards)
   return [
@@ -720,7 +835,7 @@ async function sendOpencodeMessage({ sessionId, title, messages, signal, selecte
   }
 
   const session = await ensureOpencodeSession(sessionId, title, signal, chatConfig)
-  const promptText = session.isNew ? buildSeededPrompt(messages, latestUserMessage.text) : latestUserMessage.text
+  const promptText = latestUserMessage.text
   const response = await requestOpencode(withOpencodeDirectory(`/session/${encodeURIComponent(session.id)}/message`), {
     method: 'POST',
     body: buildOpencodePromptPayload(buildContextPromptParts({ prompt: promptText, selectedCards }), chatConfig),
@@ -772,18 +887,6 @@ function buildOpencodePromptPayload(parts, chatConfig) {
     },
     parts,
   }
-}
-
-function buildSeededPrompt(messages, latestUserText) {
-  const latestUserIndex = messages.findLastIndex((message) => message.role === 'user')
-  const priorMessages = normalizeMessages(messages.slice(0, latestUserIndex)).slice(-8)
-  if (priorMessages.length === 0) return latestUserText
-
-  const transcript = priorMessages
-    .map((message) => `${message.role === 'user' ? '用户' : 'AI'}：${message.content}`)
-    .join('\n')
-
-  return `以下是 ContextPilot 聊天区已有上下文，请在此基础上继续回答。\n\n${transcript}\n\n本轮用户问题：${latestUserText}`
 }
 
 async function requestOpencode(path, options = {}) {

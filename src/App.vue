@@ -16,6 +16,12 @@ const chatSessions = ref(
   sessions.map((session) => ({
     ...session,
     messages: session.messages.map((message) => ({ ...message })),
+    // mock / 本地回退会话也必须有自己的卡片副本；否则 UI 展示的是全局卡片，
+    // 发送时却从 session.contextCards 读取空数组，造成“勾选了但模型没收到”。
+    contextCards: (session.contextCards || contextCards).map((card) => ({
+      ...card,
+      partIDs: normalizePartIDs(card.partIDs),
+    })),
   })),
 )
 const activeSessionId = ref(sessions[0]?.id)
@@ -145,7 +151,7 @@ async function refreshSupervisorCards(sessionId) {
   const incoming = await getSupervisorCards(supervisorId)
   if (incoming.length) {
     session.contextCards = mergeCards(session.contextCards || [], incoming)
-    saveRemoteCards(session.id, session.contextCards, session.metadata)
+    persistSessionCards(session)
   }
 }
 
@@ -230,11 +236,13 @@ function addContextFromMessage({ category, message }) {
     title: createContextTitle(category, message),
     body: createContextBody(message),
     partIDs: normalizePartIDs(message.partIDs),
+    sourceMessageID: message.id,
     time: `今天 ${currentTime()}`,
     source: message.role === 'user' ? '对话' : 'AI',
     priority: '中',
     selected: true,
   })
+  if (activeSession.value) persistSessionCards(activeSession.value)
 }
 
 function updateContextPriority({ id, priority }) {
@@ -242,7 +250,7 @@ function updateContextPriority({ id, priority }) {
   if (!card || !['高', '中', '低'].includes(priority)) return
   card.priority = priority
   const session = activeSession.value
-  if (session) saveRemoteCards(session.id, session.contextCards || [], session.metadata)
+  if (session) persistSessionCards(session)
 }
 
 // —— 监督总结（工作台卡片自动生成）——
@@ -254,7 +262,7 @@ async function runSupervisor(session, turnMessages) {
   if (!session || summarizingIds.value.has(session.id)) return
   summarizingIds.value = new Set(summarizingIds.value).add(session.id)
   try {
-    const { cards: incoming, supervisorId } = await runSupervisorSummary({
+    const { cards: incoming, supervisorId, sourceParts } = await runSupervisorSummary({
       mainSessionId: session.id,
       turnMessages,
       cards: session.contextCards || [],
@@ -264,9 +272,30 @@ async function runSupervisor(session, turnMessages) {
     if (supervisorId) {
       session.metadata = { ...(session.metadata || {}), type: 'main', supervisorSessionId: supervisorId }
     }
+    // 把数据库刚生成的真实 partID 回填到本轮 UI 消息。这样用户从“用户消息”或
+    // “AI 消息”手动生成卡片时，也能建立真实关联，而不是得到 partIDs: []。
+    let cardAssociationsChanged = false
+    if (sourceParts?.length) {
+      for (const turnMessage of turnMessages || []) {
+        const liveMessage = session.messages.find((message) => message.id === turnMessage.id)
+        if (!liveMessage) continue
+        const ids = sourceParts
+          .filter((part) => part.role === turnMessage.role)
+          .map((part) => part.partID)
+        liveMessage.partIDs = normalizePartIDs([...(liveMessage.partIDs || []), ...ids])
+        for (const card of session.contextCards || []) {
+          if (card.sourceMessageID !== turnMessage.id) continue
+          const nextPartIDs = normalizePartIDs([...(card.partIDs || []), ...ids])
+          if (nextPartIDs.length !== (card.partIDs || []).length) cardAssociationsChanged = true
+          card.partIDs = nextPartIDs
+        }
+      }
+    }
     if (incoming?.length) {
       session.contextCards = mergeCards(session.contextCards || [], incoming)
-      saveRemoteCards(session.id, session.contextCards, session.metadata)
+      persistSessionCards(session)
+    } else if (cardAssociationsChanged) {
+      persistSessionCards(session)
     }
   } finally {
     const next = new Set(summarizingIds.value)
@@ -275,7 +304,8 @@ async function runSupervisor(session, turnMessages) {
   }
 }
 
-// 按 topic 增量合并：已有的更新 title/body/category，保留 selected/priority；新的追加。
+// 按 topic 增量合并：用户手动选择会保留；但新卡片、内容更新或新增关联 part 的卡片
+// 必须自动选中，让刚沉淀/更新的对话立即参与下一轮上下文。
 function mergeCards(existing, incoming) {
   const result = [...(existing || [])]
   const byId = new Map()
@@ -294,19 +324,23 @@ function mergeCards(existing, incoming) {
     const idx = idIdx ?? byTopic.get(topicKey) ?? byTopic.get(titleKey)
     if (idx !== undefined) {
       const nextTopic = card.topic || result[idx].topic || card.title
-      const changed =
+      const contentChanged =
         result[idx].topic !== nextTopic ||
         result[idx].category !== card.category ||
         result[idx].title !== card.title ||
         result[idx].body !== card.body
+      const nextPartIDs = normalizePartIDs([...(result[idx].partIDs || []), ...(card.partIDs || [])])
+      const partLinksChanged = nextPartIDs.length !== normalizePartIDs(result[idx].partIDs).length
       result[idx] = {
         ...result[idx],
         topic: nextTopic,
         category: card.category,
         title: card.title,
         body: card.body,
-        partIDs: normalizePartIDs([...(result[idx].partIDs || []), ...(card.partIDs || [])]),
-        time: changed ? `今天 ${currentTime()}` : result[idx].time,
+        partIDs: nextPartIDs,
+        // 仅在本轮真的新增信息时自动勾选；未变化卡片继续尊重用户的手动取消。
+        selected: contentChanged || partLinksChanged ? true : Boolean(result[idx].selected),
+        time: contentChanged || partLinksChanged ? `今天 ${currentTime()}` : result[idx].time,
       }
       remember(result[idx], idx)
     } else {
@@ -320,7 +354,7 @@ function mergeCards(existing, incoming) {
         time: `今天 ${currentTime()}`,
         source: 'AI 总结',
         priority: '中',
-        selected: false,
+        selected: true,
       })
       remember(result[result.length - 1], result.length - 1)
     }
@@ -337,13 +371,29 @@ function normalizePartIDs(value) {
   return [...new Set(value.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()))]
 }
 
+function persistSessionCards(session) {
+  if (!session) return Promise.resolve(false)
+  const cards = (session.contextCards || []).map((card) => ({
+    ...card,
+    partIDs: normalizePartIDs(card.partIDs),
+  }))
+  // 先同步本地 metadata，避免监督会话建立/配置保存等并发 PATCH 拿旧 metadata
+  // 覆盖刚刚的 selected 状态。
+  session.metadata = {
+    ...(session.metadata || {}),
+    type: 'main',
+    contextCards: cards,
+  }
+  return saveRemoteCards(session.id, cards, session.metadata)
+}
+
 // 工作台勾选回写：选中后注入主对话下一轮 prompt。
 function toggleCardSelection(id) {
   const card = activeContextCards.value.find((item) => item.id === id)
   if (!card) return
   card.selected = !card.selected
   const session = activeSession.value
-  if (session) saveRemoteCards(session.id, session.contextCards || [], session.metadata)
+  if (session) persistSessionCards(session)
 }
 
 async function handleSendMessage(text) {

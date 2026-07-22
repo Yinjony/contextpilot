@@ -2473,9 +2473,9 @@ kbd {
 }
 
 .workflow-content {
-  min-height: 420px;
+  min-height: 440px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 290px;
+  grid-template-columns: minmax(0, 1fr) 264px;
 }
 
 .workflow-stage {
@@ -2485,8 +2485,8 @@ kbd {
 }
 
 .workflow-lane {
-  min-height: 128px;
-  padding: 18px 20px 18px 0;
+  min-height: 110px;
+  padding: 16px 20px 16px 0;
   display: grid;
   grid-template-columns: 138px minmax(0, 1fr);
   border-bottom: 1px solid var(--line-soft);
@@ -2495,6 +2495,124 @@ kbd {
 .workflow-lane:last-child {
   border-bottom: 0;
 }
+
+/* 主对话 lane：视觉主导，更高更突出，承载 chip 流。 */
+.workflow-main-lane {
+  min-height: 198px;
+  padding: 26px 20px 26px 0;
+  background: linear-gradient(180deg, #fbfcff 0%, #f4f7fc 100%);
+}
+
+.workflow-main-flow {
+  min-width: 0;
+  padding: 4px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.workflow-chip-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.workflow-chip-row.reverse {
+  flex-direction: row-reverse;
+}
+
+.workflow-main-empty {
+  flex: 1 1 auto;
+  margin: 0 18px;
+  min-height: 72px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: var(--subtle);
+  background: var(--surface-soft);
+  font-size: 12px;
+}
+
+/* 思/答 等简单小方块：只放单字 + 类型底色，细箭头串联，匹配参考图风格。 */
+.workflow-chip {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #9ca8b8;
+  border-radius: 12px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: #3d4f63;
+  background: #eef2f6;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.workflow-chip-glyph {
+  font-size: 17px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.workflow-chip-connector {
+  flex: 1 1 20px;
+  min-width: 16px;
+  max-width: 44px;
+  height: 1px;
+  position: relative;
+  background: #8291a2;
+}
+
+.workflow-chip-connector::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  right: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid #8291a2;
+}
+
+/* 反向行（右→左）：箭头翻到左侧并指向左，保持蛇形流向连续。 */
+.workflow-chip-row.reverse .workflow-chip-connector::after {
+  right: auto;
+  left: 0;
+  border-left: 0;
+  border-right: 6px solid #8291a2;
+}
+
+/* 蛇形拐弯：行末 chip 中心垂直下接下一行的首块（下一行方向相反）。 */
+.workflow-chip-uturn {
+  width: 100%;
+  height: 22px;
+  position: relative;
+}
+
+.workflow-chip-uturn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: #8291a2;
+}
+
+.workflow-chip-uturn::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid #8291a2;
+}
+
+.workflow-chip-uturn.is-right::before { right: 25px; }
+.workflow-chip-uturn.is-right::after { right: 21px; }
+.workflow-chip-uturn.is-left::before { left: 25px; }
+.workflow-chip-uturn.is-left::after { left: 21px; }
 
 .workflow-lane-label {
   padding: 9px 18px 0 26px;
@@ -2530,6 +2648,7 @@ kbd {
 .workflow-overflow-note {
   padding-right: 10px;
   flex: 0 0 auto;
+  align-self: flex-start;
   color: var(--subtle);
   font-size: 10px;
 }
@@ -2553,43 +2672,45 @@ kbd {
 }
 
 .workflow-node:hover,
-.workflow-context-node:hover {
+.workflow-context-node:hover,
+.workflow-chip:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
 
 .workflow-node.selected,
-.workflow-context-node.selected {
+.workflow-context-node.selected,
+.workflow-chip.selected {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16), var(--shadow-sm);
 }
 
-.workflow-node[data-type='UserRequest'] { border-color: #64748b; background: #ffffff; }
-.workflow-node[data-type='Think'],
-.workflow-node[data-type='Plan'] { border-color: #66c2a5; background: #b3e2cd; color: #285e50; }
-.workflow-node[data-type='Response'],
-.workflow-node[data-type='Write'] { border-color: #e78ac3; background: #f4cae4; color: #7a3d64; }
-.workflow-node[data-type='Read'],
-.workflow-node[data-type='Shell'],
-.workflow-node[data-type='Search'],
-.workflow-node[data-type='Tool'] { border-color: #8da0cb; background: #dce4f1; color: #435983; }
-.workflow-node[data-type='Subagent'] { border-color: #ffd92f; background: #fff2ae; color: #755d00; }
-.workflow-node[data-type='Skill'] { border-color: #a6d854; background: #e6f5c9; color: #4e7326; }
-.workflow-node[data-type='Compaction'] { border-color: #e5c494; background: #f1e2cc; color: #745d3f; }
-.workflow-node[data-type='Supervisor'],
-.workflow-node[data-type='Persist'] { border-color: #66c2a5; background: #e7f8f0; color: #286b58; }
+:is(.workflow-node, .workflow-chip)[data-type='UserRequest'] { border-color: #64748b; background: #ffffff; }
+:is(.workflow-node, .workflow-chip)[data-type='Think'],
+:is(.workflow-node, .workflow-chip)[data-type='Plan'] { border-color: #66c2a5; background: #b3e2cd; color: #285e50; }
+:is(.workflow-node, .workflow-chip)[data-type='Response'],
+:is(.workflow-node, .workflow-chip)[data-type='Write'] { border-color: #e78ac3; background: #f4cae4; color: #7a3d64; }
+:is(.workflow-node, .workflow-chip)[data-type='Read'],
+:is(.workflow-node, .workflow-chip)[data-type='Shell'],
+:is(.workflow-node, .workflow-chip)[data-type='Search'],
+:is(.workflow-node, .workflow-chip)[data-type='Tool'] { border-color: #8da0cb; background: #dce4f1; color: #435983; }
+:is(.workflow-node, .workflow-chip)[data-type='Subagent'] { border-color: #ffd92f; background: #fff2ae; color: #755d00; }
+:is(.workflow-node, .workflow-chip)[data-type='Skill'] { border-color: #a6d854; background: #e6f5c9; color: #4e7326; }
+:is(.workflow-node, .workflow-chip)[data-type='Compaction'] { border-color: #e5c494; background: #f1e2cc; color: #745d3f; }
+:is(.workflow-node, .workflow-chip)[data-type='Supervisor'],
+:is(.workflow-node, .workflow-chip)[data-type='Persist'] { border-color: #66c2a5; background: #e7f8f0; color: #286b58; }
 
-.workflow-node.status-running {
+:is(.workflow-node, .workflow-chip).status-running {
   border-color: #3b82f6;
   box-shadow: inset 3px 0 0 #3b82f6;
 }
 
-.workflow-node.status-error {
+:is(.workflow-node, .workflow-chip).status-error {
   border-color: var(--red);
   color: #8f1d1d;
   background: var(--red-soft);
 }
 
-.workflow-node.status-pending {
+:is(.workflow-node, .workflow-chip).status-pending {
   border-style: dashed;
   opacity: 0.72;
 }
