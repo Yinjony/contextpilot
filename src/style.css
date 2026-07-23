@@ -1669,6 +1669,560 @@ kbd {
   background: var(--surface);
 }
 
+.composer-config-bar {
+  position: relative;
+  min-width: 0;
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.composer-config-field,
+.composer-config-tools {
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.composer-config-field > span,
+.composer-config-tools-label {
+  padding-left: 9px;
+  color: var(--subtle);
+}
+
+/* 阶段：自定义触发器 + 步进式弹出，替换原生 select */
+.composer-config-stage {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.composer-config-stage-trigger {
+  height: 30px;
+  padding: 0 7px 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  background: var(--surface-soft);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  outline: none;
+}
+
+.composer-stage-badge {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: var(--brand-grad);
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.28);
+}
+
+.composer-config-stage-current {
+  max-width: 92px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-config-stage-trigger .app-icon {
+  margin-left: 1px;
+  color: var(--subtle);
+  transform: rotate(90deg);
+  transition: transform 0.16s var(--ease);
+}
+
+.composer-config-stage-trigger.open,
+.composer-config-stage-trigger:hover {
+  border-color: var(--brand-line);
+  color: var(--brand-text);
+  background: var(--brand-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+.composer-config-stage-trigger.open .app-icon {
+  transform: rotate(-90deg);
+}
+
+.composer-config-stage-trigger:focus-visible {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.composer-stage-popover {
+  position: absolute;
+  z-index: 24;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: min(240px, calc(100vw - 44px));
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  white-space: normal;
+}
+
+.composer-stage-popover-header {
+  padding: 1px 3px 8px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.composer-stage-popover-header span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.composer-stage-popover-header small {
+  color: var(--subtle);
+  font-size: 10px;
+}
+
+.composer-stage-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.composer-stage-step {
+  position: relative;
+}
+
+/* 步骤圆点之间的连接线 */
+.composer-stage-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 27px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.composer-stage-step.done:not(:last-child)::after {
+  background: var(--green-line);
+}
+
+.composer-stage-step button {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.composer-stage-step button:hover {
+  background: var(--surface-soft);
+}
+
+.composer-stage-step-no {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  color: var(--subtle);
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.composer-stage-step.done .composer-stage-step-no {
+  color: var(--green);
+  background: var(--green-soft);
+  border-color: var(--green-line);
+}
+
+.composer-stage-step.active button {
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
+  color: var(--brand-text);
+}
+
+.composer-stage-step.active .composer-stage-step-no {
+  color: #ffffff;
+  background: var(--brand-grad);
+  border-color: transparent;
+  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.3);
+}
+
+.composer-stage-step-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.composer-stage-step-mark {
+  flex: 0 0 auto;
+  color: var(--brand-text);
+}
+
+.composer-config-rules {
+  position: relative;
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+.composer-config-rule-trigger {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  background: var(--surface-soft);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  outline: none;
+}
+
+.composer-config-rule-trigger strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.composer-config-rule-trigger .app-icon {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: var(--subtle);
+  transform: rotate(90deg);
+  transition: transform 0.16s var(--ease);
+}
+
+.composer-config-rule-trigger.open,
+.composer-config-rule-trigger:hover {
+  border-color: var(--brand-line);
+  color: var(--brand-text);
+  background: var(--brand-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+.composer-config-rule-trigger.open .app-icon {
+  transform: rotate(-90deg);
+}
+
+.composer-config-rule-trigger:focus-visible {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.composer-rules-popover {
+  position: absolute;
+  z-index: 24;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: min(340px, calc(100vw - 44px));
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  white-space: normal;
+}
+
+.composer-rules-popover-header {
+  padding: 1px 3px 8px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.composer-rules-popover-header span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.composer-rules-popover-header small {
+  color: var(--subtle);
+  font-size: 10px;
+}
+
+.composer-rules-list {
+  max-height: 176px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  padding-right: 2px;
+}
+
+.composer-rule-row {
+  min-width: 0;
+  min-height: 32px;
+  padding: 5px 5px 5px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-soft);
+}
+
+.composer-rule-row > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.composer-rule-row button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--subtle);
+  background: transparent;
+}
+
+.composer-rule-row button:hover {
+  transform: none;
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.09);
+  box-shadow: none;
+}
+
+.composer-rules-empty {
+  min-height: 32px;
+  padding: 9px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  color: var(--subtle);
+  font-size: 12px;
+  text-align: center;
+}
+
+.composer-rule-add {
+  height: 32px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: var(--surface-soft);
+}
+
+.composer-rule-add input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 9px;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.composer-rule-add input::placeholder {
+  color: var(--subtle);
+}
+
+.composer-rule-add button {
+  width: 32px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--brand-text);
+  background: transparent;
+}
+
+.composer-rule-add button:hover {
+  transform: none;
+  background: var(--brand-soft);
+  box-shadow: none;
+}
+
+.composer-config-field:focus-within {
+  border-color: var(--brand);
+  background: var(--surface);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.13);
+}
+
+.composer-config-tools {
+  gap: 3px;
+  padding: 2px 3px 2px 0;
+}
+
+.composer-config-tool {
+  position: relative;
+  width: 25px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--subtle);
+  background: transparent;
+}
+
+.composer-config-tool:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.16);
+}
+
+.composer-config-tool:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.24);
+}
+
+.composer-config-tool[data-state='allow'] {
+  color: var(--green);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.composer-config-tool[data-state='confirm'] {
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.composer-config-tool[data-state='deny'] {
+  color: var(--subtle);
+}
+
+/* 权限按钮悬停说明：名称 + 用途 + 当前状态 */
+.composer-tool-tip {
+  position: absolute;
+  z-index: 26;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  min-width: 156px;
+  max-width: 210px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s var(--ease), transform 0.15s var(--ease),
+    visibility 0.15s var(--ease);
+}
+
+.composer-tool-tip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.composer-config-tool:hover .composer-tool-tip,
+.composer-config-tool:focus-visible .composer-tool-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+.composer-tool-tip-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.composer-tool-tip-desc {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.composer-tool-tip-state {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.composer-tool-tip-state[data-state='allow'] {
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.composer-tool-tip-state[data-state='confirm'] {
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.composer-tool-tip-state[data-state='deny'] {
+  color: var(--subtle);
+  background: var(--surface-sunken);
+}
+
 .composer {
   padding-top: 14px;
   display: flex;

@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
         </button>
         <button type="button" class="sidebar-utility-action" @click="$emit('workflow')">
           <AppIcon name="workflow" :size="16" />
-          <span>工作流查看</span>
+          <span>执行追踪&项目概况</span>
         </button>
         <button type="button" class="all-sessions">
           <span>查看全部会话 ({{ sessions.length }})</span>

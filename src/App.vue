@@ -73,6 +73,7 @@ const isChatConfigOpen = ref(false)
 const isWorkflowOpen = ref(false)
 const isSavingChatConfig = ref(false)
 const chatConfigError = ref('')
+let inlineConfigSaveTimer = null
 
 function openChatConfig() {
   const session = activeSession.value
@@ -130,6 +131,36 @@ async function saveChatConfig(config) {
   } finally {
     isSavingChatConfig.value = false
   }
+}
+
+function updateInlineChatConfig(config) {
+  const session = activeSession.value
+  if (!session) return
+
+  const chatConfig = normalizeChatConfig(config)
+  session.metadata = {
+    ...(session.metadata || {}),
+    type: 'main',
+    chatConfig,
+  }
+
+  if (inlineConfigSaveTimer) clearTimeout(inlineConfigSaveTimer)
+  inlineConfigSaveTimer = window.setTimeout(async () => {
+    try {
+      const latestConfig = normalizeChatConfig(session.metadata?.chatConfig)
+      const saved = await saveSessionChatConfig(
+        session.id,
+        session.title,
+        latestConfig,
+        session.metadata,
+        session.contextCards || [],
+      )
+      if (!saved) throw new Error('配置未能同步到数据库，请稍后重试。')
+      chatConfigError.value = ''
+    } catch (error) {
+      chatConfigError.value = error instanceof Error ? error.message : '配置保存失败，请稍后重试。'
+    }
+  }, 260)
 }
 
 function selectSession(id) {
@@ -588,9 +619,11 @@ function refreshSessionContext() {}
       :is-sending="isSending"
       :error="chatError"
       :model-label="chatModelLabel"
+      :chat-config="activeSession.metadata?.chatConfig"
       :context-categories="contextCategories"
       v-if="!isChartSession"
       @send="handleSendMessage"
+      @update-config="updateInlineChatConfig"
       @add-context="addContextFromMessage"
     />
 
@@ -601,8 +634,10 @@ function refreshSessionContext() {}
       :is-sending="isSending"
       :error="chatError"
       :model-label="chatModelLabel"
+      :chat-config="activeSession.metadata?.chatConfig"
       :context-categories="contextCategories"
       @send="handleSendMessage"
+      @update-config="updateInlineChatConfig"
       @add-context="addContextFromMessage"
     />
 
