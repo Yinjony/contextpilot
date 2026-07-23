@@ -5,6 +5,7 @@ import ContextWorkbench from './components/ContextWorkbench.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import SessionConfigModal from './components/SessionConfigModal.vue'
 import WorkflowModal from './components/WorkflowModal.vue'
+import MigrationExportModal from './components/MigrationExportModal.vue'
 import { sessions, totalSessions, contextCards } from './data/workspace.js'
 import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, deleteRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig } from './model/chatAdapter.js'
 
@@ -71,6 +72,7 @@ const sidebarCollapsed = ref(false)
 const contextCollapsed = ref(false)
 const isChatConfigOpen = ref(false)
 const isWorkflowOpen = ref(false)
+const isMigrationExportOpen = ref(false)
 const isSavingChatConfig = ref(false)
 const chatConfigError = ref('')
 let inlineConfigSaveTimer = null
@@ -87,13 +89,22 @@ function openChatConfig() {
   }
   chatConfigError.value = ''
   isWorkflowOpen.value = false
+  isMigrationExportOpen.value = false
   isChatConfigOpen.value = true
 }
 
 function openWorkflow() {
   if (!activeSession.value) return
   isChatConfigOpen.value = false
+  isMigrationExportOpen.value = false
   isWorkflowOpen.value = true
+}
+
+function openMigrationExport() {
+  if (!activeSession.value) return
+  isChatConfigOpen.value = false
+  isWorkflowOpen.value = false
+  isMigrationExportOpen.value = true
 }
 
 function closeChatConfig() {
@@ -601,6 +612,7 @@ function refreshSessionContext() {}
       @expand="sidebarCollapsed = false"
       @configure="openChatConfig"
       @workflow="openWorkflow"
+      @migrate="openMigrationExport"
     />
 
     <ContextWorkbench
@@ -656,6 +668,12 @@ function refreshSessionContext() {}
       :session-title="activeSession.title"
       :messages="activeSession.messages"
       @close="isWorkflowOpen = false"
+    />
+
+    <MigrationExportModal
+      v-if="isMigrationExportOpen"
+      :sessions="chatSessions"
+      @close="isMigrationExportOpen = false"
     />
   </main>
 </template>
