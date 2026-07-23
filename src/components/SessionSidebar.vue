@@ -80,7 +80,11 @@ onBeforeUnmount(() => {
       </div>
 
       <nav class="quick-actions" aria-label="快捷操作">
-        <button type="button" class="primary-action" @click="$emit('create')">
+        <button type="button" class="primary-action" @click="$emit('configure')">
+          <AppIcon name="sliders" :size="16" />
+          <span>对话底盘配置</span>
+        </button>
+        <button type="button" class="create-action" @click="$emit('create')">
           <AppIcon name="plus" :size="16" />
           <span>新建对话</span>
         </button>
@@ -98,7 +102,12 @@ onBeforeUnmount(() => {
           :class="{ active: session.id === activeId }"
           @click.stop
         >
-          <button type="button" class="session-main" @click="selectSession(session.id)">
+          <button
+            type="button"
+            class="session-main"
+            :title="session.title"
+            @click="selectSession(session.id)"
+          >
             <strong>{{ session.title }}</strong>
             <em>{{ session.time }}</em>
           </button>
@@ -138,10 +147,6 @@ onBeforeUnmount(() => {
       </section>
 
       <div class="sidebar-footer-actions" aria-label="会话辅助操作">
-        <button type="button" class="sidebar-utility-action" @click="$emit('configure')">
-          <AppIcon name="sliders" :size="16" />
-          <span>对话底盘配置</span>
-        </button>
         <button type="button" class="sidebar-utility-action" @click="$emit('workflow')">
           <AppIcon name="workflow" :size="16" />
           <span>工作流查看</span>

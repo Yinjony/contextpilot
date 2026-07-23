@@ -272,8 +272,9 @@ export async function loadHistory() {
     const result = []
     for (const oc of list) {
       const metadata = normalizeMetadata(oc.metadata)
-      // 监督 session（副进程）不进侧栏，跳过。
-      if (metadata.type === 'supervisor') continue
+      // 监督 session 与 OpenCode task/explore 子代理会话都不属于用户的主对话，
+      // 不应进入左侧会话列表。子代理会话由 parentID 标识。
+      if (metadata.type === 'supervisor' || oc.parentID || oc.parentId) continue
 
       const supervisorSessionId = metadata.supervisorSessionId || supervisorByMainId.get(oc.id)
       // 预填 session 缓存：历史会话续聊时 ensureOpencodeSession 直接命中，复用 opencode session。
