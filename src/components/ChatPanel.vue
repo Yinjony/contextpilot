@@ -11,7 +11,7 @@ const props = defineProps({
   modelLabel: { type: String, default: 'opencode' },
 })
 
-const emit = defineEmits(['send'])
+const emit = defineEmits(['send', 'stop'])
 const draft = ref('')
 const messagesEl = ref(null)
 const canSend = computed(() => draft.value.trim().length > 0 && !props.isSending)
@@ -20,6 +20,14 @@ function submitMessage() {
   if (!canSend.value) return
   emit('send', draft.value)
   draft.value = ''
+}
+
+function handlePrimaryAction() {
+  if (props.isSending) {
+    emit('stop')
+    return
+  }
+  submitMessage()
 }
 
 watch(
@@ -59,16 +67,16 @@ watch(
 
     <div class="composer-shell">
       <p v-if="error" class="composer-error">{{ error }}</p>
-      <form class="composer" aria-label="发送消息" @submit.prevent="submitMessage">
+      <form class="composer" aria-label="发送消息" @submit.prevent="handlePrimaryAction">
         <input
           v-model="draft"
           type="text"
           :disabled="isSending"
           placeholder="输入消息，继续当前对话"
         />
-        <button type="submit" :disabled="!canSend">
-          <AppIcon name="send" :size="16" />
-          <span>{{ isSending ? '发送中' : '发送' }}</span>
+        <button type="submit" :class="{ 'stop-generation': isSending }" :disabled="!isSending && !canSend">
+          <AppIcon :name="isSending ? 'stop' : 'send'" :size="16" />
+          <span>{{ isSending ? '停止生成' : '发送' }}</span>
         </button>
       </form>
     </div>

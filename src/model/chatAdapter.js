@@ -352,6 +352,39 @@ export async function loadHistory() {
   }
 }
 
+// 查询当前项目仍在运行的会话。页面刷新后用它恢复“生成中”状态，避免前端
+// 误以为会话空闲并向同一个 busy session 再次提交消息。
+export async function getRemoteBusySessionIds(signal) {
+  if (backend !== 'opencode') return []
+  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  try {
+    const statuses = await getBridgeClient().sessionStatus({ directory }, signal)
+    if (!statuses || typeof statuses !== 'object') return []
+    return Object.entries(statuses)
+      .filter(([, status]) => status?.type === 'busy' || status?.type === 'retry')
+      .map(([sessionID]) => sessionID)
+  } catch (error) {
+    console.warn('[chatAdapter] 获取会话运行状态失败：', error?.message || error)
+    return null
+  }
+}
+
+// 同时支持刷新后恢复的真实 session id 和前端新建会话的本地别名。
+// 如果生成尚未创建远端 session，本地 AbortController 已足以取消，无需为“停止”
+// 额外创建一个空 session。
+export async function abortRemoteGeneration(sessionId, signal) {
+  if (backend !== 'opencode') return true
+  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const session = opencodeSessions.get(sessionId) || (String(sessionId).startsWith('ses_') ? { id: sessionId } : null)
+  if (!session?.id) return true
+  try {
+    return Boolean(await getBridgeClient().abortSession({ sessionID: session.id, directory }, signal))
+  } catch (error) {
+    console.warn('[chatAdapter] abortRemoteGeneration 失败：', error?.message || error)
+    return false
+  }
+}
+
 // 删除后端会话（opencode.db）。成功返回 true 并清本地 session 缓存；失败返回 false（不抛）。
 export async function deleteRemoteSession(sessionId, signal) {
   if (backend !== 'opencode') return false

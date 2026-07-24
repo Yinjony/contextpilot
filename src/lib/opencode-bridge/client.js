@@ -193,6 +193,20 @@ export class OpenCodeBridgeClient {
     })
   }
 
+  sessionStatus(input = {}, signal) {
+    return this.request('GET', '/session/status', {
+      query: this.workspaceQuery(input),
+      signal,
+    })
+  }
+
+  abortSession(input, signal) {
+    return this.request('POST', `/session/${encodeURIComponent(input.sessionID)}/abort`, {
+      query: this.workspaceQuery(input),
+      signal,
+    })
+  }
+
   removeSession(input, signal) {
     return this.request('DELETE', `/session/${encodeURIComponent(input.sessionID)}`, {
       query: this.workspaceQuery(input),

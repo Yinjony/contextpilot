@@ -1,12 +1,12 @@
 <script setup>
-import {onMounted, reactive, ref, computed, watch} from 'vue'
+import {onBeforeUnmount, onMounted, reactive, ref, computed, watch} from 'vue'
 import SessionSidebar from './components/SessionSidebar.vue'
 import ContextWorkbench from './components/ContextWorkbench.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import SessionConfigModal from './components/SessionConfigModal.vue'
 import WorkflowModal from './components/WorkflowModal.vue'
 import { sessions, totalSessions, contextCards } from './data/workspace.js'
-import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, deleteRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig } from './model/chatAdapter.js'
+import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, getRemoteBusySessionIds, abortRemoteGeneration, deleteRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig } from './model/chatAdapter.js'
 
 const baseContextCards = ref(contextCards.map((card) => ({ ...card })))
 const defaultContextCategories = [...new Set(contextCards.map((card) => card.category))]
@@ -25,6 +25,23 @@ const chatSessions = ref(
   })),
 )
 const activeSessionId = ref(sessions[0]?.id)
+const localSendingSessionIds = ref(new Set())
+const remoteBusySessionIds = ref(new Set())
+const activeAbortControllers = new Map()
+let busyStatusTimer = null
+
+function updateSessionSet(target, sessionId, enabled) {
+  const next = new Set(target.value)
+  if (enabled) next.add(sessionId)
+  else next.delete(sessionId)
+  target.value = next
+}
+
+async function syncRemoteBusySessions() {
+  const ids = await getRemoteBusySessionIds()
+  // null 表示状态请求失败；保留上一次结果，避免网络抖动时误解除“生成中”。
+  if (ids) remoteBusySessionIds.value = new Set(ids)
+}
 
 // 启动时从 opencode 加载真实历史会话；失败/为空则保留 mock（sessions）。
 const isLoadingHistory = ref(true)
@@ -36,9 +53,17 @@ onMounted(async () => {
       chatSessions.value = real
       activeSessionId.value = real[0]?.id ?? activeSessionId.value
     }
+    await syncRemoteBusySessions()
+    busyStatusTimer = window.setInterval(syncRemoteBusySessions, 3000)
   } finally {
     isLoadingHistory.value = false
   }
+})
+
+onBeforeUnmount(() => {
+  if (busyStatusTimer) window.clearInterval(busyStatusTimer)
+  for (const controller of activeAbortControllers.values()) controller.abort()
+  activeAbortControllers.clear()
 })
 
 const activeSession = computed(
@@ -60,11 +85,11 @@ watch(
     }
   }
 )
-const isSending = ref(false)
+const isSending = computed(() => {
+  const id = activeSession.value?.id
+  return Boolean(id && (localSendingSessionIds.value.has(id) || remoteBusySessionIds.value.has(id)))
+})
 const chatError = ref('')
-
-// 当前生成请求的 AbortController，供后续“停止生成”按钮调用 abort()。
-let activeAbortController = null
 
 // 两侧栏收起状态
 const sidebarCollapsed = ref(false)
@@ -399,7 +424,7 @@ function toggleCardSelection(id) {
 async function handleSendMessage(text) {
   const content = text.trim()
   const session = activeSession.value
-  if (!content || !session || isSending.value) return
+  if (!content || !session || localSendingSessionIds.value.has(session.id) || remoteBusySessionIds.value.has(session.id)) return
 
   chatError.value = ''
   const userMessage = createMessage('user', content)
@@ -416,7 +441,7 @@ async function handleSendMessage(text) {
     session.status = '进行中'
     session.isDraft = false
   }
-  isSending.value = true
+  updateSessionSet(localSendingSessionIds, session.id, true)
 
   // rAF 节流：onDelta/onReasoning 高频触发，用局部变量收敛，每帧至多写一次响应式字段。
   let pendingText = ''
@@ -430,7 +455,8 @@ async function handleSendMessage(text) {
     assistantMessage.reasoning = pendingReasoning
   }
 
-  activeAbortController = new AbortController()
+  const requestController = new AbortController()
+  activeAbortControllers.set(session.id, requestController)
 
   try {
     const selectedCards = (session.contextCards || []).filter((c) => c.selected)
@@ -439,7 +465,7 @@ async function handleSendMessage(text) {
         sessionId: session.id,
         title: session.title,
         messages: session.messages,
-        signal: activeAbortController.signal,
+        signal: requestController.signal,
         selectedCards,
         chatConfig: session.metadata?.chatConfig,
         onDelta: (delta, fullText) => {
@@ -490,8 +516,26 @@ async function handleSendMessage(text) {
   } finally {
     if (rafId) cancelAnimationFrame(rafId)
     assistantMessage.pending = false
-    isSending.value = false
-    activeAbortController = null
+    updateSessionSet(localSendingSessionIds, session.id, false)
+    if (activeAbortControllers.get(session.id) === requestController) {
+      activeAbortControllers.delete(session.id)
+    }
+    await syncRemoteBusySessions()
+  }
+}
+
+async function handleStopGeneration() {
+  const session = activeSession.value
+  if (!session) return
+
+  chatError.value = ''
+  activeAbortControllers.get(session.id)?.abort()
+  const stopped = await abortRemoteGeneration(session.id)
+  updateSessionSet(localSendingSessionIds, session.id, false)
+  updateSessionSet(remoteBusySessionIds, session.id, false)
+
+  if (!stopped) {
+    chatError.value = '停止请求未能同步到 OpenCode，请稍后重试或刷新页面。'
   }
 }
 
@@ -591,6 +635,7 @@ function refreshSessionContext() {}
       :context-categories="contextCategories"
       v-if="!isChartSession"
       @send="handleSendMessage"
+      @stop="handleStopGeneration"
       @add-context="addContextFromMessage"
     />
 
@@ -603,6 +648,7 @@ function refreshSessionContext() {}
       :model-label="chatModelLabel"
       :context-categories="contextCategories"
       @send="handleSendMessage"
+      @stop="handleStopGeneration"
       @add-context="addContextFromMessage"
     />
 

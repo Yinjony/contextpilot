@@ -225,7 +225,7 @@ kbd {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 38px;
+  min-height: 32px;
 }
 
 .sidebar-title {
@@ -237,9 +237,9 @@ kbd {
   flex: 1;
   min-width: 0;
   color: var(--text);
-  font-size: 20px;
-  font-weight: 760;
-  line-height: 1;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
   letter-spacing: 0;
   text-transform: lowercase;
 }
@@ -336,9 +336,9 @@ kbd {
 
 .sidebar h1.brand-word {
   margin-top: 0;
-  font-size: 20px;
-  font-weight: 760;
-  line-height: 1;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
   letter-spacing: 0;
 }
 
@@ -763,18 +763,18 @@ kbd {
 .panel-header,
 .chat-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
 }
 
 .panel-header h2,
 .chat-header h2 {
-  margin-top: 3px;
+  margin-top: 0;
   color: var(--text);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
   letter-spacing: 0;
 }
 
@@ -1091,6 +1091,8 @@ kbd {
 .context-empty {
   flex: 1;
   padding: 26px;
+  align-content: start;
+  padding-top: clamp(96px, 28%, 180px);
 }
 
 .empty-icon {
@@ -1118,6 +1120,11 @@ kbd {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.55;
+}
+
+.context-empty p {
+  max-width: none;
+  white-space: nowrap;
 }
 
 .context-card {
@@ -1754,6 +1761,14 @@ kbd {
 .composer button:hover {
   transform: none;
   box-shadow: none;
+}
+
+.composer button.stop-generation {
+  background: #ef4444;
+}
+
+.composer button.stop-generation:hover {
+  background: #dc2626;
 }
 
 .composer button:disabled,
