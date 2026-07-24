@@ -5,6 +5,7 @@ import ContextWorkbench from './components/ContextWorkbench.vue'
 import ChatPanel from './components/ChatPanel.vue'
 import SessionConfigModal from './components/SessionConfigModal.vue'
 import WorkflowModal from './components/WorkflowModal.vue'
+import MigrationExportModal from './components/MigrationExportModal.vue'
 import { sessions, totalSessions, contextCards } from './data/workspace.js'
 import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, getRemoteBusySessionIds, abortRemoteGeneration, deleteRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig } from './model/chatAdapter.js'
 
@@ -96,8 +97,10 @@ const sidebarCollapsed = ref(false)
 const contextCollapsed = ref(false)
 const isChatConfigOpen = ref(false)
 const isWorkflowOpen = ref(false)
+const isMigrationExportOpen = ref(false)
 const isSavingChatConfig = ref(false)
 const chatConfigError = ref('')
+let inlineConfigSaveTimer = null
 
 function openChatConfig() {
   const session = activeSession.value
@@ -111,13 +114,22 @@ function openChatConfig() {
   }
   chatConfigError.value = ''
   isWorkflowOpen.value = false
+  isMigrationExportOpen.value = false
   isChatConfigOpen.value = true
 }
 
 function openWorkflow() {
   if (!activeSession.value) return
   isChatConfigOpen.value = false
+  isMigrationExportOpen.value = false
   isWorkflowOpen.value = true
+}
+
+function openMigrationExport() {
+  if (!activeSession.value) return
+  isChatConfigOpen.value = false
+  isWorkflowOpen.value = false
+  isMigrationExportOpen.value = true
 }
 
 function closeChatConfig() {
@@ -155,6 +167,36 @@ async function saveChatConfig(config) {
   } finally {
     isSavingChatConfig.value = false
   }
+}
+
+function updateInlineChatConfig(config) {
+  const session = activeSession.value
+  if (!session) return
+
+  const chatConfig = normalizeChatConfig(config)
+  session.metadata = {
+    ...(session.metadata || {}),
+    type: 'main',
+    chatConfig,
+  }
+
+  if (inlineConfigSaveTimer) clearTimeout(inlineConfigSaveTimer)
+  inlineConfigSaveTimer = window.setTimeout(async () => {
+    try {
+      const latestConfig = normalizeChatConfig(session.metadata?.chatConfig)
+      const saved = await saveSessionChatConfig(
+        session.id,
+        session.title,
+        latestConfig,
+        session.metadata,
+        session.contextCards || [],
+      )
+      if (!saved) throw new Error('配置未能同步到数据库，请稍后重试。')
+      chatConfigError.value = ''
+    } catch (error) {
+      chatConfigError.value = error instanceof Error ? error.message : '配置保存失败，请稍后重试。'
+    }
+  }, 260)
 }
 
 function selectSession(id) {
@@ -614,6 +656,7 @@ function refreshSessionContext() {}
       @expand="sidebarCollapsed = false"
       @configure="openChatConfig"
       @workflow="openWorkflow"
+      @migrate="openMigrationExport"
     />
 
     <ContextWorkbench
@@ -632,10 +675,12 @@ function refreshSessionContext() {}
       :is-sending="isSending"
       :error="chatError"
       :model-label="chatModelLabel"
+      :chat-config="activeSession.metadata?.chatConfig"
       :context-categories="contextCategories"
       v-if="!isChartSession"
       @send="handleSendMessage"
       @stop="handleStopGeneration"
+      @update-config="updateInlineChatConfig"
       @add-context="addContextFromMessage"
     />
 
@@ -646,9 +691,11 @@ function refreshSessionContext() {}
       :is-sending="isSending"
       :error="chatError"
       :model-label="chatModelLabel"
+      :chat-config="activeSession.metadata?.chatConfig"
       :context-categories="contextCategories"
       @send="handleSendMessage"
       @stop="handleStopGeneration"
+      @update-config="updateInlineChatConfig"
       @add-context="addContextFromMessage"
     />
 
@@ -666,9 +713,13 @@ function refreshSessionContext() {}
       v-if="isWorkflowOpen && activeSession"
       :session-title="activeSession.title"
       :messages="activeSession.messages"
-      :cards="activeContextCards"
-      :is-summarizing="isSummarizing"
       @close="isWorkflowOpen = false"
+    />
+
+    <MigrationExportModal
+      v-if="isMigrationExportOpen"
+      :sessions="chatSessions"
+      @close="isMigrationExportOpen = false"
     />
   </main>
 </template>

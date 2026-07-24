@@ -18,6 +18,7 @@ const emit = defineEmits([
   'expand',
   'configure',
   'workflow',
+  'migrate',
 ])
 const openMenuId = ref('')
 
@@ -149,11 +150,11 @@ onBeforeUnmount(() => {
       <div class="sidebar-footer-actions" aria-label="会话辅助操作">
         <button type="button" class="sidebar-utility-action" @click="$emit('workflow')">
           <AppIcon name="workflow" :size="16" />
-          <span>工作流查看</span>
+          <span>执行追踪&项目概况</span>
         </button>
-        <button type="button" class="all-sessions">
-          <span>查看全部会话 ({{ sessions.length }})</span>
-          <AppIcon name="arrow-right" :size="16" />
+        <button type="button" class="sidebar-utility-action" @click="$emit('migrate')">
+          <AppIcon name="file-text" :size="16" />
+          <span>&#x8FC1;&#x79FB;&#x6587;&#x6863;&#x5BFC;&#x51FA;</span>
         </button>
       </div>
     </template>

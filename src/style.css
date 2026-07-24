@@ -1710,6 +1710,560 @@ kbd {
   background: var(--surface);
 }
 
+.composer-config-bar {
+  position: relative;
+  min-width: 0;
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.composer-config-field,
+.composer-config-tools {
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.composer-config-field > span,
+.composer-config-tools-label {
+  padding-left: 9px;
+  color: var(--subtle);
+}
+
+/* 阶段：自定义触发器 + 步进式弹出，替换原生 select */
+.composer-config-stage {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.composer-config-stage-trigger {
+  height: 30px;
+  padding: 0 7px 0 5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  background: var(--surface-soft);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  outline: none;
+}
+
+.composer-stage-badge {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: var(--brand-grad);
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.28);
+}
+
+.composer-config-stage-current {
+  max-width: 92px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composer-config-stage-trigger .app-icon {
+  margin-left: 1px;
+  color: var(--subtle);
+  transform: rotate(90deg);
+  transition: transform 0.16s var(--ease);
+}
+
+.composer-config-stage-trigger.open,
+.composer-config-stage-trigger:hover {
+  border-color: var(--brand-line);
+  color: var(--brand-text);
+  background: var(--brand-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+.composer-config-stage-trigger.open .app-icon {
+  transform: rotate(-90deg);
+}
+
+.composer-config-stage-trigger:focus-visible {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.composer-stage-popover {
+  position: absolute;
+  z-index: 24;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: min(240px, calc(100vw - 44px));
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  white-space: normal;
+}
+
+.composer-stage-popover-header {
+  padding: 1px 3px 8px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.composer-stage-popover-header span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.composer-stage-popover-header small {
+  color: var(--subtle);
+  font-size: 10px;
+}
+
+.composer-stage-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.composer-stage-step {
+  position: relative;
+}
+
+/* 步骤圆点之间的连接线 */
+.composer-stage-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 27px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.composer-stage-step.done:not(:last-child)::after {
+  background: var(--green-line);
+}
+
+.composer-stage-step button {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.composer-stage-step button:hover {
+  background: var(--surface-soft);
+}
+
+.composer-stage-step-no {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  color: var(--subtle);
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.composer-stage-step.done .composer-stage-step-no {
+  color: var(--green);
+  background: var(--green-soft);
+  border-color: var(--green-line);
+}
+
+.composer-stage-step.active button {
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
+  color: var(--brand-text);
+}
+
+.composer-stage-step.active .composer-stage-step-no {
+  color: #ffffff;
+  background: var(--brand-grad);
+  border-color: transparent;
+  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.3);
+}
+
+.composer-stage-step-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.composer-stage-step-mark {
+  flex: 0 0 auto;
+  color: var(--brand-text);
+}
+
+.composer-config-rules {
+  position: relative;
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+.composer-config-rule-trigger {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  background: var(--surface-soft);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  outline: none;
+}
+
+.composer-config-rule-trigger strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.composer-config-rule-trigger .app-icon {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: var(--subtle);
+  transform: rotate(90deg);
+  transition: transform 0.16s var(--ease);
+}
+
+.composer-config-rule-trigger.open,
+.composer-config-rule-trigger:hover {
+  border-color: var(--brand-line);
+  color: var(--brand-text);
+  background: var(--brand-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+.composer-config-rule-trigger.open .app-icon {
+  transform: rotate(-90deg);
+}
+
+.composer-config-rule-trigger:focus-visible {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.composer-rules-popover {
+  position: absolute;
+  z-index: 24;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: min(340px, calc(100vw - 44px));
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  white-space: normal;
+}
+
+.composer-rules-popover-header {
+  padding: 1px 3px 8px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.composer-rules-popover-header span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.composer-rules-popover-header small {
+  color: var(--subtle);
+  font-size: 10px;
+}
+
+.composer-rules-list {
+  max-height: 176px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 5px;
+  padding-right: 2px;
+}
+
+.composer-rule-row {
+  min-width: 0;
+  min-height: 32px;
+  padding: 5px 5px 5px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-soft);
+}
+
+.composer-rule-row > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.composer-rule-row button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--subtle);
+  background: transparent;
+}
+
+.composer-rule-row button:hover {
+  transform: none;
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.09);
+  box-shadow: none;
+}
+
+.composer-rules-empty {
+  min-height: 32px;
+  padding: 9px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  color: var(--subtle);
+  font-size: 12px;
+  text-align: center;
+}
+
+.composer-rule-add {
+  height: 32px;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: var(--surface-soft);
+}
+
+.composer-rule-add input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0 9px;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.composer-rule-add input::placeholder {
+  color: var(--subtle);
+}
+
+.composer-rule-add button {
+  width: 32px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--brand-text);
+  background: transparent;
+}
+
+.composer-rule-add button:hover {
+  transform: none;
+  background: var(--brand-soft);
+  box-shadow: none;
+}
+
+.composer-config-field:focus-within {
+  border-color: var(--brand);
+  background: var(--surface);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.13);
+}
+
+.composer-config-tools {
+  gap: 3px;
+  padding: 2px 3px 2px 0;
+}
+
+.composer-config-tool {
+  position: relative;
+  width: 25px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--subtle);
+  background: transparent;
+}
+
+.composer-config-tool:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.16);
+}
+
+.composer-config-tool:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.24);
+}
+
+.composer-config-tool[data-state='allow'] {
+  color: var(--green);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.composer-config-tool[data-state='confirm'] {
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.composer-config-tool[data-state='deny'] {
+  color: var(--subtle);
+}
+
+/* 权限按钮悬停说明：名称 + 用途 + 当前状态 */
+.composer-tool-tip {
+  position: absolute;
+  z-index: 26;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  min-width: 156px;
+  max-width: 210px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s var(--ease), transform 0.15s var(--ease),
+    visibility 0.15s var(--ease);
+}
+
+.composer-tool-tip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.composer-config-tool:hover .composer-tool-tip,
+.composer-config-tool:focus-visible .composer-tool-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+.composer-tool-tip-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.composer-tool-tip-desc {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.composer-tool-tip-state {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.composer-tool-tip-state[data-state='allow'] {
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.composer-tool-tip-state[data-state='confirm'] {
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.composer-tool-tip-state[data-state='deny'] {
+  color: var(--subtle);
+  background: var(--surface-sunken);
+}
+
 .composer {
   padding-top: 14px;
   display: flex;
@@ -2426,20 +2980,34 @@ kbd {
 .workflow-metrics {
   margin: 16px 26px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
 .workflow-metrics > div {
+  position: relative;
   min-height: 62px;
-  padding: 10px 13px;
+  padding: 12px 14px 12px 18px;
   border: 1px solid var(--line);
   border-radius: 10px;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  background: var(--surface-soft);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-soft) 100%);
+  box-shadow: 0 1px 2px rgba(24, 34, 62, 0.04);
+  overflow: hidden;
+}
+
+.workflow-metrics > div::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  bottom: 11px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--brand-grad);
 }
 
 .workflow-metrics strong {
@@ -2523,7 +3091,7 @@ kbd {
 }
 
 .workflow-content {
-  min-height: 440px;
+  min-height: 380px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 264px;
 }
@@ -2531,6 +3099,8 @@ kbd {
 .workflow-stage {
   min-width: 0;
   padding: 4px 0;
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
 }
 
@@ -2548,7 +3118,8 @@ kbd {
 
 /* 主对话 lane：视觉主导，更高更突出，承载 chip 流。 */
 .workflow-main-lane {
-  min-height: 198px;
+  flex: 0 0 auto;
+  min-height: 176px;
   padding: 26px 20px 26px 0;
   background: linear-gradient(180deg, #fbfcff 0%, #f4f7fc 100%);
 }
@@ -2559,7 +3130,106 @@ kbd {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  justify-content: center;
 }
+
+/* 动作分布：吸收主对话下方的剩余高度，把"空着"变成有信息量的概览 */
+.workflow-breakdown {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 18px 26px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface);
+}
+
+.workflow-breakdown-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.workflow-breakdown-head strong {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text);
+}
+
+.workflow-breakdown-head span {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--subtle);
+}
+
+.workflow-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 8px;
+}
+
+.workflow-breakdown-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.workflow-breakdown-pill:hover {
+  transform: translateY(-1px);
+  border-color: var(--brand-line);
+  box-shadow: var(--shadow-sm);
+}
+
+.workflow-breakdown-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.workflow-breakdown-count {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.workflow-breakdown-empty {
+  grid-column: 1 / -1;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  text-align: center;
+  color: var(--subtle);
+  background: var(--surface-soft);
+  font-size: 12px;
+}
+
+/* 分布胶囊：图标按动作类型取色（颜色只作用在图标上，名称/计数保持中性） */
+.workflow-breakdown-pill[data-type='UserRequest'] { color: #64748b; }
+.workflow-breakdown-pill[data-type='Think'],
+.workflow-breakdown-pill[data-type='Plan'] { color: #2f9e7e; }
+.workflow-breakdown-pill[data-type='Response'],
+.workflow-breakdown-pill[data-type='Write'] { color: #c2589c; }
+.workflow-breakdown-pill[data-type='Read'],
+.workflow-breakdown-pill[data-type='Shell'],
+.workflow-breakdown-pill[data-type='Search'],
+.workflow-breakdown-pill[data-type='Tool'] { color: #5170b8; }
+.workflow-breakdown-pill[data-type='Subagent'] { color: #b08800; }
+.workflow-breakdown-pill[data-type='Skill'] { color: #6c9b2f; }
+.workflow-breakdown-pill[data-type='Compaction'] { color: #9c7a4d; }
 
 .workflow-chip-row {
   display: flex;
@@ -2585,8 +3255,9 @@ kbd {
   font-size: 12px;
 }
 
-/* 思/答 等简单小方块：只放单字 + 类型底色，细箭头串联，匹配参考图风格。 */
+/* 思/答 等简单小方块：只放动作图标 + 类型底色，细箭头串联，匹配参考图风格。 */
 .workflow-chip {
+  position: relative;
   width: 50px;
   height: 50px;
   border: 1px solid #9ca8b8;
@@ -2598,13 +3269,39 @@ kbd {
   background: #eef2f6;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(24, 34, 62, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.workflow-chip-glyph {
-  font-size: 17px;
-  font-weight: 850;
-  line-height: 1;
+/* 顶部高光层：叠在底色之上、图标之下，给方块一点立体感 */
+.workflow-chip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 48%);
+}
+
+.workflow-chip .action-icon {
+  position: relative;
+  z-index: 1;
+}
+
+/* 动作图标：span 定尺寸，svg 填满；颜色由外层 color 透传（图标内部用 currentColor） */
+.action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: inherit;
+}
+
+.action-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .workflow-chip-connector {
@@ -2731,7 +3428,8 @@ kbd {
 .workflow-node.selected,
 .workflow-context-node.selected,
 .workflow-chip.selected {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16), var(--shadow-sm);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3), 0 4px 10px rgba(99, 102, 241, 0.16);
+  transform: translateY(-1px);
 }
 
 :is(.workflow-node, .workflow-chip)[data-type='UserRequest'] { border-color: #64748b; background: #ffffff; }
@@ -3033,6 +3731,10 @@ kbd {
 .workflow-footer p {
   color: var(--muted);
   font-size: 11px;
+}
+
+.workflow-footer--simple {
+  justify-content: flex-end;
 }
 
 @media (max-width: 900px) {
