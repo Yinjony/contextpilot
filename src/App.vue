@@ -7,15 +7,72 @@ import SessionConfigModal from './components/SessionConfigModal.vue'
 import WorkflowModal from './components/WorkflowModal.vue'
 import MigrationExportModal from './components/MigrationExportModal.vue'
 import { sessions, totalSessions, contextCards } from './data/workspace.js'
-import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, deleteRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig } from './model/chatAdapter.js'
+import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, deleteRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig, getDefaultProjectDirectory } from './model/chatAdapter.js'
+
+const PROJECT_ENVIRONMENTS_STORAGE_KEY = 'contextpilot:project-environments'
+const ACTIVE_PROJECT_ENVIRONMENT_STORAGE_KEY = 'contextpilot:active-project-environment'
+
+function normalizeProjectDirectory(value) {
+  return String(value || '').trim().replace(/\\/g, '/').replace(/\/+$/, '')
+}
+
+function projectDirectoryKey(value) {
+  const directory = normalizeProjectDirectory(value)
+  return /^[A-Za-z]:\//.test(directory) ? directory.toLowerCase() : directory
+}
+
+function projectDisplayName(directory) {
+  const parts = normalizeProjectDirectory(directory).split('/').filter(Boolean)
+  return parts[parts.length - 1] || directory || '\u9879\u76ee'
+}
+
+function loadStoredProjectDirectories(defaultDirectory) {
+  try {
+    const raw = window.localStorage.getItem(PROJECT_ENVIRONMENTS_STORAGE_KEY)
+    const values = raw ? JSON.parse(raw) : []
+    const merged = [defaultDirectory, ...(Array.isArray(values) ? values : [])]
+    const seen = new Set()
+    return merged.filter((value) => {
+      const directory = normalizeProjectDirectory(value)
+      const key = projectDirectoryKey(directory)
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return true
+    }).map(normalizeProjectDirectory)
+  } catch {
+    return [defaultDirectory]
+  }
+}
+
+function loadActiveProjectDirectory(projects, fallback) {
+  try {
+    const saved = normalizeProjectDirectory(window.localStorage.getItem(ACTIVE_PROJECT_ENVIRONMENT_STORAGE_KEY))
+    return projects.find((directory) => projectDirectoryKey(directory) === projectDirectoryKey(saved)) || fallback
+  } catch {
+    return fallback
+  }
+}
 
 const baseContextCards = ref(contextCards.map((card) => ({ ...card })))
 const defaultContextCategories = [...new Set(contextCards.map((card) => card.category))]
+const defaultProjectDirectory = normalizeProjectDirectory(getDefaultProjectDirectory())
+const projectDirectories = ref(loadStoredProjectDirectories(defaultProjectDirectory))
+const activeProjectDirectory = ref(loadActiveProjectDirectory(projectDirectories.value, defaultProjectDirectory))
+const projectSessionCache = new Map()
+const isLoadingProject = ref(false)
+
+const projectEnvironments = computed(() =>
+  projectDirectories.value.map((directory) => ({
+    directory,
+    name: projectDisplayName(directory),
+  })),
+)
 
 // 当前活动会话（驱动聊天区标题与消息）
 const chatSessions = ref(
   sessions.map((session) => ({
     ...session,
+    directory: defaultProjectDirectory,
     messages: session.messages.map((message) => ({ ...message })),
     // mock / 本地回退会话也必须有自己的卡片副本；否则 UI 展示的是全局卡片，
     // 发送时却从 session.contextCards 读取空数组，造成“勾选了但模型没收到”。
@@ -29,17 +86,102 @@ const activeSessionId = ref(sessions[0]?.id)
 
 // 启动时从 opencode 加载真实历史会话；失败/为空则保留 mock（sessions）。
 const isLoadingHistory = ref(true)
-onMounted(async () => {
+
+function persistProjectDirectories() {
   try {
-    const real = await loadHistory()
-    if (real && real.length) {
-      // 历史消息和监督卡片都在 loadHistory 内从对应 session 读回。
-      chatSessions.value = real
-      activeSessionId.value = real[0]?.id ?? activeSessionId.value
-    }
-  } finally {
-    isLoadingHistory.value = false
+    window.localStorage.setItem(PROJECT_ENVIRONMENTS_STORAGE_KEY, JSON.stringify(projectDirectories.value))
+    window.localStorage.setItem(ACTIVE_PROJECT_ENVIRONMENT_STORAGE_KEY, activeProjectDirectory.value)
+  } catch {
+    // Local persistence is optional; OpenCode remains the source of sessions.
   }
+}
+
+function normalizeProjectSessions(items, directory) {
+  return (items || []).map((session) => ({
+    ...session,
+    directory: normalizeProjectDirectory(session.directory || directory),
+  }))
+}
+
+function activateProjectSessions(directory, items) {
+  const target = normalizeProjectDirectory(directory)
+  const next = normalizeProjectSessions(items, target)
+  const usable = next.length ? next : [buildNewSession(target)]
+  chatSessions.value = usable
+  activeSessionId.value = usable[0]?.id || ''
+  projectSessionCache.set(projectDirectoryKey(target), usable)
+  chatError.value = ''
+}
+
+async function loadProjectEnvironment(directory, { initial = false } = {}) {
+  const target = normalizeProjectDirectory(directory)
+  if (!target) return
+  isLoadingProject.value = true
+  activeProjectDirectory.value = target
+  persistProjectDirectories()
+  try {
+    const remote = await loadHistory(target)
+    if (remote && remote.length) {
+      activateProjectSessions(target, remote)
+      return
+    }
+
+    const cached = projectSessionCache.get(projectDirectoryKey(target))
+    if (cached?.length) {
+      activateProjectSessions(target, cached)
+      return
+    }
+
+    if (initial && projectDirectoryKey(target) === projectDirectoryKey(defaultProjectDirectory)) {
+      activateProjectSessions(target, chatSessions.value)
+      return
+    }
+
+    activateProjectSessions(target, [])
+  } finally {
+    isLoadingProject.value = false
+  }
+}
+
+async function selectProjectEnvironment(directory) {
+  const target = normalizeProjectDirectory(directory)
+  if (!target || projectDirectoryKey(target) === projectDirectoryKey(activeProjectDirectory.value)) return
+  if (isSending.value) {
+    window.alert('\u6b63\u5728\u751f\u6210\u56de\u590d\uff0c\u8bf7\u7b49\u5f85\u5f53\u524d\u5bf9\u8bdd\u5b8c\u6210\u540e\u518d\u5207\u6362\u9879\u76ee\u3002')
+    return
+  }
+  projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
+  await loadProjectEnvironment(target)
+}
+
+async function createProjectEnvironment() {
+  const raw = window.prompt('\u8bf7\u7c98\u8d34\u65b0\u9879\u76ee\u7684\u7edd\u5bf9\u8def\u5f84\uff08\u4f8b\u5982 C:\\\\Projects\\\\my-app\uff09\uff1a', '')
+  const target = normalizeProjectDirectory(raw)
+  if (!target) return
+  if (!projectDirectories.value.some((directory) => projectDirectoryKey(directory) === projectDirectoryKey(target))) {
+    projectDirectories.value = [...projectDirectories.value, target]
+  }
+  persistProjectDirectories()
+  await selectProjectEnvironment(target)
+}
+
+async function removeProjectEnvironment(directory) {
+  const target = normalizeProjectDirectory(directory)
+  if (projectDirectoryKey(target) === projectDirectoryKey(defaultProjectDirectory)) {
+    window.alert('\u9ed8\u8ba4\u9879\u76ee\u73af\u5883\u4e0d\u80fd\u79fb\u9664\u3002')
+    return
+  }
+  if (!window.confirm('\u4ece\u4fa7\u8fb9\u680f\u79fb\u9664\u9879\u76ee\u73af\u5883\uff1f\u8fd9\u4e0d\u4f1a\u5220\u9664\u4efb\u4f55 OpenCode \u4f1a\u8bdd\u3002')) return
+  projectDirectories.value = projectDirectories.value.filter((item) => projectDirectoryKey(item) !== projectDirectoryKey(target))
+  projectSessionCache.delete(projectDirectoryKey(target))
+  persistProjectDirectories()
+  if (projectDirectoryKey(activeProjectDirectory.value) === projectDirectoryKey(target)) {
+    await loadProjectEnvironment(projectDirectories.value[0] || defaultProjectDirectory)
+  }
+}
+onMounted(async () => {
+  await loadProjectEnvironment(activeProjectDirectory.value, { initial: true })
+  isLoadingHistory.value = false
 })
 
 const activeSession = computed(
@@ -132,6 +274,8 @@ async function saveChatConfig(config) {
       chatConfig,
       session.metadata,
       session.contextCards || [],
+      undefined,
+      session.directory || activeProjectDirectory.value,
     )
     if (!saved) {
       throw new Error('配置未能同步到数据库，请稍后重试。')
@@ -165,6 +309,8 @@ function updateInlineChatConfig(config) {
         latestConfig,
         session.metadata,
         session.contextCards || [],
+        undefined,
+        session.directory || activeProjectDirectory.value,
       )
       if (!saved) throw new Error('配置未能同步到数据库，请稍后重试。')
       chatConfigError.value = ''
@@ -190,17 +336,18 @@ async function refreshSupervisorCards(sessionId) {
   try {
     localStorage.setItem(`contextpilot:supervisor:${sessionId}`, supervisorId)
   } catch { /* localStorage 不可用时静默 */ }
-  const incoming = await getSupervisorCards(supervisorId)
+  const incoming = await getSupervisorCards(supervisorId, undefined, session.directory || activeProjectDirectory.value)
   if (incoming.length) {
     session.contextCards = mergeCards(session.contextCards || [], incoming)
     persistSessionCards(session)
   }
 }
 
-function buildNewSession() {
+function buildNewSession(directory = activeProjectDirectory.value) {
   const id = `chat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
   return {
     id,
+    directory: normalizeProjectDirectory(directory),
     title: '新建对话',
     status: '待开始',
     tone: 'progress',
@@ -214,10 +361,11 @@ function buildNewSession() {
 }
 
 function createNewSession() {
-  const session = buildNewSession()
+  const session = buildNewSession(activeProjectDirectory.value)
 
   chatSessions.value.unshift(session)
   activeSessionId.value = session.id
+  projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
   chatError.value = ''
 }
 
@@ -254,7 +402,7 @@ async function deleteSession(id) {
   if (!window.confirm(`删除对话“${session.title}”？`)) return
 
   // 后端删除（opencode.db）；失败不阻断前端删除，只提示。
-  const ok = await deleteRemoteSession(id)
+  const ok = await deleteRemoteSession(id, undefined, session.directory || activeProjectDirectory.value)
 
   chatSessions.value.splice(index, 1)
   if (chatSessions.value.length === 0) {
@@ -265,6 +413,7 @@ async function deleteSession(id) {
     const next = chatSessions.value[Math.min(index, chatSessions.value.length - 1)]
     activeSessionId.value = next.id
   }
+  projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
   chatError.value = ok ? '' : '后端会话删除失败，刷新后该会话可能仍在。'
 }
 
@@ -309,6 +458,7 @@ async function runSupervisor(session, turnMessages) {
       turnMessages,
       cards: session.contextCards || [],
       mainMetadata: session.metadata,
+      directory: session.directory || activeProjectDirectory.value,
     })
     // 同步前端 metadata 的 supervisorSessionId，避免后续 saveRemoteCards 用旧 metadata 覆盖掉绑定。
     if (supervisorId) {
@@ -426,7 +576,7 @@ function persistSessionCards(session) {
     type: 'main',
     contextCards: cards,
   }
-  return saveRemoteCards(session.id, cards, session.metadata)
+  return saveRemoteCards(session.id, cards, session.metadata, undefined, session.directory || activeProjectDirectory.value)
 }
 
 // 工作台勾选回写：选中后注入主对话下一轮 prompt。
@@ -484,6 +634,7 @@ async function handleSendMessage(text) {
         signal: activeAbortController.signal,
         selectedCards,
         chatConfig: session.metadata?.chatConfig,
+        directory: session.directory || activeProjectDirectory.value,
         onDelta: (delta, fullText) => {
           pendingText = fullText
           if (!rafScheduled) {
@@ -511,6 +662,7 @@ async function handleSendMessage(text) {
         messages: session.messages,
         selectedCards,
         chatConfig: session.metadata?.chatConfig,
+        directory: session.directory || activeProjectDirectory.value,
       })
       assistantMessage.text = reply
       runSupervisor(session, buildSupervisorTurn(userMessage, assistantMessage))
@@ -603,6 +755,9 @@ function refreshSessionContext() {}
       :total-sessions="totalSessions"
       :active-id="activeSessionId"
       :collapsed="sidebarCollapsed"
+      :projects="projectEnvironments"
+      :active-project-directory="activeProjectDirectory"
+      :project-loading="isLoadingProject"
       @select="selectSession"
       @create="createNewSession"
       @share="shareSession"
@@ -613,6 +768,9 @@ function refreshSessionContext() {}
       @configure="openChatConfig"
       @workflow="openWorkflow"
       @migrate="openMigrationExport"
+      @select-project="selectProjectEnvironment"
+      @create-project="createProjectEnvironment"
+      @remove-project="removeProjectEnvironment"
     />
 
     <ContextWorkbench
@@ -673,6 +831,7 @@ function refreshSessionContext() {}
     <MigrationExportModal
       v-if="isMigrationExportOpen"
       :sessions="chatSessions"
+      :directory="activeProjectDirectory"
       @close="isMigrationExportOpen = false"
     />
   </main>

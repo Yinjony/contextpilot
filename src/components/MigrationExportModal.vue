@@ -12,6 +12,7 @@ import {
 
 const props = defineProps({
   sessions: { type: Array, default: () => [] },
+  directory: { type: String, default: '' },
 })
 
 const emit = defineEmits(['close'])
@@ -90,6 +91,7 @@ async function startAnalysis() {
   try {
     const result = await startMigrationAnalysis({
       sessions: props.sessions,
+      directory: props.directory,
       signal: requestController.signal,
     })
     temporarySessionID.value = result.sessionID
@@ -115,6 +117,7 @@ async function generatePreview() {
       sessionID: currentID,
       sessions: props.sessions,
       selectedTypeIDs: selectedIDs.value,
+      directory: props.directory,
       signal: requestController.signal,
     })
     documentTitle.value = (props.sessions.find((session) => session?.title)?.title || '\u9879\u76ee') + ' - \u8fc1\u79fb\u6587\u6863'
@@ -132,7 +135,7 @@ async function generatePreview() {
 async function discardTemporarySession() {
   const id = temporarySessionID.value
   temporarySessionID.value = ''
-  if (id) await discardMigrationSession(id)
+  if (id) await discardMigrationSession(id, undefined, props.directory)
 }
 
 async function close() {

@@ -66,6 +66,14 @@ const MIGRATION_SESSION_TYPE = 'migration-export'
 
 const env = import.meta.env
 const backend = (env.VITE_CHAT_BACKEND || 'opencode').toLowerCase()
+
+export function getDefaultProjectDirectory() {
+  return env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+}
+
+function resolveProjectDirectory(directory) {
+  return String(directory || getDefaultProjectDirectory()).trim()
+}
 const opencodeSessions = new Map()
 // 主对话 sessionID → 监督 sessionID（监督对话独立存在于 opencode，专门做卡片总结）。
 const supervisorSessions = new Map()
@@ -163,7 +171,7 @@ function getBridgeClient() {
 
 // 流式版发送：复用同步路径的 session 缓存、首轮上下文注入、禁工具 guard、provider/model 配置。
 // onDelta(delta, fullText) 由底层 runPrompt 在每个文本增量时回调；fullText 是已拼接的完整文本。
-export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning, selectedCards, chatConfig }) {
+export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning, selectedCards, chatConfig, directory }) {
   if (backend === 'openai-compatible') {
     // 该后端 v1 不支持流式：走同步接口，再整体回调一次。
     const text = await sendOpenAICompatibleMessage({ messages, signal, chatConfig })
@@ -177,7 +185,8 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
   }
 
   // 复用同步路径的 session 缓存（按 client session id 映射到 opencode session id）。
-  const session = await ensureOpencodeSession(sessionId, title, signal, chatConfig)
+  const projectDirectory = resolveProjectDirectory(directory)
+  const session = await ensureOpencodeSession(sessionId, title, signal, chatConfig, projectDirectory)
   // 选中卡片作为上下文前置注入（补上工作台勾选 → 主对话的链路）。
   // 新建远端 session 时也只发送本轮问题。过去内容只能通过选中卡片进入，
   // 否则旧的整段 UI 历史注入会让未选中内容绕过 part 过滤。
@@ -187,7 +196,7 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
     selectedCards,
   })
   const guard = opencodeChatPromptGuardPayload(chatConfig)
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const requestDirectory = projectDirectory
 
   const client = getBridgeClient()
 
@@ -216,7 +225,7 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
   try {
     const result = await client.runPrompt({
       sessionID: session.id,
-      directory,
+      directory: requestDirectory,
       parts: promptParts,
       model: {
         providerID: opencodeProviderID(),
@@ -269,12 +278,12 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
 
 // 启动时从 opencode 加载真实历史会话（仅当前项目 directory）。
 // 返回 UI session 数组；失败或为空返回 null，由调用方回退 mock。
-export async function loadHistory() {
+export async function loadHistory(directory) {
   if (backend !== 'opencode') return null
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const projectDirectory = resolveProjectDirectory(directory)
   const client = getBridgeClient()
   try {
-    const list = await client.listSessions({ directory })
+    const list = await client.listSessions({ directory: projectDirectory })
     if (!Array.isArray(list) || list.length === 0) return null
 
     const supervisorByMainId = new Map()
@@ -303,7 +312,7 @@ export async function loadHistory() {
       let withParts = []
       let loadedParts = false
       try {
-        const loaded = await client.messages({ sessionID: oc.id, directory })
+        const loaded = await client.messages({ sessionID: oc.id, directory: projectDirectory })
         if (Array.isArray(loaded)) {
           withParts = loaded
           loadedParts = true
@@ -316,7 +325,7 @@ export async function loadHistory() {
       const firstUser = messages.find((m) => m.role === 'user')
       let supervisorCards = []
       if (supervisorSessionId) {
-        supervisorCards = await getSupervisorCards(supervisorSessionId)
+        supervisorCards = await getSupervisorCards(supervisorSessionId, undefined, projectDirectory)
       }
       const validPartIDs = loadedParts
         ? new Set(withParts.flatMap((message) => (message.parts || []).map((part) => part?.id).filter(Boolean)))
@@ -335,20 +344,21 @@ export async function loadHistory() {
         (supervisorSessionId && (metadata.type !== 'main' || metadata.supervisorSessionId !== supervisorSessionId))
       ) {
         try {
-          await updateSessionMetadata(client, directory, oc.id, uiMetadata)
+          await updateSessionMetadata(client, projectDirectory, oc.id, uiMetadata)
         } catch (error) {
           console.warn('[chatAdapter] 补写主 session metadata 失败：', error?.message || error)
         }
       }
       if (supervisorSessionId && supervisorByMainId.get(oc.id) !== supervisorSessionId) {
         try {
-          await updateSessionMetadata(client, directory, supervisorSessionId, buildSupervisorMetadata(oc.id))
+          await updateSessionMetadata(client, projectDirectory, supervisorSessionId, buildSupervisorMetadata(oc.id))
         } catch (error) {
           console.warn('[chatAdapter] 补写监督 session metadata 失败：', error?.message || error)
         }
       }
       result.push({
         id: oc.id,
+        directory: oc.directory || projectDirectory,
         title: oc.title || '未命名对话',
         time: formatRelative(oc.time?.updated || oc.time?.created),
         summary: firstUser?.text || oc.title || '等待模型回复',
@@ -368,14 +378,14 @@ export async function loadHistory() {
 }
 
 // 删除后端会话（opencode.db）。成功返回 true 并清本地 session 缓存；失败返回 false（不抛）。
-export async function deleteRemoteSession(sessionId, signal) {
+export async function deleteRemoteSession(sessionId, signal, directory) {
   if (backend !== 'opencode') return false
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const projectDirectory = resolveProjectDirectory(directory)
   const client = getBridgeClient()
   try {
     // sessionId 可能是前端 UI id，先映射到 opencode session id，避免 DELETE 404。
-    const oc = await ensureOpencodeSession(sessionId, undefined, signal)
-    await client.removeSession({ sessionID: oc.id, directory }, signal)
+    const oc = await ensureOpencodeSession(sessionId, undefined, signal, undefined, projectDirectory)
+    await client.removeSession({ sessionID: oc.id, directory: projectDirectory }, signal)
     opencodeSessions.delete(sessionId)
     return true
   } catch (error) {
@@ -386,13 +396,13 @@ export async function deleteRemoteSession(sessionId, signal) {
 
 // 把卡片写回 opencode session 的 metadata（持久化在 opencode.db，跨设备同步）。
 // baseMetadata 传入该 session 现有 metadata，避免覆盖其他字段；失败返回 false（不抛）。
-export async function saveRemoteCards(sessionId, cards, baseMetadata, signal) {
+export async function saveRemoteCards(sessionId, cards, baseMetadata, signal, directory) {
   if (backend !== 'opencode') return false
   const client = getBridgeClient()
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const projectDirectory = resolveProjectDirectory(directory)
   try {
     // sessionId 可能是前端 UI id（新建会话），先映射到 opencode session id，避免 PATCH 404。
-    const oc = await ensureOpencodeSession(sessionId, undefined, signal)
+    const oc = await ensureOpencodeSession(sessionId, undefined, signal, undefined, projectDirectory)
     const supervisorId = normalizeMetadata(baseMetadata).supervisorSessionId || supervisorSessions.get(oc.id) || supervisorSessions.get(sessionId)
     const metadata = buildMainMetadata(baseMetadata, supervisorId, cards)
     await updateSessionMetadata(client, directory, oc.id, metadata, signal)
@@ -405,13 +415,13 @@ export async function saveRemoteCards(sessionId, cards, baseMetadata, signal) {
 
 // 把会话级底盘配置与当前卡片一起写入主 session metadata。
 // 新建草稿会话保存配置时会先创建远端 session，确保切换或刷新后仍可读回。
-export async function saveSessionChatConfig(sessionId, title, chatConfig, baseMetadata, cards, signal) {
+export async function saveSessionChatConfig(sessionId, title, chatConfig, baseMetadata, cards, signal, directory) {
   if (backend !== 'opencode') return false
   const client = getBridgeClient()
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const projectDirectory = resolveProjectDirectory(directory)
   try {
     const normalizedConfig = normalizeChatConfig(chatConfig)
-    const oc = await ensureOpencodeSession(sessionId, title, signal, normalizedConfig)
+    const oc = await ensureOpencodeSession(sessionId, title, signal, normalizedConfig, projectDirectory)
     const supervisorId =
       normalizeMetadata(baseMetadata).supervisorSessionId ||
       supervisorSessions.get(oc.id) ||
@@ -421,7 +431,7 @@ export async function saveSessionChatConfig(sessionId, title, chatConfig, baseMe
       supervisorId,
       cards,
     )
-    await updateSessionMetadata(client, directory, oc.id, metadata, signal)
+    await updateSessionMetadata(client, projectDirectory, oc.id, metadata, signal)
     return true
   } catch (error) {
     console.warn('[chatAdapter] saveSessionChatConfig failed', error?.message || error)
@@ -431,13 +441,13 @@ export async function saveSessionChatConfig(sessionId, title, chatConfig, baseMe
 
 // A migration export is deliberately isolated in a short-lived OpenCode session.
 // It is omitted from history and removed when the document is generated or dismissed.
-export async function startMigrationAnalysis({ sessions, signal }) {
+export async function startMigrationAnalysis({ sessions, signal, directory: targetDirectory }) {
   if (backend !== 'opencode') {
     throw new Error('\u8fc1\u79fb\u6587\u6863\u5bfc\u51fa\u9700\u8981\u8fde\u63a5 OpenCode \u540e\u7aef\u3002')
   }
 
   const client = getBridgeClient()
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const directory = resolveProjectDirectory(targetDirectory)
   let sessionID = ''
   try {
     const created = await client.createSession(
@@ -467,12 +477,12 @@ export async function startMigrationAnalysis({ sessions, signal }) {
       candidates: parseMigrationCandidates(extractOpencodeAssistantText(result), sessions),
     }
   } catch (error) {
-    if (sessionID) await discardMigrationSession(sessionID)
+    if (sessionID) await discardMigrationSession(sessionID, undefined, directory)
     throw error
   }
 }
 
-export async function generateMigrationDocument({ sessionID, sessions, selectedTypeIDs, signal }) {
+export async function generateMigrationDocument({ sessionID, sessions, selectedTypeIDs, signal, directory: targetDirectory }) {
   if (backend !== 'opencode') {
     throw new Error('\u8fc1\u79fb\u6587\u6863\u5bfc\u51fa\u9700\u8981\u8fde\u63a5 OpenCode \u540e\u7aef\u3002')
   }
@@ -484,7 +494,7 @@ export async function generateMigrationDocument({ sessionID, sessions, selectedT
   }
 
   const client = getBridgeClient()
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const directory = resolveProjectDirectory(targetDirectory)
   try {
     const result = await client.prompt(
       {
@@ -498,14 +508,14 @@ export async function generateMigrationDocument({ sessionID, sessions, selectedT
     )
     return extractOpencodeAssistantText(result)
   } finally {
-    await discardMigrationSession(sessionID)
+    await discardMigrationSession(sessionID, undefined, directory)
   }
 }
 
-export async function discardMigrationSession(sessionID, signal) {
+export async function discardMigrationSession(sessionID, signal, targetDirectory) {
   if (backend !== 'opencode' || !sessionID) return false
   const client = getBridgeClient()
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const directory = resolveProjectDirectory(targetDirectory)
   try {
     await client.removeSession({ sessionID, directory }, signal)
     return true
@@ -636,16 +646,16 @@ function defaultMigrationCandidates(sessions) {
   }))
 }
 
-export async function runSupervisorSummary({ mainSessionId, turnMessages, messages, cards, mainMetadata, signal }) {
+export async function runSupervisorSummary({ mainSessionId, turnMessages, messages, cards, mainMetadata, signal, directory: targetDirectory }) {
   if (backend !== 'opencode') return { cards: [], supervisorId: null, sourceParts: [] }
   const client = getBridgeClient()
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const directory = resolveProjectDirectory(targetDirectory)
 
   let supervisorId
   let main
   try {
-    main = await ensureOpencodeSession(mainSessionId, undefined, signal)
-    supervisorId = await ensureSupervisorSession(mainSessionId, mainMetadata, signal)
+    main = await ensureOpencodeSession(mainSessionId, undefined, signal, undefined, directory)
+    supervisorId = await ensureSupervisorSession(mainSessionId, mainMetadata, signal, directory)
   } catch (error) {
     console.warn('[chatAdapter] ensureSupervisorSession 失败：', error?.message || error)
     return { cards: [], supervisorId: null, sourceParts: [] }
@@ -690,10 +700,10 @@ export async function runSupervisorSummary({ mainSessionId, turnMessages, messag
 // 为主对话创建/复用监督 session（缓存 mainId → supervisorId）。
 // 创建时给监督 session 打标 type=supervisor（便于 loadHistory 过滤），并把绑定关系
 // 持久化进主 session metadata（刷新后可重建映射，监督 session 长期复用）。
-async function ensureSupervisorSession(mainSessionId, mainMetadata, signal) {
+async function ensureSupervisorSession(mainSessionId, mainMetadata, signal, targetDirectory) {
   const client = getBridgeClient()
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
-  const main = await ensureOpencodeSession(mainSessionId, undefined, signal)
+  const directory = resolveProjectDirectory(targetDirectory)
+  const main = await ensureOpencodeSession(mainSessionId, undefined, signal, undefined, directory)
   const mainId = main.id
   const baseMainMetadata = normalizeMetadata(mainMetadata)
   const cached = baseMainMetadata.supervisorSessionId || supervisorSessions.get(mainId) || supervisorSessions.get(mainSessionId)
@@ -730,10 +740,10 @@ async function ensureSupervisorSession(mainSessionId, mainMetadata, signal) {
 }
 
 // 拉取监督 session 的最新总结，解析成卡片（选择对话时刷新工作台用）。
-export async function getSupervisorCards(supervisorId, signal) {
+export async function getSupervisorCards(supervisorId, signal, targetDirectory) {
   if (backend !== 'opencode' || !supervisorId) return []
   const client = getBridgeClient()
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
+  const directory = resolveProjectDirectory(targetDirectory)
   try {
     const withParts = await client.messages({ sessionID: supervisorId, directory }, signal)
     if (!Array.isArray(withParts)) return []
@@ -1062,23 +1072,24 @@ function formatClock(ts) {
   return `${hh}:${mm}`
 }
 
-export async function sendChatMessage({ sessionId, title, messages, signal, selectedCards, chatConfig }) {
+export async function sendChatMessage({ sessionId, title, messages, signal, selectedCards, chatConfig, directory }) {
   if (backend === 'openai-compatible') {
     return sendOpenAICompatibleMessage({ messages, signal, chatConfig })
   }
 
-  return sendOpencodeMessage({ sessionId, title, messages, signal, selectedCards, chatConfig })
+  return sendOpencodeMessage({ sessionId, title, messages, signal, selectedCards, chatConfig, directory })
 }
 
-async function sendOpencodeMessage({ sessionId, title, messages, signal, selectedCards, chatConfig }) {
+async function sendOpencodeMessage({ sessionId, title, messages, signal, selectedCards, chatConfig, directory }) {
   const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user')
   if (!latestUserMessage?.text?.trim()) {
     throw new Error('没有可发送的用户消息。')
   }
 
-  const session = await ensureOpencodeSession(sessionId, title, signal, chatConfig)
+  const projectDirectory = resolveProjectDirectory(directory)
+  const session = await ensureOpencodeSession(sessionId, title, signal, chatConfig, projectDirectory)
   const promptText = latestUserMessage.text
-  const response = await requestOpencode(withOpencodeDirectory(`/session/${encodeURIComponent(session.id)}/message`), {
+  const response = await requestOpencode(withOpencodeDirectory(`/session/${encodeURIComponent(session.id)}/message`, projectDirectory), {
     method: 'POST',
     body: buildOpencodePromptPayload(buildContextPromptParts({ prompt: promptText, selectedCards }), chatConfig),
     signal,
@@ -1086,12 +1097,13 @@ async function sendOpencodeMessage({ sessionId, title, messages, signal, selecte
   return extractOpencodeAssistantText(response)
 }
 
-async function ensureOpencodeSession(clientSessionId, title, signal, chatConfig) {
+async function ensureOpencodeSession(clientSessionId, title, signal, chatConfig, directory) {
   const cacheKey = clientSessionId || 'default'
   const cached = opencodeSessions.get(cacheKey)
   if (cached) return { ...cached, isNew: false }
 
-  const response = await requestOpencode(withOpencodeDirectory('/session'), {
+  const projectDirectory = resolveProjectDirectory(directory)
+  const response = await requestOpencode(withOpencodeDirectory('/session', projectDirectory), {
     method: 'POST',
     body: buildOpencodeSessionPayload(title, chatConfig),
     signal,
@@ -1313,12 +1325,12 @@ function opencodeChatPermissionPayload() {
   }
 }
 
-function withOpencodeDirectory(path) {
-  const directory = env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
-  if (!directory) return path
+function withOpencodeDirectory(path, directory) {
+  const projectDirectory = resolveProjectDirectory(directory)
+  if (!projectDirectory) return path
 
   const separator = path.includes('?') ? '&' : '?'
-  return `${path}${separator}directory=${encodeURIComponent(directory)}`
+  return `${path}${separator}directory=${encodeURIComponent(projectDirectory)}`
 }
 
 function opencodeProviderID() {

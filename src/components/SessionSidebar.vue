@@ -1,11 +1,14 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import AppIcon from './AppIcon.vue'
 
-defineProps({
+const props = defineProps({
   sessions: { type: Array, required: true },
   activeId: { type: String, default: '' },
   collapsed: { type: Boolean, default: false },
+  projects: { type: Array, default: () => [] },
+  activeProjectDirectory: { type: String, default: '' },
+  projectLoading: { type: Boolean, default: false },
 })
 
 const emit = defineEmits([
@@ -19,137 +22,216 @@ const emit = defineEmits([
   'configure',
   'workflow',
   'migrate',
+  'select-project',
+  'create-project',
+  'remove-project',
 ])
+
 const openMenuId = ref('')
+const projectMenu = ref(null)
+const projectMenuRef = ref(null)
+
+const activeProject = computed(() =>
+  props.projects.find((project) => project.directory === props.activeProjectDirectory) || props.projects[0] || null,
+)
+
+function projectInitials(project) {
+  return String(project?.name || '').trim().slice(0, 2).toUpperCase() || 'CP'
+}
+
+function closeMenus() {
+  openMenuId.value = ''
+  projectMenu.value = null
+}
 
 function toggleMenu(id) {
   openMenuId.value = openMenuId.value === id ? '' : id
-}
-
-function closeMenu() {
-  openMenuId.value = ''
+  projectMenu.value = null
 }
 
 function selectSession(id) {
-  closeMenu()
+  closeMenus()
   emit('select', id)
 }
 
 function runAction(type, id) {
-  closeMenu()
+  closeMenus()
   emit(type, id)
 }
 
-function handleDocumentClick() {
-  closeMenu()
+function selectProject(directory) {
+  closeMenus()
+  emit('select-project', directory)
+}
+
+function openProjectMenu(event, directory) {
+  event.preventDefault()
+  openMenuId.value = ''
+  projectMenu.value = { x: event.clientX, y: event.clientY, directory }
+}
+
+function removeProject() {
+  const directory = projectMenu.value?.directory
+  closeMenus()
+  if (directory) emit('remove-project', directory)
+}
+
+function handleDocumentClick(event) {
+  if (projectMenu.value && !projectMenuRef.value?.contains(event.target)) projectMenu.value = null
+  openMenuId.value = ''
+}
+
+function handleKeydown(event) {
+  if (event.key === 'Escape') closeMenus()
 }
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
+  document.addEventListener('keydown', handleKeydown)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick)
+  document.removeEventListener('keydown', handleKeydown)
 })
 </script>
 
 <template>
-  <aside class="sidebar" :class="{ collapsed }" aria-label="会话导航">
-    <!-- 收起态：窄轨，仅留品牌标 + 展开按钮 -->
+  <aside class="sidebar" :class="{ collapsed }" aria-label="sidebar">
     <button
       v-if="collapsed"
       type="button"
       class="rail-toggle"
-      aria-label="展开会话栏"
+      aria-label="expand sidebar"
       @click="$emit('expand')"
     >
-      <span class="rail-content-icon"><AppIcon name="user" :size="18" /></span>
+      <span class="rail-content-icon"><AppIcon name="layers" :size="18" /></span>
       <AppIcon name="chevrons-right" :size="18" />
     </button>
 
     <template v-else>
-      <div class="sidebar-header">
-        <h1 class="brand-word">contexpilot</h1>
+      <nav class="project-rail" aria-label="project environments">
         <button
           type="button"
-          class="icon-btn"
-          aria-label="收起会话栏"
-          @click="$emit('collapse')"
+          class="project-rail-add"
+          title="create project environment"
+          @click="$emit('create-project')"
         >
-          <AppIcon name="chevrons-left" :size="16" />
+          <AppIcon name="plus" :size="17" />
         </button>
-      </div>
-
-      <nav class="quick-actions" aria-label="快捷操作">
-        <button type="button" class="primary-action" @click="$emit('create')">
-          <AppIcon name="plus" :size="16" />
-          <span>新建对话</span>
+        <button
+          v-for="project in projects"
+          :key="project.directory"
+          type="button"
+          class="project-rail-item"
+          :class="{ active: project.directory === activeProjectDirectory }"
+          :title="project.directory"
+          :aria-label="project.name"
+          @click="selectProject(project.directory)"
+          @contextmenu="openProjectMenu($event, project.directory)"
+        >
+          {{ projectInitials(project) }}
         </button>
       </nav>
 
-      <section class="session-list" aria-label="会话列表">
-        <div class="section-heading">
-          <span>会话</span>
-          <strong>{{ sessions.length }}</strong>
-        </div>
-        <div
-          v-for="session in sessions"
-          :key="session.id"
-          class="session-item"
-          :class="{ active: session.id === activeId }"
-          @click.stop
-        >
-          <button type="button" class="session-main" @click="selectSession(session.id)">
-            <strong>{{ session.title }}</strong>
-            <em>{{ session.time }}</em>
+      <div class="sidebar-content">
+        <div class="sidebar-header">
+          <div class="project-heading">
+            <span class="project-heading-label">&#x9879;&#x76EE;&#x73AF;&#x5883;</span>
+            <strong :title="activeProject?.directory">{{ activeProject?.name || '&#x9879;&#x76EE;' }}</strong>
+          </div>
+          <span v-if="projectLoading" class="project-loading" aria-label="loading"></span>
+          <button
+            type="button"
+            class="icon-btn"
+            aria-label="collapse sidebar"
+            @click="$emit('collapse')"
+          >
+            <AppIcon name="chevrons-left" :size="16" />
           </button>
+        </div>
 
-          <div class="session-actions">
-            <button
-              type="button"
-              class="session-menu-trigger"
-              :aria-label="`${session.title} 操作`"
-              :aria-expanded="openMenuId === session.id"
-              @click.stop="toggleMenu(session.id)"
-            >
-              <AppIcon name="more-horizontal" :size="18" />
+        <nav class="quick-actions" aria-label="quick actions">
+          <button type="button" class="primary-action" :disabled="projectLoading" @click="$emit('create')">
+            <AppIcon name="plus" :size="16" />
+            <span>&#x65B0;&#x5EFA;&#x5BF9;&#x8BDD;</span>
+          </button>
+        </nav>
+
+        <section class="session-list" aria-label="sessions">
+          <div class="section-heading">
+            <span>&#x5BF9;&#x8BDD;</span>
+            <strong>{{ sessions.length }}</strong>
+          </div>
+          <p v-if="!sessions.length" class="project-empty">&#x5F53;&#x524D;&#x9879;&#x76EE;&#x6682;&#x65E0;&#x5BF9;&#x8BDD;</p>
+          <div
+            v-for="session in sessions"
+            :key="session.id"
+            class="session-item"
+            :class="{ active: session.id === activeId }"
+            @click.stop
+          >
+            <button type="button" class="session-main" @click="selectSession(session.id)">
+              <strong>{{ session.title }}</strong>
+              <em>{{ session.time }}</em>
             </button>
 
-            <div v-if="openMenuId === session.id" class="session-menu" role="menu">
-              <button type="button" role="menuitem" @click.stop="runAction('share', session.id)">
-                <AppIcon name="share" :size="17" />
-                <span>分享</span>
-              </button>
-              <button type="button" role="menuitem" @click.stop="runAction('rename', session.id)">
-                <AppIcon name="pencil" :size="17" />
-                <span>重命名</span>
-              </button>
+            <div class="session-actions">
               <button
                 type="button"
-                class="danger"
-                role="menuitem"
-                @click.stop="runAction('delete', session.id)"
+                class="session-menu-trigger"
+                :aria-label="`${session.title} actions`"
+                :aria-expanded="openMenuId === session.id"
+                @click.stop="toggleMenu(session.id)"
               >
-                <AppIcon name="trash" :size="17" />
-                <span>删除</span>
+                <AppIcon name="more-horizontal" :size="18" />
               </button>
+
+              <div v-if="openMenuId === session.id" class="session-menu" role="menu" @click.stop>
+                <button type="button" role="menuitem" @click="runAction('share', session.id)">
+                  <AppIcon name="share" :size="17" />
+                  <span>&#x5206;&#x4EAB;</span>
+                </button>
+                <button type="button" role="menuitem" @click="runAction('rename', session.id)">
+                  <AppIcon name="pencil" :size="17" />
+                  <span>&#x91CD;&#x547D;&#x540D;</span>
+                </button>
+                <button type="button" class="danger" role="menuitem" @click="runAction('delete', session.id)">
+                  <AppIcon name="trash" :size="17" />
+                  <span>&#x5220;&#x9664;</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <div class="sidebar-footer-actions" aria-label="会话辅助操作">
-        <button type="button" class="sidebar-utility-action" @click="$emit('configure')">
-          <AppIcon name="sliders" :size="16" />
-          <span>对话底盘配置</span>
-        </button>
-        <button type="button" class="sidebar-utility-action" @click="$emit('workflow')">
-          <AppIcon name="workflow" :size="16" />
-          <span>执行追踪&项目概况</span>
-        </button>
-        <button type="button" class="sidebar-utility-action" @click="$emit('migrate')">
-          <AppIcon name="file-text" :size="16" />
-          <span>&#x8FC1;&#x79FB;&#x6587;&#x6863;&#x5BFC;&#x51FA;</span>
+        <div class="sidebar-footer-actions" aria-label="session utilities">
+          <button type="button" class="sidebar-utility-action" @click="$emit('configure')">
+            <AppIcon name="sliders" :size="16" />
+            <span>&#x5BF9;&#x8BDD;&#x5E95;&#x76D8;&#x914D;&#x7F6E;</span>
+          </button>
+          <button type="button" class="sidebar-utility-action" @click="$emit('workflow')">
+            <AppIcon name="workflow" :size="16" />
+            <span>&#x6267;&#x884C;&#x8FFD;&#x8E2A;&amp;&#x9879;&#x76EE;&#x6982;&#x51B5;</span>
+          </button>
+          <button type="button" class="sidebar-utility-action" @click="$emit('migrate')">
+            <AppIcon name="file-text" :size="16" />
+            <span>&#x8FC1;&#x79FB;&#x6587;&#x6863;&#x5BFC;&#x51FA;</span>
+          </button>
+        </div>
+      </div>
+
+      <div
+        v-if="projectMenu"
+        ref="projectMenuRef"
+        class="project-context-menu"
+        :style="{ top: `${projectMenu.y}px`, left: `${projectMenu.x}px` }"
+        role="menu"
+        @click.stop
+      >
+        <button type="button" role="menuitem" @click="removeProject">
+          <AppIcon name="x" :size="15" />
+          <span>&#x4ECE;&#x4FA7;&#x8FB9;&#x680F;&#x79FB;&#x9664;</span>
         </button>
       </div>
     </template>
