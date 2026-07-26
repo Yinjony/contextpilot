@@ -86,10 +86,21 @@ function eventSessionID(event) {
   }
 }
 
+// opencode 在 Windows 上事件里的 directory 用反斜杠（C:\\Users\\...），而前端为多项目
+// 侧边栏做了归一化（\ → /）。这里必须双向归一化后再比较，否则所有 delta 事件都会被
+// 严格 === 判定为不匹配而静默丢弃，表现为收不到实时回复。
+function normalizeDirectory(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/\/+$/, '')
+    .toLowerCase()
+}
+
 function isDirectoryMatch(event, directory) {
   if (!directory) return true
   if (!event.directory) return true
-  return event.directory === directory
+  return normalizeDirectory(event.directory) === normalizeDirectory(directory)
 }
 
 function promptParts(input) {

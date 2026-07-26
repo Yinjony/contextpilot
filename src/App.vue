@@ -199,6 +199,10 @@ async function removeProjectEnvironment(directory) {
 onMounted(async () => {
   await loadProjectEnvironment(activeProjectDirectory.value, { initial: true })
   isLoadingHistory.value = false
+  // 恢复 busy 状态同步：初始拉一次 + 每 3s 轮询，让 UI 实时反映 opencode 端会话状态
+  // （刷新后也能恢复“生成中”）。合并 1c16f31 时这两行被意外丢掉，此处补回。
+  await syncRemoteBusySessions()
+  busyStatusTimer = window.setInterval(syncRemoteBusySessions, 3000)
 })
 
 onBeforeUnmount(() => {
