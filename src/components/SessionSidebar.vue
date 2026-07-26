@@ -167,6 +167,7 @@ onBeforeUnmount(() => {
             <span>会话</span>
             <strong>{{ sessions.length }}</strong>
           </div>
+          <p v-if="!sessions.length" class="project-empty">当前项目暂无对话</p>
           <div
             v-for="session in sessions"
             :key="session.id"
@@ -180,32 +181,6 @@ onBeforeUnmount(() => {
               :title="session.title"
               @click="selectSession(session.id)"
             >
-              <strong>{{ session.title }}</strong>
-              <em>{{ session.time }}</em>
-          </button>
-        </div>
-
-        <nav class="quick-actions" aria-label="quick actions">
-          <button type="button" class="primary-action" :disabled="projectLoading" @click="$emit('create')">
-            <AppIcon name="plus" :size="16" />
-            <span>&#x65B0;&#x5EFA;&#x5BF9;&#x8BDD;</span>
-          </button>
-        </nav>
-
-        <section class="session-list" aria-label="sessions">
-          <div class="section-heading">
-            <span>&#x5BF9;&#x8BDD;</span>
-            <strong>{{ sessions.length }}</strong>
-          </div>
-          <p v-if="!sessions.length" class="project-empty">&#x5F53;&#x524D;&#x9879;&#x76EE;&#x6682;&#x65E0;&#x5BF9;&#x8BDD;</p>
-          <div
-            v-for="session in sessions"
-            :key="session.id"
-            class="session-item"
-            :class="{ active: session.id === activeId }"
-            @click.stop
-          >
-            <button type="button" class="session-main" @click="selectSession(session.id)">
               <strong>{{ session.title }}</strong>
               <em>{{ session.time }}</em>
             </button>

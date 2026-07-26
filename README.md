@@ -22,33 +22,30 @@ ContextPilot 是一个面向 AI 长对话与 Agent 协作场景的上下文管�
 ```bash
 npm install
 ```
-### 替换opencode.exe
-
-将本项目下的`/exe/opencode.exe`
-替换到 `C:\Users\用户名\.opencode\bin`下
-
 ### 选择并安装修改版 OpenCode
 
 ContextPilot 的上下文忽略功能依赖修改版 OpenCode。官方 OpenCode 不包含
 `contextpilot.context-part-ids` 筛选逻辑，因此不能直接替代下面三个实验版本。
 
-先根据电脑类型选择且只下载一个文件：
+请从项目的
+[GitHub Releases](https://github.com/Yinjony/contextpilot/releases)
+下载与电脑匹配的一个 ZIP：
 
 | 编号 | 电脑类型 | 判断方法 | 需要下载的文件 |
 | --- | --- | --- | --- |
 | 1 | Apple Silicon Mac（M1、M2、M3、M4 等） | `uname -m` 输出 `arm64` | `opencode-darwin-arm64.zip` |
 | 2 | Intel Mac | `uname -m` 输出 `x86_64` | `opencode-darwin-x64.zip` |
-| 3 | Windows x64 | “设置 → 系统 → 系统信息”显示 64 位、x64 | `opencode.exe` |
+| 3 | Windows x64 | “设置 → 系统 → 系统信息”显示 64 位、x64 | `opencode-windows-x64.zip` |
 
-> ZIP 不能直接运行。Mac 用户必须先解压并把其中的 `opencode` 安装到指定位置。
-> Windows 用户也必须用下载的 `opencode.exe` 替换原文件。
+三个 ZIP 都必须先完整解压，不能直接在压缩包预览窗口中运行安装脚本。安装程序
+只替换 OpenCode 可执行文件，不修改 ContextPilot 源码、会话、模型配置或 API Key。
 
 #### 1. Apple Silicon Mac 安装
 
 只适用于 `uname -m` 输出 `arm64` 的 Mac。
 
 1. 下载 `opencode-darwin-arm64.zip`。
-2. 双击 ZIP，将两个文件完整解压到同一个文件夹：
+2. 双击 ZIP，将下面两个文件完整解压到同一个文件夹：
 
 ```text
 opencode
@@ -71,7 +68,7 @@ install-macos.command
 只适用于 `uname -m` 输出 `x86_64` 的 Mac。
 
 1. 下载 `opencode-darwin-x64.zip`。
-2. 双击 ZIP，将两个文件完整解压到同一个文件夹：
+2. 双击 ZIP，将下面两个文件完整解压到同一个文件夹：
 
 ```text
 opencode
@@ -113,37 +110,60 @@ chmod +x install-macos.command
 
 #### 3. Windows x64 安装
 
-下载研究人员提供的修改版 `opencode.exe`。如果下载的是 ZIP，先解压得到
-`opencode.exe`。
-
-打开 PowerShell 并执行：
-
-```powershell
-# 创建安装目录
-New-Item -ItemType Directory -Force "$HOME\.opencode\bin" | Out-Null
-
-# 已安装 OpenCode 时先备份
-if (Test-Path "$HOME\.opencode\bin\opencode.exe") {
-  Copy-Item "$HOME\.opencode\bin\opencode.exe" `
-    "$HOME\.opencode\bin\opencode.exe.backup" -Force
-}
-
-# 安装修改版；默认假设文件位于“下载”文件夹
-Copy-Item "$HOME\Downloads\opencode.exe" `
-  "$HOME\.opencode\bin\opencode.exe" -Force
-```
-
-验证结果：
-
-```powershell
-& "$HOME\.opencode\bin\opencode.exe" --version
-```
-
-应显示：
+1. 下载 `opencode-windows-x64.zip`。
+2. 右键 ZIP，选择“全部解压”，确认下面三个文件位于同一个文件夹：
 
 ```text
-1.17.9
+opencode.exe
+install-windows.cmd
+install-windows.ps1
 ```
+
+3. 双击 `install-windows.cmd`。若 Windows SmartScreen 提示风险，先确认文件来自
+   本项目 Release，再选择“更多信息 → 仍要运行”。
+4. 脚本会检查 Windows x64 架构、版本号与 ContextPilot 筛选标记，然后备份原
+   文件并完成替换。
+5. 看到“安装成功”和 `版本：1.17.9` 后，按任意键关闭窗口。
+
+原文件会备份为：
+
+```text
+%USERPROFILE%\.opencode\bin\opencode.exe.backup-日期时间
+```
+
+修改版会安装到：
+
+```text
+%USERPROFILE%\.opencode\bin\opencode.exe
+```
+
+如果双击安装失败，可在解压目录中打开 PowerShell，执行：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\install-windows.ps1"
+```
+
+若提示文件正在使用，请先关闭 ContextPilot 和所有正在运行的 OpenCode
+终端窗口，再重新执行安装脚本。
+
+### 校验下载文件（可选但推荐）
+
+Release 同时提供 `checksums.txt`。下载后可核对 ZIP 是否完整：
+
+macOS：
+
+```bash
+shasum -a 256 opencode-darwin-arm64.zip
+# Intel Mac 将文件名替换为 opencode-darwin-x64.zip
+```
+
+Windows PowerShell：
+
+```powershell
+Get-FileHash .\opencode-windows-x64.zip -Algorithm SHA256
+```
+
+输出值应与 `checksums.txt` 中对应文件一致。
 
 ### 启动修改版 OpenCode 服务
 
