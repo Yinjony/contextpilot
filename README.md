@@ -22,6 +22,10 @@ ContextPilot 是一个面向 AI 长对话与 Agent 协作场景的上下文管�
 ```bash
 npm install
 ```
+### 替换opencode.exe
+
+将本项目下的`/exe/opencode.exe`
+替换到 `C:\Users\用户名\.opencode\bin`下
 
 ### 选择并安装修改版 OpenCode
 
@@ -224,51 +228,7 @@ VITE_OPENCODE_STREAMING=true
 VITE_OPENCODE_CHAT_ENABLE_TOOLS=false
 ```
 
-请勿将密码、API Key 或其他敏感配置提交到 Git 仓库。
-
-## OpenAI-compatible 后端
-
-除了 OpenCode，项目也提供基础的 OpenAI-compatible 接口适配。
-
-示例配置：
-
-```env
-VITE_CHAT_BACKEND=openai-compatible
-VITE_OPENAI_BASE_URL=https://your-api.example.com/v1
-VITE_OPENAI_CHAT_PATH=/chat/completions
-VITE_OPENAI_API_KEY=your-api-key
-VITE_OPENAI_MODEL=your-model
-VITE_OPENAI_TEMPERATURE=0.4
-```
-
-当前 OpenAI-compatible 路径使用同步响应。完整的流式输出、历史会话和监督会话能力主要围绕 OpenCode 实现。
-
-## OpenCode Bridge 工作原理
-
-OpenCode 的异步 Prompt 接口成功后通常返回 `204 No Content`，模型输出需要通过全局事件流接收。
-
-ContextPilot 使用的基本流程如下：
-
-1. 连接 `GET /global/event`；
-2. 创建或复用 OpenCode Session；
-3. 调用 `POST /session/:sessionID/prompt_async`；
-4. 监听 `message.part.delta` 等事件；
-5. 按照 `partID` 拼接增量文本；
-6. 监听推理内容和重试状态；
-7. 在 Session 状态变为 `idle` 后结束本轮；
-8. 触发监督会话整理上下文卡片。
-
-## 数据持久化
-
-接入 OpenCode 后，ContextPilot 会尝试：
-
-- 从 OpenCode 加载历史会话；
-- 建立主会话与监督会话之间的关联；
-- 将对话配置保存到 Session Metadata；
-- 将上下文卡片写入主会话元数据；
-- 复用历史监督会话进行增量总结。
-
-如果 OpenCode 服务不可用或不存在历史数据，界面会回退到项目内置的演示数据。
+请勿将密码、API Key 或其他敏感配置提交到 Git 仓库。 。
 
 ## 可用命令
 

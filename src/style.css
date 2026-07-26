@@ -83,8 +83,8 @@ body,
 body {
   margin: 0;
   background: var(--bg);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 button,
@@ -221,6 +221,154 @@ kbd {
   gap: 0;
 }
 
+.sidebar:not(.collapsed) {
+  padding: 0;
+  gap: 0;
+  flex-direction: row;
+}
+
+.project-rail {
+  width: 46px;
+  min-width: 46px;
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  overflow-y: auto;
+  background: var(--surface-soft);
+  border-right: 1px solid var(--line);
+}
+
+.project-rail-add,
+.project-rail-item {
+  width: 32px;
+  min-height: 32px;
+  padding: 3px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 760;
+  line-height: 1.1;
+  word-break: break-all;
+}
+
+.project-rail-add {
+  border: 1px solid var(--brand-line);
+  color: var(--brand-text);
+  background: var(--brand-soft);
+}
+
+.project-rail-add:hover {
+  color: #fff;
+  background: var(--brand-grad);
+}
+
+.project-rail-item {
+  border: 1px solid transparent;
+  color: var(--muted);
+  background: transparent;
+}
+
+.project-rail-item:hover {
+  border-color: var(--line);
+  color: var(--text);
+  background: var(--surface);
+}
+
+.project-rail-item.active {
+  border-color: var(--brand-line);
+  color: var(--brand-text);
+  background: var(--brand-soft);
+  box-shadow: var(--shadow-xs);
+}
+
+.sidebar-content {
+  min-width: 0;
+  flex: 1;
+  padding: 16px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.project-heading {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 3px;
+}
+
+.project-heading-label {
+  color: var(--subtle);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .08em;
+}
+
+.project-heading strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 720;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-loading {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  border: 2px solid var(--brand-soft);
+  border-top-color: var(--brand-text);
+  border-radius: 50%;
+  animation: project-spinner .8s linear infinite;
+}
+
+@keyframes project-spinner {
+  to { transform: rotate(360deg); }
+}
+
+.project-empty {
+  margin: 2px 4px;
+  color: var(--subtle);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.project-context-menu {
+  position: fixed;
+  z-index: 80;
+  min-width: 154px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.project-context-menu button {
+  width: 100%;
+  min-height: 33px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--red);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.project-context-menu button:hover {
+  background: var(--red-soft);
+}
+
 .sidebar-header {
   display: flex;
   align-items: center;
@@ -329,7 +477,7 @@ kbd {
 .sidebar h1 {
   margin-top: 4px;
   color: var(--text);
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -343,7 +491,7 @@ kbd {
 }
 
 .project-card {
-  padding: 16px;
+  padding: 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface-soft);
@@ -353,7 +501,7 @@ kbd {
 .project-card h2 {
   margin-top: 8px;
   color: var(--text);
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.35;
 }
@@ -854,7 +1002,7 @@ kbd {
 .metric-value {
   display: block;
   color: var(--text);
-  font-size: 19px;
+  font-size: 14px;
   font-weight: 760;
   line-height: 1.1;
   letter-spacing: 0;
@@ -1109,7 +1257,7 @@ kbd {
 .context-empty h3,
 .chat-empty h3 {
   color: var(--text);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.3;
 }
@@ -1535,7 +1683,7 @@ kbd {
   user-select: none;
   padding: 6px 12px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
 }
 .reasoning-summary::-webkit-details-marker {
@@ -1554,16 +1702,16 @@ kbd {
 .reasoning-text {
   padding: 2px 14px 10px;
   color: var(--subtle);
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: 12px;
+  line-height: 1.6;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 /* —— markdown 正文渲染 —— */
 .markdown-body {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.55;
 }
 .markdown-body > :first-child {
   margin-top: 0;
@@ -1584,10 +1732,10 @@ kbd {
   line-height: 1.3;
   font-weight: 700;
 }
-.markdown-body h1 { font-size: 17px; }
-.markdown-body h2 { font-size: 16px; }
-.markdown-body h3 { font-size: 15px; }
-.markdown-body h4 { font-size: 14px; }
+.markdown-body h1 { font-size: 14px; }
+.markdown-body h2 { font-size: 13px; }
+.markdown-body h3 { font-size: 13px; }
+.markdown-body h4 { font-size: 12.5px; }
 .markdown-body ul,
 .markdown-body ol {
   margin: 0 0 10px;
@@ -2526,7 +2674,7 @@ kbd {
 
 .session-config-title-row h2 {
   color: var(--text);
-  font-size: 22px;
+  font-size: 16px;
   line-height: 1.3;
 }
 
@@ -2991,7 +3139,7 @@ kbd {
 }
 
 .workflow-title-row h2 {
-  font-size: 22px;
+  font-size: 16px;
   line-height: 1.3;
 }
 
@@ -3091,7 +3239,7 @@ kbd {
 
 .workflow-metrics strong {
   color: var(--text);
-  font-size: 21px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
 
