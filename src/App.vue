@@ -628,7 +628,7 @@ function createContextTitle(category, message) {
 
 function createContextBody(message) {
   const text = message.text.replace(/\s+/g, ' ').trim()
-  return text.length > 84 ? `${text.slice(0, 84)}...` : text
+  return text.length > 160 ? `${text.slice(0, 160)}...` : text
 }
 
 // 监督总结接管工作台卡片生成，这里不再硬编码覆盖 contextCards。

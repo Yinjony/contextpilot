@@ -813,7 +813,7 @@ function buildSupervisorPrompt(turnMessages, cards, sourceParts) {
     '3. 如果本轮对话不符合任何已有卡片主题，才追加一个新卡片；新卡片可以省略 id 或把 id 留空，topic 要稳定。',
     '4. 与本轮无关的旧卡片原样保留在数组里。',
     '5. category 从 [问题分析, 修复方案, 关键报错, 旧假设, 概念说明, 进展] 里选最接近的，必要时可自拟。',
-    '6. title 一句话概括主题，body 写该主题的关键信息或要点。',
+    '6. title 一句话概括主题；body 用约 90–160 个中文字符完整介绍该主题，优先包含背景、核心信息和当前结论，使其在工作台中约占 3 行，最多不超过 5 行。',
     '7. partIDs 只能使用“本轮可关联 source parts”中给出的 partID，或保留已有卡片原有的 partIDs；不得编造。与本轮无关的旧卡片必须原样保留其 partIDs。',
     '8. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
     '',
