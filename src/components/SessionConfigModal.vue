@@ -91,7 +91,10 @@ function submit() {
           <div>
             <div class="session-config-title-row">
               <h2 id="session-config-title">对话底盘配置</h2>
-              <span>{{ sessionTitle }}</span>
+              <span class="modal-session-context" :title="sessionTitle">
+                <small>当前会话</small>
+                <strong>{{ sessionTitle }}</strong>
+              </span>
             </div>
             <p>配置会随当前对话保存，并在后续每轮对话中作为系统指令生效。</p>
           </div>

@@ -11,12 +11,17 @@ const props = defineProps({
   error: { type: String, default: '' },
   modelLabel: { type: String, default: 'opencode' },
   chatConfig: { type: Object, default: () => createDefaultChatConfig() },
+  projectDirectory: { type: String, default: '' },
 })
 
 const emit = defineEmits(['send', 'stop', 'update-config'])
 const draft = ref('')
 const messagesEl = ref(null)
-const canSend = computed(() => draft.value.trim().length > 0 && !props.isSending)
+const fileInput = ref(null)
+const imageInput = ref(null)
+const attachments = ref([])
+const attachmentError = ref('')
+const canSend = computed(() => (draft.value.trim().length > 0 || attachments.value.length > 0) && !props.isSending)
 const inlineConfig = ref(createDefaultChatConfig())
 const rulesMenuOpen = ref(false)
 const stageMenuOpen = ref(false)
@@ -84,8 +89,80 @@ function toggleTool(key) {
 
 function submitMessage() {
   if (!canSend.value) return
-  emit('send', draft.value)
+  emit('send', {
+    text: draft.value,
+    attachments: attachments.value.map((attachment) => ({ ...attachment })),
+  })
   draft.value = ''
+  attachments.value = []
+  attachmentError.value = ''
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function readAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error(`无法读取文件：${file.name}`))
+    reader.readAsDataURL(file)
+  })
+}
+
+async function addAttachments(fileList, kind) {
+  attachmentError.value = ''
+  const incoming = [...(fileList || [])]
+  if (!incoming.length) return
+  if (attachments.value.length + incoming.length > 5) {
+    attachmentError.value = '每条消息最多添加 5 个附件。'
+    return
+  }
+
+  const next = []
+  for (const file of incoming) {
+    const maxSize = kind === 'image' ? 5 * 1024 * 1024 : 10 * 1024 * 1024
+    if (file.size > maxSize) {
+      attachmentError.value = `${file.name} 超过${kind === 'image' ? ' 5 MB' : ' 10 MB'}限制。`
+      continue
+    }
+    if (kind === 'image' && !file.type.startsWith('image/')) {
+      attachmentError.value = `${file.name} 不是支持的图片格式。`
+      continue
+    }
+    try {
+      next.push({
+        id: `attachment-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: file.name,
+        mime: file.type || 'application/octet-stream',
+        size: file.size,
+        sizeLabel: formatFileSize(file.size),
+        kind,
+        dataUrl: await readAsDataURL(file),
+      })
+    } catch (cause) {
+      attachmentError.value = cause?.message || String(cause)
+    }
+  }
+  attachments.value = [...attachments.value, ...next]
+}
+
+function removeAttachment(id) {
+  attachments.value = attachments.value.filter((attachment) => attachment.id !== id)
+  attachmentError.value = ''
+}
+
+function selectFiles(event) {
+  void addAttachments(event.target.files, 'file')
+  event.target.value = ''
+}
+
+function selectImages(event) {
+  void addAttachments(event.target.files, 'image')
+  event.target.value = ''
 }
 
 function handlePrimaryAction() {
@@ -94,6 +171,23 @@ function handlePrimaryAction() {
     return
   }
   submitMessage()
+}
+
+function approveWrite() {
+  if (props.isSending) return
+  emit('send', {
+    text: '同意写入项目。请按你上一条消息中说明的目标文件完成写入，不要再次询问路径或确认。',
+    attachments: [],
+    approveWrite: true,
+  })
+}
+
+function rejectWrite() {
+  if (props.isSending) return
+  emit('send', {
+    text: '暂不写入项目，请改为在对话中生成可预览和下载的 Markdown 文档。',
+    attachments: [],
+  })
 }
 
 watch(
@@ -128,7 +222,14 @@ watch(
     </header>
 
     <div ref="messagesEl" class="messages">
-      <ChatMessage v-for="message in messages" :key="message.id" :message="message" />
+      <ChatMessage
+        v-for="message in messages"
+        :key="message.id"
+        :message="message"
+        :project-directory="projectDirectory"
+        @approve-write="approveWrite"
+        @reject-write="rejectWrite"
+      />
     </div>
 
     <div class="composer-shell">
@@ -243,7 +344,31 @@ watch(
         </div>
       </div>
       <p v-if="error" class="composer-error">{{ error }}</p>
+      <p v-if="attachmentError" class="composer-error" role="alert">{{ attachmentError }}</p>
+      <div v-if="attachments.length" class="composer-attachments" aria-label="待发送附件">
+        <div v-for="attachment in attachments" :key="attachment.id" class="composer-attachment">
+          <img v-if="attachment.kind === 'image'" :src="attachment.dataUrl" :alt="attachment.name" />
+          <span v-else class="composer-attachment-icon"><AppIcon name="file-text" :size="17" /></span>
+          <span class="composer-attachment-copy">
+            <strong :title="attachment.name">{{ attachment.name }}</strong>
+            <small>{{ attachment.sizeLabel }}</small>
+          </span>
+          <button type="button" :aria-label="`移除附件：${attachment.name}`" @click="removeAttachment(attachment.id)">
+            <AppIcon name="x" :size="14" />
+          </button>
+        </div>
+      </div>
       <form class="composer" aria-label="发送消息" @submit.prevent="handlePrimaryAction">
+        <input ref="fileInput" class="composer-file-input" type="file" multiple @change="selectFiles" />
+        <input ref="imageInput" class="composer-file-input" type="file" accept="image/*" multiple @change="selectImages" />
+        <div class="composer-upload-actions" aria-label="添加附件">
+          <button type="button" :disabled="isSending" aria-label="上传文件" title="上传文件（最大 10 MB）" @click="fileInput?.click()">
+            <AppIcon name="paperclip" :size="17" />
+          </button>
+          <button type="button" :disabled="isSending" aria-label="上传图片" title="上传图片（最大 5 MB）" @click="imageInput?.click()">
+            <AppIcon name="image" :size="17" />
+          </button>
+        </div>
         <input
           v-model="draft"
           type="text"

@@ -22,6 +22,66 @@ ContextPilot 是一个面向 AI 长对话与 Agent 协作场景的上下文管�
 ```bash
 npm install
 ```
+
+### macOS 一键启动（DeepSeek 官方 API）
+
+如果使用 DeepSeek 官方 API，建议先将 API Key 保存到 macOS 钥匙串。该操作只需执行一次：
+
+```bash
+security add-generic-password \
+  -a "$USER" \
+  -s contextpilot-deepseek \
+  -w
+```
+
+终端提示 `password data for new item:` 时粘贴 API Key；输入过程不会显示字符。可用以下命令确认凭证已经保存，但不会打印密钥：
+
+```bash
+security find-generic-password \
+  -a "$USER" \
+  -s contextpilot-deepseek >/dev/null \
+  && echo "API Key 已保存"
+```
+
+随后在 `~/.config/opencode/opencode.json` 的顶层配置 DeepSeek provider；如果文件中已有 `mcp` 等字段，请保留并合并，不要整体覆盖：
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "deepseek": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "DeepSeek Official API",
+      "options": {
+        "baseURL": "https://api.deepseek.com",
+        "apiKey": "{env:DEEPSEEK_API_KEY}"
+      },
+      "models": {
+        "deepseek-v4-flash": {
+          "name": "DeepSeek V4 Flash"
+        },
+        "deepseek-v4-pro": {
+          "name": "DeepSeek V4 Pro"
+        }
+      }
+    }
+  }
+}
+```
+
+完成依赖安装、OpenCode 配置和 `.env.local` 配置后，在项目根目录执行：
+
+```bash
+npm run dev:local
+```
+
+该命令会从 macOS 钥匙串读取 `contextpilot-deepseek`，并同时启动：
+
+- OpenCode：`http://127.0.0.1:4096`
+- ContextPilot：`http://127.0.0.1:5173`
+
+终端窗口需要保持运行。按 `Control + C` 会同时停止前端和由该命令启动的 OpenCode 服务。API Key 不会写入项目文件。
+
 ### 选择并安装修改版 OpenCode
 
 ContextPilot 的上下文忽略功能依赖修改版 OpenCode。官方 OpenCode 不包含
@@ -174,7 +234,13 @@ Get-FileHash .\opencode-windows-x64.zip -Algorithm SHA256
 Apple Silicon Mac 和 Intel Mac 使用同一条启动命令：
 
 ```bash
-~/.opencode/bin/opencode serve --port 4096 --hostname 127.0.0.1
+export DEEPSEEK_API_KEY="$(security find-generic-password -a "$USER" -s contextpilot-deepseek -w)"
+
+~/.opencode/bin/opencode serve \
+  --port 4096 \
+  --hostname 127.0.0.1 \
+  --cors http://127.0.0.1:5173 \
+  --cors http://localhost:5173
 ```
 
 Windows PowerShell：
@@ -209,10 +275,12 @@ VITE_OPENCODE_DIRECTORY=C:\Users\your-name\Projects\contextpilot
 
 该路径必须是运行 OpenCode Server 的机器能够访问和识别的目录。
 
-### 启动前端
+### 分别启动服务
+
+如果不使用 macOS 一键启动命令，需要先按上一节启动 OpenCode，并保持该终端窗口运行；然后打开另一个终端启动前端：
 
 ```bash
-npm run dev
+npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
 启动完成后访问：
@@ -235,25 +303,32 @@ VITE_OPENCODE_USERNAME=opencode
 VITE_OPENCODE_PASSWORD=
 VITE_OPENCODE_DIRECTORY=/absolute/path/to/contextpilot
 
-# 模型配置
-VITE_OPENCODE_PROVIDER_ID=opencode
-VITE_OPENCODE_MODEL_ID=deepseek-v4-flash-free
-VITE_OPENCODE_AGENT=
+# 模型配置（DeepSeek 官方 API）
+VITE_OPENCODE_PROVIDER_ID=deepseek
+VITE_OPENCODE_MODEL_ID=deepseek-v4-flash
+VITE_OPENCODE_AGENT=contextpilot-chat
 VITE_OPENCODE_MODEL_VARIANT=
 
 # 流式输出
 VITE_OPENCODE_STREAMING=true
 
-# 是否允许主对话调用工具
-VITE_OPENCODE_CHAT_ENABLE_TOOLS=false
+# 是否允许主对话调用工具，以及超时/失败重试上限
+VITE_OPENCODE_CHAT_ENABLE_TOOLS=true
+VITE_OPENCODE_CHAT_TIMEOUT_MS=75000
+VITE_OPENCODE_CHAT_MAX_RETRIES=2
 ```
 
-请勿将密码、API Key 或其他敏感配置提交到 Git 仓库。 。
+默认使用响应更快的 `deepseek-v4-flash`；需要更强推理时可改为 `deepseek-v4-pro`。
+
+请勿将密码、API Key 或其他敏感配置提交到 Git 仓库。
 
 ## 可用命令
 
 ```bash
-# 启动开发服务器
+# macOS：从钥匙串读取 DeepSeek API Key，同时启动 OpenCode 和前端
+npm run dev:local
+
+# 仅启动前端（OpenCode 需要单独启动）
 npm run dev
 
 # 构建生产版本

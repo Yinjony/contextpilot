@@ -38,11 +38,12 @@ function encodeBase64(value) {
 
 function mergeSignals(signals) {
   const active = signals.filter((signal) => !!signal)
-  if (active.length === 0) return
-  if (active.length === 1) return active[0]
+  if (active.length === 0) return { signal: undefined, cleanup: () => undefined }
+  if (active.length === 1) return { signal: active[0], cleanup: () => undefined }
 
   const controller = new AbortController()
   const abort = () => controller.abort()
+  const listening = []
 
   for (const signal of active) {
     if (signal.aborted) {
@@ -50,9 +51,13 @@ function mergeSignals(signals) {
       break
     }
     signal.addEventListener('abort', abort, { once: true })
+    listening.push(signal)
   }
 
-  return controller.signal
+  return {
+    signal: controller.signal,
+    cleanup: () => listening.forEach((signal) => signal.removeEventListener('abort', abort)),
+  }
 }
 
 function eventSessionID(event) {
@@ -293,7 +298,8 @@ export class OpenCodeBridgeClient {
           input.timeoutMs,
         )
       : undefined
-    const signal = mergeSignals([input.signal, localAbort.signal])
+    const mergedSignal = mergeSignals([input.signal, localAbort.signal])
+    const signal = mergedSignal.signal
     const directory = input.directory ?? this.config.directory
     const workspace = input.workspace ?? this.config.workspace
 
@@ -366,6 +372,30 @@ export class OpenCodeBridgeClient {
             const info = payload.properties.info
             messageIDs.add(info.id)
             if (info.role) messageRole.set(info.id, info.role)
+
+            // OpenCode 有时会在 assistant 消息已经以 finish=stop 完成后，不再发送
+            // session.status: idle（或浏览器恰好漏收该 SSE）。过去 runPrompt 只等待 idle，
+            // 因而后端其实已经结束，前端却会一直保持“生成中”直到超时。
+            // tool-calls 只是工具循环的中间完成态，不能在这里提前收尾；其它带 completed
+            // 时间的 assistant finish 均代表本轮已经产生最终结果。
+            const isFinalAssistantMessage =
+              promptSubmitted &&
+              info.role === 'assistant' &&
+              Boolean(info.time?.completed) &&
+              Boolean(info.finish) &&
+              info.finish !== 'tool-calls'
+            if (isFinalAssistantMessage) {
+              settled = true
+              emit({
+                type: 'completed',
+                sessionID: info.sessionID ?? targetSessionID ?? '',
+                messageID: info.id,
+                finish: info.finish,
+                event,
+              })
+              resolveDone()
+              return
+            }
             continue
           }
 
@@ -384,6 +414,7 @@ export class OpenCodeBridgeClient {
                 sessionID: targetSessionID ?? part.sessionID ?? '',
                 messageID: part.messageID,
                 partID: part.id,
+                part,
                 event,
               })
             } else if (part.type === 'reasoning' && typeof part.text === 'string') {
@@ -395,6 +426,16 @@ export class OpenCodeBridgeClient {
                 sessionID: targetSessionID ?? part.sessionID ?? '',
                 messageID: part.messageID,
                 partID: part.id,
+                part,
+                event,
+              })
+            } else if (['tool', 'compaction'].includes(part.type)) {
+              emit({
+                type: 'workflow-part',
+                sessionID: targetSessionID ?? part.sessionID ?? '',
+                messageID: part.messageID,
+                partID: part.id,
+                part,
                 event,
               })
             }
@@ -520,6 +561,7 @@ export class OpenCodeBridgeClient {
       if (timeout) clearTimeout(timeout)
       localAbort.abort()
       await listener.catch(() => undefined)
+      mergedSignal.cleanup()
     }
   }
 }

@@ -140,7 +140,7 @@ const metrics = computed(() => {
     <template v-else>
       <header class="panel-header">
         <div>
-          <h2>可控上下文工作台</h2>
+          <h2>Context Workbench</h2>
         </div>
         <button
           type="button"

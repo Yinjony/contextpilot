@@ -13,6 +13,7 @@ import {
 const props = defineProps({
   sessions: { type: Array, default: () => [] },
   directory: { type: String, default: '' },
+  sessionTitle: { type: String, default: '当前对话' },
 })
 
 const emit = defineEmits(['close'])
@@ -195,6 +196,10 @@ onBeforeUnmount(() => {
             <h2>{{ t.title }}</h2>
             <p>{{ phaseText() }}</p>
           </div>
+          <span class="modal-session-context" :title="sessionTitle">
+            <small>当前会话</small>
+            <strong>{{ sessionTitle }}</strong>
+          </span>
         </div>
         <button type="button" class="migration-close" :aria-label="t.close" @click="close">
           <AppIcon name="x" :size="19" />

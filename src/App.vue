@@ -7,7 +7,7 @@ import SessionConfigModal from './components/SessionConfigModal.vue'
 import WorkflowModal from './components/WorkflowModal.vue'
 import MigrationExportModal from './components/MigrationExportModal.vue'
 import { sessions, totalSessions, contextCards } from './data/workspace.js'
-import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, getRemoteBusySessionIds, abortRemoteGeneration, deleteRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig, getDefaultProjectDirectory } from './model/chatAdapter.js'
+import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, getRemoteBusySessionIds, abortRemoteGeneration, deleteRemoteSession, renameRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig, getDefaultProjectDirectory } from './model/chatAdapter.js'
 
 const PROJECT_ENVIRONMENTS_STORAGE_KEY = 'contextpilot:project-environments'
 const ACTIVE_PROJECT_ENVIRONMENT_STORAGE_KEY = 'contextpilot:active-project-environment'
@@ -54,7 +54,6 @@ function loadActiveProjectDirectory(projects, fallback) {
 }
 
 const baseContextCards = ref(contextCards.map((card) => ({ ...card })))
-const defaultContextCategories = [...new Set(contextCards.map((card) => card.category))]
 const defaultProjectDirectory = normalizeProjectDirectory(getDefaultProjectDirectory())
 const projectDirectories = ref(loadStoredProjectDirectories(defaultProjectDirectory))
 const activeProjectDirectory = ref(loadActiveProjectDirectory(projectDirectories.value, defaultProjectDirectory))
@@ -128,6 +127,15 @@ function activateProjectSessions(directory, items) {
   activeSessionId.value = usable[0]?.id || ''
   projectSessionCache.set(projectDirectoryKey(target), usable)
   chatError.value = ''
+  const active = usable[0]
+  if (active?.needsSupervisorSummary) {
+    active.needsSupervisorSummary = false
+    const userIndex = active.messages.findLastIndex((message) => message?.role === 'user')
+    const latestTurn = userIndex >= 0 ? active.messages.slice(userIndex) : []
+    if (latestTurn.some((message) => message?.role === 'assistant' && message.text?.trim())) {
+      queueMicrotask(() => runSupervisor(active, latestTurn))
+    }
+  }
 }
 
 async function loadProjectEnvironment(directory, { initial = false } = {}) {
@@ -215,11 +223,6 @@ const activeSession = computed(
   () => chatSessions.value.find((s) => s.id === activeSessionId.value) ?? chatSessions.value[0],
 )
 const activeContextCards = computed(() => activeSession.value?.contextCards ?? baseContextCards.value)
-const contextCategories = computed(() => {
-  const categories = [...new Set(activeContextCards.value.map((card) => card.category))]
-  return categories.length ? categories : defaultContextCategories
-})
-
 const isChartSession = computed(() => activeSession.value?.id === 'chart')
 
 watch(
@@ -409,16 +412,40 @@ async function shareSession(id) {
   }
 }
 
-function renameSession(id) {
+async function renameSession(id) {
   const session = chatSessions.value.find((item) => item.id === id)
   if (!session) return
 
   const nextTitle = window.prompt('重命名对话', session.title)?.trim()
-  if (!nextTitle) return
+  if (!nextTitle || nextTitle === session.title) return
+  const previousTitle = session.title
+  const previousSummary = session.summary
+  const previousDraftState = session.isDraft
+  const previousMetadata = session.metadata
   session.title = nextTitle
   if (session.summary === '等待第一条消息') {
     session.summary = nextTitle
   }
+  // 手动命名后的空会话不再参与首次消息自动命名，避免再次覆盖用户标题。
+  session.isDraft = false
+  session.metadata = { ...(session.metadata || {}), manualTitle: nextTitle }
+
+  const saved = await renameRemoteSession(
+    session.id,
+    nextTitle,
+    session.metadata,
+    undefined,
+    session.directory || activeProjectDirectory.value,
+  )
+  if (!saved) {
+    session.title = previousTitle
+    session.summary = previousSummary
+    session.isDraft = previousDraftState
+    session.metadata = previousMetadata
+    window.alert('会话重命名保存失败，已恢复原名称。请确认 OpenCode 服务正常后重试。')
+    return
+  }
+  projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
 }
 
 async function deleteSession(id) {
@@ -444,25 +471,6 @@ async function deleteSession(id) {
   chatError.value = ok ? '' : '后端会话删除失败，刷新后该会话可能仍在。'
 }
 
-function addContextFromMessage({ category, message }) {
-  if (!category || !message) return
-
-  const target = activeSession.value?.contextCards ?? baseContextCards.value
-  target.unshift({
-    id: `from-message-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    category,
-    title: createContextTitle(category, message),
-    body: createContextBody(message),
-    partIDs: normalizePartIDs(message.partIDs),
-    sourceMessageID: message.id,
-    time: `今天 ${currentTime()}`,
-    source: message.role === 'user' ? '对话' : 'AI',
-    priority: '中',
-    selected: true,
-  })
-  if (activeSession.value) persistSessionCards(activeSession.value)
-}
-
 function updateContextPriority({ id, priority }) {
   const card = activeContextCards.value.find((item) => item.id === id)
   if (!card || !['高', '中', '低'].includes(priority)) return
@@ -474,11 +482,32 @@ function updateContextPriority({ id, priority }) {
 // —— 监督总结（工作台卡片自动生成）——
 const summarizingIds = ref(new Set())
 const isSummarizing = computed(() => summarizingIds.value.has(activeSessionId.value))
+const pendingSupervisorTurns = new Map()
 
 // 主对话 idle 后后台触发：让监督 session 总结对话 → 更新工作台卡片（不阻塞 UI）。
 async function runSupervisor(session, turnMessages) {
-  if (!session || summarizingIds.value.has(session.id)) return
+  if (!session) return
+  const queue = pendingSupervisorTurns.get(session.id) || []
+  queue.push(turnMessages)
+  pendingSupervisorTurns.set(session.id, queue)
+
+  // 同一会话只运行一个监督任务；生成期间到达的新轮次进入队列，避免被静默丢弃。
+  if (summarizingIds.value.has(session.id)) return
   summarizingIds.value = new Set(summarizingIds.value).add(session.id)
+  try {
+    while (queue.length) {
+      const nextTurn = queue.shift()
+      await summarizeSupervisorTurn(session, nextTurn)
+    }
+  } finally {
+    pendingSupervisorTurns.delete(session.id)
+    const next = new Set(summarizingIds.value)
+    next.delete(session.id)
+    summarizingIds.value = next
+  }
+}
+
+async function summarizeSupervisorTurn(session, turnMessages) {
   try {
     const { cards: incoming, supervisorId, sourceParts } = await runSupervisorSummary({
       mainSessionId: session.id,
@@ -516,10 +545,8 @@ async function runSupervisor(session, turnMessages) {
     } else if (cardAssociationsChanged) {
       persistSessionCards(session)
     }
-  } finally {
-    const next = new Set(summarizingIds.value)
-    next.delete(session.id)
-    summarizingIds.value = next
+  } catch (error) {
+    console.warn('[App] 监督总结失败：', error?.message || error)
   }
 }
 
@@ -615,13 +642,16 @@ function toggleCardSelection(id) {
   if (session) persistSessionCards(session)
 }
 
-async function handleSendMessage(text) {
-  const content = text.trim()
+async function handleSendMessage(payload) {
+  const input = typeof payload === 'string' ? { text: payload, attachments: [] } : (payload || {})
+  const attachments = Array.isArray(input.attachments) ? input.attachments : []
+  const typedContent = String(input.text || '').trim()
+  const content = typedContent || (attachments.length ? `请查看并分析附件：${attachments.map((item) => item.name).join('、')}` : '')
   const session = activeSession.value
   if (!content || !session || localSendingSessionIds.value.has(session.id) || remoteBusySessionIds.value.has(session.id)) return
 
   chatError.value = ''
-  const userMessage = createMessage('user', content)
+  const userMessage = createMessage('user', content, { attachments })
   // 用 reactive 包裹：后续流式 onDelta 频繁改 text 必须经过 proxy 才能触发 UI 更新。
   // 否则 push 进响应式数组后，局部变量仍是原始对象，改它不会重渲染（气泡会卡在占位文本）。
   const assistantMessage = reactive(
@@ -642,6 +672,16 @@ async function handleSendMessage(text) {
   let pendingReasoning = ''
   let rafScheduled = false
   let rafId = 0
+  const upsertWorkflowPart = (part) => {
+    if (!part?.id || !['text', 'reasoning', 'tool', 'compaction'].includes(part.type)) return
+    const parts = Array.isArray(assistantMessage.workflowParts)
+      ? [...assistantMessage.workflowParts]
+      : []
+    const index = parts.findIndex((item) => item.id === part.id)
+    if (index >= 0) parts[index] = { ...parts[index], ...part }
+    else parts.push(part)
+    assistantMessage.workflowParts = parts
+  }
   const flush = () => {
     rafScheduled = false
     rafId = 0
@@ -654,6 +694,16 @@ async function handleSendMessage(text) {
 
   try {
     const selectedCards = (session.contextCards || []).filter((c) => c.selected)
+    // “同意写入”按钮只为当前一轮临时开放写文件工具，不改变会话的长期权限设置。
+    const requestChatConfig = input.approveWrite
+      ? normalizeChatConfig({
+          ...(session.metadata?.chatConfig || {}),
+          toolPermissions: {
+            ...(session.metadata?.chatConfig?.toolPermissions || {}),
+            writeFiles: 'allow',
+          },
+        })
+      : session.metadata?.chatConfig
     if (chatStreams) {
       const { text: reply, reasoning, partIDs } = await sendChatMessageStream({
         sessionId: session.id,
@@ -661,7 +711,7 @@ async function handleSendMessage(text) {
         messages: session.messages,
         signal: requestController.signal,
         selectedCards,
-        chatConfig: session.metadata?.chatConfig,
+        chatConfig: requestChatConfig,
         directory: session.directory || activeProjectDirectory.value,
         onDelta: (delta, fullText) => {
           pendingText = fullText
@@ -677,6 +727,7 @@ async function handleSendMessage(text) {
             rafId = requestAnimationFrame(flush)
           }
         },
+        onWorkflowPart: upsertWorkflowPart,
       })
       assistantMessage.text = reply
       if (reasoning) assistantMessage.reasoning = reasoning
@@ -689,7 +740,7 @@ async function handleSendMessage(text) {
         title: session.title,
         messages: session.messages,
         selectedCards,
-        chatConfig: session.metadata?.chatConfig,
+        chatConfig: requestChatConfig,
         directory: session.directory || activeProjectDirectory.value,
       })
       assistantMessage.text = reply
@@ -765,26 +816,6 @@ function createSessionTitle(text) {
   return normalized.length > 18 ? `${normalized.slice(0, 18)}...` : normalized
 }
 
-function createContextTitle(category, message) {
-  if (message.heading) return message.heading
-
-  const text = message.text.replace(/\s+/g, ' ').trim()
-  const summary = text.length > 18 ? `${text.slice(0, 18)}...` : text
-  const titleMap = {
-    问题分析: '对话问题摘要',
-    修复方案: '对话修复摘要',
-    关键报错: '对话报错摘要',
-    旧假设: '对话假设摘要',
-  }
-
-  return summary || titleMap[category] || `${category}摘要`
-}
-
-function createContextBody(message) {
-  const text = message.text.replace(/\s+/g, ' ').trim()
-  return text.length > 160 ? `${text.slice(0, 160)}...` : text
-}
-
 // 监督总结接管工作台卡片生成，这里不再硬编码覆盖 contextCards。
 // 保留签名兼容历史调用点（chatError banner 已负责展示错误，无需卡片）。
 function refreshSessionContext() {}
@@ -836,12 +867,11 @@ function refreshSessionContext() {}
       :error="chatError"
       :model-label="chatModelLabel"
       :chat-config="activeSession.metadata?.chatConfig"
-      :context-categories="contextCategories"
+      :project-directory="activeSession.directory || activeProjectDirectory"
       v-if="!isChartSession"
       @send="handleSendMessage"
       @stop="handleStopGeneration"
       @update-config="updateInlineChatConfig"
-      @add-context="addContextFromMessage"
     />
 
     <ChatPanel
@@ -852,11 +882,10 @@ function refreshSessionContext() {}
       :error="chatError"
       :model-label="chatModelLabel"
       :chat-config="activeSession.metadata?.chatConfig"
-      :context-categories="contextCategories"
+      :project-directory="activeSession.directory || activeProjectDirectory"
       @send="handleSendMessage"
       @stop="handleStopGeneration"
       @update-config="updateInlineChatConfig"
-      @add-context="addContextFromMessage"
     />
 
     <SessionConfigModal
@@ -878,8 +907,9 @@ function refreshSessionContext() {}
 
     <MigrationExportModal
       v-if="isMigrationExportOpen"
-      :sessions="chatSessions"
+      :sessions="activeSession ? [activeSession] : []"
       :directory="activeProjectDirectory"
+      :session-title="activeSession?.title || '未选择会话'"
       @close="isMigrationExportOpen = false"
     />
   </main>

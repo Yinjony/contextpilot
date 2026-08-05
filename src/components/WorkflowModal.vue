@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import AppIcon from './AppIcon.vue'
 import ActionIcon from './ActionIcon.vue'
 
@@ -16,17 +16,20 @@ const selectedNode = ref(null)
 
 const typeMeta = {
   UserRequest: { label: '用户请求', group: 'model' },
-  Think: { label: '模型思考', group: 'model' },
+  Understand: { label: '理解需求', group: 'model' },
+  Decompose: { label: '拆解任务', group: 'tool' },
+  SearchContext: { label: '检索上下文', group: 'tool' },
+  Plan: { label: '制定计划', group: 'tool' },
+  GenerateCode: { label: '生成代码', group: 'tool' },
+  RunCommand: { label: '运行命令', group: 'tool' },
+  AnalyzeResult: { label: '分析结果', group: 'model' },
   Response: { label: '生成回复', group: 'model' },
-  Read: { label: '读取', group: 'tool' },
-  Write: { label: '写入', group: 'tool' },
-  Shell: { label: '命令', group: 'tool' },
-  Search: { label: '搜索', group: 'tool' },
-  Plan: { label: '计划', group: 'tool' },
-  Subagent: { label: '子代理', group: 'tool' },
-  Skill: { label: '技能', group: 'tool' },
-  Compaction: { label: '上下文压缩', group: 'model' },
-  Tool: { label: '工具调用', group: 'tool' },
+  Summarize: { label: '总结归纳', group: 'model' },
+  UpdateContext: { label: '更新上下文', group: 'model' },
+  SaveFile: { label: '保存文件', group: 'tool' },
+  RunTest: { label: '执行测试', group: 'tool' },
+  CheckResult: { label: '检查结果', group: 'tool' },
+  Optimize: { label: '优化调整', group: 'tool' },
 }
 
 const filters = [
@@ -35,16 +38,18 @@ const filters = [
   { id: 'tool', label: '工具' },
 ]
 
-function toolActionType(name = '') {
-  const value = String(name).toLowerCase()
-  if (/read|view|cat|open/.test(value)) return 'Read'
-  if (/write|edit|patch|create/.test(value)) return 'Write'
-  if (/shell|bash|command|exec|terminal/.test(value)) return 'Shell'
-  if (/search|grep|glob|find|web/.test(value)) return 'Search'
+function toolActionType(name = '', detail = '') {
+  const value = `${name} ${detail}`.toLowerCase()
+  if (/test|pytest|vitest|jest|playwright|test:/.test(value)) return 'RunTest'
+  if (/check|verify|inspect|lint|typecheck|status/.test(value)) return 'CheckResult'
+  if (/write|save|export/.test(value)) return 'SaveFile'
+  if (/edit|patch|create|generate|code/.test(value)) return 'GenerateCode'
+  if (/shell|bash|command|exec|terminal/.test(value)) return 'RunCommand'
+  if (/read|view|cat|open|search|grep|glob|find|web|fetch/.test(value)) return 'SearchContext'
   if (/plan|todo/.test(value)) return 'Plan'
-  if (/task|subagent|agent/.test(value)) return 'Subagent'
-  if (/skill/.test(value)) return 'Skill'
-  return 'Tool'
+  if (/task|subagent|agent/.test(value)) return 'Decompose'
+  if (/optimi|refactor|improve/.test(value)) return 'Optimize'
+  return 'AnalyzeResult'
 }
 
 function actionStatus(message, part) {
@@ -54,7 +59,7 @@ function actionStatus(message, part) {
 }
 
 function makeAction(type, message, part, index, detail) {
-  const meta = typeMeta[type] || typeMeta.Tool
+  const meta = typeMeta[type] || typeMeta.AnalyzeResult
   return {
     id: `${message.id || 'message'}:${part?.id || type}:${index}`,
     type,
@@ -87,10 +92,10 @@ const conversationActions = computed(() => {
     if (parts.length) {
       parts.forEach((part) => {
         let type = null
-        if (part.type === 'reasoning') type = 'Think'
+        if (part.type === 'reasoning') type = 'Understand'
         if (part.type === 'text') type = 'Response'
-        if (part.type === 'compaction') type = 'Compaction'
-        if (part.type === 'tool') type = toolActionType(part.tool)
+        if (part.type === 'compaction') type = 'Summarize'
+        if (part.type === 'tool') type = toolActionType(part.tool, part.text)
         if (!type) return
         actions.push(makeAction(type, message, part, actions.length, part.tool || part.text))
       })
@@ -98,7 +103,7 @@ const conversationActions = computed(() => {
     }
 
     if (message.reasoning) {
-      actions.push(makeAction('Think', message, null, actions.length, message.reasoning))
+      actions.push(makeAction('Understand', message, null, actions.length, message.reasoning))
     }
     if (message.text) {
       actions.push(makeAction('Response', message, null, actions.length, message.text))
@@ -125,42 +130,50 @@ const typeBreakdown = computed(() => {
 
 const totalActionCount = computed(() => conversationActions.value.length)
 
-const filteredActions = computed(() => {
-  const source = actionFilter.value === 'all'
-    ? conversationActions.value
-    : conversationActions.value.filter((action) => action.group === actionFilter.value)
-  return source.slice(-20)
+// 以用户消息为边界重建会话轮次：一条用户请求及其后的全部 Agent parts
+// 属于同一条执行链，直到下一条用户消息出现。
+const conversationTurns = computed(() => {
+  const turns = []
+  let current = null
+  conversationActions.value.forEach((action) => {
+    if (action.type === 'UserRequest') {
+      current = {
+        id: action.id,
+        index: turns.length + 1,
+        request: action,
+        actions: [action],
+      }
+      turns.push(current)
+      return
+    }
+    if (!current) {
+      current = {
+        id: `turn-unbound-${turns.length + 1}`,
+        index: turns.length + 1,
+        request: null,
+        actions: [],
+      }
+      turns.push(current)
+    }
+    current.actions.push(action)
+  })
+  return turns
 })
 
-const hiddenActionCount = computed(() => {
-  const sourceCount = actionFilter.value === 'all'
-    ? conversationActions.value.length
-    : conversationActions.value.filter((action) => action.group === actionFilter.value).length
-  return Math.max(0, sourceCount - filteredActions.value.length)
-})
+const filteredTurns = computed(() => conversationTurns.value.map((turn) => ({
+  ...turn,
+  // 筛选模型/工具时仍保留用户请求作为该链路的语义锚点。
+  actions: actionFilter.value === 'all'
+    ? turn.actions
+    : turn.actions.filter((action) => action.type === 'UserRequest' || action.group === actionFilter.value),
+})).filter((turn) => turn.actions.length > 0).reverse())
 
-// 蛇形布局：按容器宽度算每行 chip 数，再把动作切成多行；奇偶行方向交替实现「拐弯」。
-const flowRef = ref(null)
-const chipsPerRow = ref(8)
-let resizeObserver = null
+const turnsViewportRef = ref(null)
 
-function recalcPerRow() {
-  const el = flowRef.value
-  if (!el) return
-  const contentWidth = Math.max(0, el.clientWidth - 36) // 减去左右 18px 内边距
-  const n = Math.floor((contentWidth + 16) / 66) // 每 chip 50 + 连接器约 16
-  chipsPerRow.value = Math.max(3, Math.min(12, n))
+async function keepLatestTurnVisible() {
+  await nextTick()
+  if (turnsViewportRef.value) turnsViewportRef.value.scrollTop = 0
 }
-
-const actionRows = computed(() => {
-  const list = filteredActions.value
-  const size = chipsPerRow.value
-  const rows = []
-  for (let i = 0; i < list.length; i += size) {
-    rows.push(list.slice(i, i + size))
-  }
-  return rows
-})
 
 const DEFAULT_CONTEXT_LIMIT = 1_000_000
 const configuredContextLimit = Number(import.meta.env.VITE_OPENCODE_CONTEXT_LIMIT)
@@ -192,6 +205,9 @@ const contextRemaining = computed(() => {
   const used = latestUsage.value ? latestUsage.value.input + latestUsage.value.cacheRead : 0
   return Math.max(0, contextLimit - used)
 })
+const contextUsed = computed(() => Math.min(contextLimit, Math.max(0, contextLimit - contextRemaining.value)))
+const contextUsagePercent = computed(() => contextLimit > 0 ? (contextUsed.value / contextLimit) * 100 : 0)
+const contextUsageLabel = computed(() => `${contextUsagePercent.value.toFixed(1)}%`)
 
 function formatTokenCount(value) {
   if (!Number.isFinite(value)) return '—'
@@ -200,12 +216,7 @@ function formatTokenCount(value) {
   return String(Math.round(value))
 }
 
-const metrics = computed(() => [
-  { label: 'Token 消耗', value: formatTokenCount(totalTokenUsage.value) },
-  { label: '上下文剩余', value: formatTokenCount(contextRemaining.value) },
-])
-
-const detailNode = computed(() => selectedNode.value || filteredActions.value.at(-1))
+const detailNode = computed(() => selectedNode.value || filteredTurns.value.at(0)?.actions.at(-1))
 
 function selectNode(node) {
   selectedNode.value = node
@@ -230,17 +241,10 @@ function brief(value, max = 24) {
 onMounted(async () => {
   await nextTick()
   modalRef.value?.focus()
-  recalcPerRow()
-  if (flowRef.value && typeof ResizeObserver !== 'undefined') {
-    resizeObserver = new ResizeObserver(recalcPerRow)
-    resizeObserver.observe(flowRef.value)
-  }
+  await keepLatestTurnVisible()
 })
 
-onBeforeUnmount(() => {
-  resizeObserver?.disconnect()
-  resizeObserver = null
-})
+watch(() => [filteredTurns.value.length, conversationActions.value.length, actionFilter.value], keepLatestTurnVisible)
 </script>
 
 <template>
@@ -259,9 +263,11 @@ onBeforeUnmount(() => {
           <div class="workflow-title-row">
             <span class="workflow-title-icon"><AppIcon name="workflow" :size="19" /></span>
             <h2 id="workflow-title">执行追踪&项目概况</h2>
-            <span>{{ sessionTitle }}</span>
+            <span class="modal-session-context" :title="sessionTitle">
+              <small>当前会话</small>
+              <strong>{{ sessionTitle }}</strong>
+            </span>
           </div>
-          <p>将 OpenCode 消息 part 映射为可追溯的执行动作。</p>
         </div>
         <button type="button" class="icon-btn workflow-close" aria-label="关闭工作流" @click="$emit('close')">
           <AppIcon name="x" :size="18" />
@@ -272,12 +278,42 @@ onBeforeUnmount(() => {
 <!--        <span>OpenCode parts</span><i></i><span>标准动作模型</span><i></i><strong>可视化工作流</strong>-->
 <!--      </div>-->
 
-      <div class="workflow-metrics" aria-label="工作流统计">
-        <div v-for="metric in metrics" :key="metric.label">
-          <strong>{{ metric.value }}</strong>
-          <span>{{ metric.label }}</span>
+      <section class="workflow-context-meter" aria-labelledby="workflow-context-title">
+        <div class="workflow-context-head">
+          <div>
+            <span id="workflow-context-title">上下文容量</span>
+            <strong>{{ contextUsageLabel }} 已占用</strong>
+          </div>
+          <span class="workflow-context-limit">容量 {{ formatTokenCount(contextLimit) }}</span>
         </div>
-      </div>
+
+        <div
+          class="workflow-context-track"
+          role="progressbar"
+          aria-label="当前上下文占用比例"
+          :aria-valuenow="Math.round(contextUsagePercent)"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          :aria-valuetext="`已占用 ${formatTokenCount(contextUsed)}，剩余 ${formatTokenCount(contextRemaining)}`"
+        >
+          <span class="workflow-context-used" :style="{ width: `${contextUsagePercent}%` }"></span>
+        </div>
+
+        <div class="workflow-context-stats">
+          <div class="is-used">
+            <span><i></i>当前上下文占用</span>
+            <strong>{{ formatTokenCount(contextUsed) }}</strong>
+          </div>
+          <div class="is-remaining">
+            <span><i></i>上下文剩余</span>
+            <strong>{{ formatTokenCount(contextRemaining) }}</strong>
+          </div>
+          <div class="is-total">
+            <span>累计 Token 消耗</span>
+            <strong>{{ formatTokenCount(totalTokenUsage) }}</strong>
+          </div>
+        </div>
+      </section>
 
       <div class="workflow-toolbar">
         <div class="workflow-filters" aria-label="动作筛选">
@@ -301,16 +337,23 @@ onBeforeUnmount(() => {
       <div class="workflow-content">
         <div class="workflow-stage">
           <section class="workflow-lane workflow-main-lane">
-            <div class="workflow-lane-label">
-              <strong>主对话</strong>
-              <span>按 part 时间排序 · 点击方块查看详情</span>
-            </div>
-            <div ref="flowRef" class="workflow-main-flow">
-              <span v-if="hiddenActionCount && filteredActions.length" class="workflow-overflow-note">较早 {{ hiddenActionCount }} 项</span>
-              <template v-if="filteredActions.length">
-                <template v-for="(row, rowIdx) in actionRows" :key="`flow-row-${rowIdx}`">
-                  <div class="workflow-chip-row" :class="{ reverse: rowIdx % 2 === 1 }">
-                    <template v-for="(node, i) in row" :key="node.id">
+            <div class="workflow-main-flow">
+              <div class="workflow-flow-heading">
+                <div>
+                  <strong>执行链路</strong>
+                  <span>共 {{ filteredTurns.length }} 轮 · {{ totalActionCount }} 项</span>
+                </div>
+                <small>按对话轮次分组 · 区域内显示 3 轮</small>
+              </div>
+              <div v-if="filteredTurns.length" ref="turnsViewportRef" class="workflow-turns-viewport">
+                <section v-for="turn in filteredTurns" :key="turn.id" class="workflow-turn">
+                  <header class="workflow-turn-header">
+                    <span>第 {{ turn.index }} 轮</span>
+                    <strong :title="turn.request?.detail || '历史执行'">{{ brief(turn.request?.detail || '历史执行', 48) }}</strong>
+                    <small>{{ turn.actions.length }} 项</small>
+                  </header>
+                  <div class="workflow-turn-track" tabindex="0" :aria-label="`第 ${turn.index} 轮执行链路`">
+                    <template v-for="(node, i) in turn.actions" :key="node.id">
                       <button
                         type="button"
                         class="workflow-chip"
@@ -319,19 +362,14 @@ onBeforeUnmount(() => {
                         :title="`${node.label} · ${brief(node.tool || node.detail)}`"
                         @click="selectNode(node)"
                       >
-                        <ActionIcon :type="node.type" :size="20" :prefix="node.id" />
+                        <ActionIcon :type="node.type" :size="25" :prefix="node.id" />
+                        <span class="workflow-chip-label">{{ node.label }}</span>
                       </button>
-                      <span v-if="i < row.length - 1" class="workflow-chip-connector" aria-hidden="true"></span>
+                      <span v-if="i < turn.actions.length - 1" class="workflow-chip-connector" aria-hidden="true"></span>
                     </template>
                   </div>
-                  <div
-                    v-if="rowIdx < actionRows.length - 1"
-                    class="workflow-chip-uturn"
-                    :class="rowIdx % 2 === 1 ? 'is-left' : 'is-right'"
-                    aria-hidden="true"
-                  ></div>
-                </template>
-              </template>
+                </section>
+              </div>
               <div v-else class="workflow-main-empty">当前筛选下暂无动作</div>
             </div>
           </section>

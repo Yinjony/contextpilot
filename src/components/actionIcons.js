@@ -139,3 +139,50 @@ export const ACTION_ICON_SVG = Object.fromEntries(
 export function getActionIconSvg(type) {
   return ACTION_ICON_SVG[type] ?? FALLBACK
 }
+import userRequestIcon from '../assets/action-icons/user-request.png'
+import understandIcon from '../assets/action-icons/understand.png'
+import decomposeIcon from '../assets/action-icons/decompose.png'
+import searchContextIcon from '../assets/action-icons/search-context.png'
+import planIcon from '../assets/action-icons/plan.png'
+import generateCodeIcon from '../assets/action-icons/generate-code.png'
+import runCommandIcon from '../assets/action-icons/run-command.png'
+import analyzeResultIcon from '../assets/action-icons/analyze-result.png'
+import responseIcon from '../assets/action-icons/response.png'
+import summarizeIcon from '../assets/action-icons/summarize.png'
+import updateContextIcon from '../assets/action-icons/update-context.png'
+import saveFileIcon from '../assets/action-icons/save-file.png'
+import runTestIcon from '../assets/action-icons/run-test.png'
+import checkResultIcon from '../assets/action-icons/check-result.png'
+import optimizeIcon from '../assets/action-icons/optimize.png'
+
+const ACTION_ICON_ASSETS = {
+  UserRequest: userRequestIcon,
+  Understand: understandIcon,
+  Decompose: decomposeIcon,
+  SearchContext: searchContextIcon,
+  Plan: planIcon,
+  GenerateCode: generateCodeIcon,
+  RunCommand: runCommandIcon,
+  AnalyzeResult: analyzeResultIcon,
+  Response: responseIcon,
+  Summarize: summarizeIcon,
+  UpdateContext: updateContextIcon,
+  SaveFile: saveFileIcon,
+  RunTest: runTestIcon,
+  CheckResult: checkResultIcon,
+  Optimize: optimizeIcon,
+  // 兼容已经持久化的旧动作类型。
+  Think: understandIcon,
+  Read: searchContextIcon,
+  Search: searchContextIcon,
+  Write: saveFileIcon,
+  Shell: runCommandIcon,
+  Subagent: decomposeIcon,
+  Skill: analyzeResultIcon,
+  Compaction: summarizeIcon,
+  Tool: analyzeResultIcon,
+}
+
+export function getActionIconAsset(type) {
+  return ACTION_ICON_ASSETS[type] || analyzeResultIcon
+}

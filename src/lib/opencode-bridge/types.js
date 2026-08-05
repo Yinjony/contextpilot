@@ -76,7 +76,7 @@
  */
 
 /**
- * @typedef {{ sessionID?: string, directory?: string, workspace?: string, prompt?: string, parts?: OpenCodePromptPartInput[], messageID?: string, model?: OpenCodeModelRef, agent?: string, noReply?: boolean, tools?: Record<string, boolean>, format?: unknown, system?: string, variant?: string, timeoutMs?: number, signal?: AbortSignal, onEvent?: (event: OpenCodeGlobalEvent) => void, onUpdate?: (update: OpenCodeRunPromptUpdate) => void, onDelta?: (delta: string, text: string, event: OpenCodeGlobalEvent) => void }} OpenCodeRunPromptInput
+ * @typedef {{ sessionID?: string, directory?: string, workspace?: string, prompt?: string, parts?: OpenCodePromptPartInput[], messageID?: string, model?: OpenCodeModelRef, agent?: string, noReply?: boolean, tools?: Record<string, boolean>, format?: unknown, system?: string, variant?: string, timeoutMs?: number, signal?: AbortSignal, onEvent?: (event: OpenCodeGlobalEvent) => void, onUpdate?: (update: OpenCodeRunPromptUpdate) => void, onDelta?: (delta: string, text: string, event: OpenCodeGlobalEvent) => void, onReasoning?: (text: string, event: OpenCodeGlobalEvent) => void }} OpenCodeRunPromptInput
  */
 
 /**

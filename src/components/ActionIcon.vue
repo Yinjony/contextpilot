@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { getActionIconSvg, prefixSvgIds } from './actionIcons.js'
+import { getActionIconAsset, getActionIconSvg, prefixSvgIds } from './actionIcons.js'
 
 const props = defineProps({
   type: { type: String, required: true },
@@ -24,9 +24,13 @@ const svg = computed(() => {
   const pfx = sanitizePrefix(props.prefix || props.type)
   return pfx ? prefixSvgIds(getActionIconSvg(props.type), pfx) : getActionIconSvg(props.type)
 })
+
+const asset = computed(() => getActionIconAsset(props.type))
 </script>
 
 <template>
-  <!-- 颜色由外层 color 透传（图标内部用 currentColor），尺寸由 size 控制 -->
-  <span class="action-icon" :style="sizeStyle" aria-hidden="true" v-html="svg" />
+  <span class="action-icon" :style="sizeStyle" aria-hidden="true">
+    <img v-if="asset" class="action-icon-image" :src="asset" alt="" />
+    <span v-else class="action-icon-fallback" v-html="svg"></span>
+  </span>
 </template>

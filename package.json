@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "zsh ./scripts/start-local.sh",
     "build": "vite build",
     "preview": "vite preview"
   },

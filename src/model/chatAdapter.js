@@ -26,6 +26,15 @@ const OPENCODE_CHAT_DISABLED_TOOLS = [
   'plan_exit',
   'external_directory',
 ]
+const OPENCODE_CHAT_ALWAYS_DISABLED_TOOLS = [
+  'task',
+  'todowrite',
+  'skill',
+  'question',
+  'plan_enter',
+  'plan_exit',
+  'external_directory',
+]
 
 const CHAT_CONFIG_DEFAULTS = {
   goal: '',
@@ -66,6 +75,14 @@ const MIGRATION_SESSION_TYPE = 'migration-export'
 
 const env = import.meta.env
 const backend = (env.VITE_CHAT_BACKEND || 'opencode').toLowerCase()
+const OPENCODE_CHAT_TIMEOUT_MS = normalizePositiveInteger(env.VITE_OPENCODE_CHAT_TIMEOUT_MS, 90000)
+const OPENCODE_CHAT_MAX_RETRIES = normalizePositiveInteger(env.VITE_OPENCODE_CHAT_MAX_RETRIES, 2)
+const OPENCODE_CHAT_MAX_TOOL_CALLS = normalizePositiveInteger(env.VITE_OPENCODE_CHAT_MAX_TOOL_CALLS, 4)
+
+function normalizePositiveInteger(value, fallback) {
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
 
 export function getDefaultProjectDirectory() {
   return env.VITE_OPENCODE_DIRECTORY || OPENCODE_DEFAULT_DIRECTORY
@@ -155,6 +172,27 @@ export const chatStreams =
 
 export { isAbortError }
 
+// 读取模型已经写入当前项目的 Markdown 文件，供聊天区文档卡片预览。
+// 只接受项目内相对路径，避免把聊天文本变成任意本地文件读取入口。
+export async function readProjectMarkdown(path, directory, signal) {
+  if (backend !== 'opencode') throw new Error('当前模型后端不支持项目文件预览。')
+  const relativePath = String(path || '').trim().replace(/\\/g, '/')
+  if (
+    !relativePath.toLowerCase().endsWith('.md') ||
+    relativePath.startsWith('/') ||
+    relativePath.split('/').includes('..')
+  ) {
+    throw new Error('只能预览当前项目内的 Markdown 文件。')
+  }
+  const projectDirectory = resolveProjectDirectory(directory)
+  const query = new URLSearchParams({ directory: projectDirectory, path: relativePath })
+  const result = await requestOpencode(`/file/content?${query.toString()}`, { signal })
+  if (result?.type !== 'text' || typeof result.content !== 'string') {
+    throw new Error('该路径不是可预览的文本文件。')
+  }
+  return result.content
+}
+
 // 模块级单例 client，懒加载（首次发送时才读 env，与现有 lazy 风格一致）。
 let bridgeClient
 function getBridgeClient() {
@@ -171,7 +209,7 @@ function getBridgeClient() {
 
 // 流式版发送：复用同步路径的 session 缓存、首轮上下文注入、禁工具 guard、provider/model 配置。
 // onDelta(delta, fullText) 由底层 runPrompt 在每个文本增量时回调；fullText 是已拼接的完整文本。
-export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning, selectedCards, chatConfig, directory }) {
+export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning, onWorkflowPart, selectedCards, chatConfig, directory }) {
   if (backend === 'openai-compatible') {
     // 该后端 v1 不支持流式：走同步接口，再整体回调一次。
     const text = await sendOpenAICompatibleMessage({ messages, signal, chatConfig })
@@ -194,6 +232,7 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
   const promptParts = buildContextPromptParts({
     prompt: basePrompt,
     selectedCards,
+    attachments: latestUserMessage.attachments,
   })
   const guard = opencodeChatPromptGuardPayload(chatConfig)
   const requestDirectory = projectDirectory
@@ -211,12 +250,27 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
 
   // 收集模型重试信息（session.status: retry），失败时给出真实网关原因，而非笼统“超时”。
   let lastRetry = null
-  const MAX_RETRY = 4
   const handleUpdate = (update) => {
+    if (update?.part && onWorkflowPart) {
+      const part = update.part
+      onWorkflowPart({
+        id: typeof part.id === 'string' ? part.id : update.partID || '',
+        type: part.type,
+        tool: typeof part.tool === 'string' ? part.tool : '',
+        callID: typeof part.callID === 'string' ? part.callID : '',
+        status: typeof part.state?.status === 'string'
+          ? part.state.status
+          : update.type === 'workflow-part' ? 'running' : 'completed',
+        startedAt: part.state?.time?.start,
+        endedAt: part.state?.time?.end,
+        text: typeof part.text === 'string' ? part.text.slice(0, 240) : '',
+        error: typeof part.state?.error === 'string' ? part.state.error.slice(0, 240) : '',
+      })
+    }
     if (update?.type === 'status' && update.status?.type === 'retry') {
       lastRetry = update.status
-      if (update.status.attempt >= MAX_RETRY) {
-        // 重试次数过多，主动终止——比等满 120s 超时快得多（约 30s 出结果）。
+      if (update.status.attempt >= OPENCODE_CHAT_MAX_RETRIES) {
+        // 重试次数过多时主动终止，避免网关故障让界面长时间停留在生成状态。
         innerAbort.abort()
       }
     }
@@ -235,7 +289,7 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
       ...(env.VITE_OPENCODE_MODEL_VARIANT ? { variant: env.VITE_OPENCODE_MODEL_VARIANT } : {}),
       ...(guard.system ? { system: guard.system } : {}),
       ...(guard.tools ? { tools: guard.tools } : {}),
-      timeoutMs: 120000,
+      timeoutMs: OPENCODE_CHAT_TIMEOUT_MS,
       signal: innerAbort.signal,
       onUpdate: handleUpdate,
       ...(onDelta ? { onDelta: (delta, fullText) => onDelta(delta, fullText) } : {}),
@@ -255,13 +309,20 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
       throw error
     }
     if (isAbortError(error) || error?.name === 'AbortError') {
+      // 本地超时只会关闭 SSE；同步终止后端 session，避免它继续生成一条前端
+      // 未接收的回答，造成刷新后“有回答但没有触发总结”的不一致状态。
+      try {
+        await client.abortSession({ sessionID: session.id, directory: requestDirectory })
+      } catch (abortError) {
+        console.warn('[chatAdapter] 超时后终止 OpenCode session 失败：', abortError?.message || abortError)
+      }
       // 重试耗尽（innerAbort）或超时：若有 retry 信息，给出真实网关原因。
       if (lastRetry) {
         throw new Error(
           `模型调用失败：${lastRetry.message}（已重试 ${lastRetry.attempt} 次仍失败）。建议换个模型或稍后重试。`,
         )
       }
-      throw new Error('模型生成超时（120 秒未完成），请稍后重试或换个模型。')
+      throw new Error(`模型生成超时（${Math.round(OPENCODE_CHAT_TIMEOUT_MS / 1000)} 秒未完成），请稍后重试或换个模型。`)
     }
     if (isNetworkError(error) || error?.name === 'OpenCodeSseError') {
       throw new Error(
@@ -322,7 +383,7 @@ export async function loadHistory(directory) {
         if (Array.isArray(loaded)) {
           withParts = loaded
           loadedParts = true
-          messages = withParts.map(toUIMessage).filter(Boolean)
+          messages = toUIConversationMessages(withParts)
         }
       } catch {
         // 单个会话消息加载失败则保留空消息列表，不中断整体加载。
@@ -365,7 +426,8 @@ export async function loadHistory(directory) {
       result.push({
         id: oc.id,
         directory: oc.directory || projectDirectory,
-        title: oc.title || '未命名对话',
+        // OpenCode 可能在首次生成后自动改写 title；用户手动标题拥有最高优先级。
+        title: metadata.manualTitle || oc.title || '未命名对话',
         time: formatRelative(oc.time?.updated || oc.time?.created),
         summary: firstUser?.text || oc.title || '等待模型回复',
         status: '进行中',
@@ -374,6 +436,7 @@ export async function loadHistory(directory) {
         messages,
         metadata: uiMetadata,
         contextCards,
+        needsSupervisorSummary: latestTurnNeedsSupervisor(messages, contextCards),
       })
     }
     return result
@@ -429,6 +492,29 @@ export async function deleteRemoteSession(sessionId, signal, directory) {
     return true
   } catch (error) {
     console.warn('[chatAdapter] deleteRemoteSession 失败：', error?.message || error)
+    return false
+  }
+}
+
+// 持久化用户手动设置的会话标题。仅修改 title，不覆盖 metadata 等其他会话字段。
+export async function renameRemoteSession(sessionId, title, baseMetadata, signal, directory) {
+  const nextTitle = String(title || '').trim()
+  if (!nextTitle) return false
+  if (backend !== 'opencode') return true
+  const projectDirectory = resolveProjectDirectory(directory)
+  const client = getBridgeClient()
+  try {
+    // 草稿会话可能尚未创建远端记录；ensure 会先以手动标题创建并建立 id 映射。
+    const oc = await ensureOpencodeSession(sessionId, nextTitle, signal, undefined, projectDirectory)
+    await client.updateSession({
+      sessionID: oc.id,
+      directory: projectDirectory,
+      title: nextTitle,
+      metadata: { ...normalizeMetadata(baseMetadata), manualTitle: nextTitle },
+    }, signal)
+    return true
+  } catch (error) {
+    console.warn('[chatAdapter] renameRemoteSession 失败：', error?.message || error)
     return false
   }
 }
@@ -819,13 +905,15 @@ function buildSupervisorPrompt(turnMessages, cards, sourceParts) {
     '',
     '要求：',
     '1. 只输出更新后的完整 JSON 数组，每个元素形如 {"id":"","topic":"","category":"","title":"","body":"","partIDs":[]}。',
-    '2. 先判断本轮对话是否符合某个已有卡片主题；符合时只更新那个已有卡片，必须保留它原来的 id、topic 和 partIDs，并把真正支撑本轮更新的 source partID 追加进 partIDs，不要新增重复卡片。',
-    '3. 如果本轮对话不符合任何已有卡片主题，才追加一个新卡片；新卡片可以省略 id 或把 id 留空，topic 要稳定。',
-    '4. 与本轮无关的旧卡片原样保留在数组里。',
-    '5. category 从 [问题分析, 修复方案, 关键报错, 旧假设, 概念说明, 进展] 里选最接近的，必要时可自拟。',
-    '6. title 一句话概括主题；body 用约 90–160 个中文字符完整介绍该主题，优先包含背景、核心信息和当前结论，使其在工作台中约占 3 行，最多不超过 5 行。',
-    '7. partIDs 只能使用“本轮可关联 source parts”中给出的 partID，或保留已有卡片原有的 partIDs；不得编造。与本轮无关的旧卡片必须原样保留其 partIDs。',
-    '8. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
+    '2. 卡片代表一个边界清晰、可独立复用的研究子任务，而不是整个会话的大方向。判断是否更新旧卡片时，必须同时满足：研究对象/概念相同，用户当前目标或交付物相同，任务阶段连续。仅仅同属一个上位领域，不算同一主题。',
+    '3. 出现以下任一变化时，应追加一个新卡片，而不是扩写旧卡片：用户明确改变调研方向或研究对象；开始调研一个新理论、概念或框架；从论文检索转向理论综述、实验设计、方法分析、系统实现等不同目标；用户使用“另外、转向、接下来、我想了解、围绕某个新方向”等表达开启可独立成立的子任务。',
+    '4. 只有本轮是在补充、追问、验证或细化同一个研究对象且目标未改变时，才更新已有卡片；此时必须保留原来的 id、topic 和 partIDs，并追加真正支撑本轮更新的 source partID。',
+    '5. 拿不准是合并还是拆分时，优先拆分为新卡片，避免单张卡片不断膨胀；每轮最多追加一个最能代表本轮新目标的卡片。新卡片可以省略 id 或把 id 留空，topic 应使用“研究对象 + 任务目标”的稳定表述。',
+    '6. 与本轮无关的旧卡片原样保留在数组里。',
+    '7. category 从 [问题分析, 修复方案, 关键报错, 旧假设, 概念说明, 进展, 论文调研, 理论调研, 实验设计] 里选最接近的，必要时可自拟。',
+    '8. title 一句话概括主题；body 用约 90–160 个中文字符完整介绍该主题，只保留该子任务的背景、核心信息和当前结论，不要把其他卡片主题揉进来。',
+    '9. partIDs 只能使用“本轮可关联 source parts”中给出的 partID，或保留已有卡片原有的 partIDs；不得编造。与本轮无关的旧卡片必须原样保留其 partIDs。',
+    '10. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
     '',
     '过去卡片：',
     cardsBlock,
@@ -939,6 +1027,20 @@ function mergeLoadedContextCards(supervisorCards, storedCards, validPartIDs) {
   return result
 }
 
+// 检测最新一轮正式回答是否尚未被任何总结卡片关联。它用于补偿前端超时、
+// 刷新或短暂断连后 OpenCode 仍完成回答，但监督总结没有被调用的情况。
+function latestTurnNeedsSupervisor(messages, cards) {
+  const list = Array.isArray(messages) ? messages : []
+  const userIndex = list.findLastIndex((message) => message?.role === 'user')
+  if (userIndex < 0) return false
+  const latestTurn = list.slice(userIndex)
+  if (!latestTurn.some((message) => message?.role === 'assistant' && message.text?.trim())) return false
+  const turnPartIDs = normalizePartIDs(latestTurn.flatMap((message) => message.partIDs || []))
+  if (!turnPartIDs.length) return false
+  const coveredPartIDs = new Set(normalizePartIDs((cards || []).flatMap((card) => card.partIDs || [])))
+  return turnPartIDs.some((partID) => !coveredPartIDs.has(partID))
+}
+
 // 不信任模型直接返回的 ID：新关联只能来自本轮真实 source parts；旧关联只能
 // 来自该卡片之前已经持有的 partIDs，避免 hallucinated / 串卡 ID 写进数据库。
 function validateSupervisorCardPartIDs(incomingCards, existingCards, sourceParts) {
@@ -966,11 +1068,21 @@ function validateSupervisorCardPartIDs(incomingCards, existingCards, sourceParts
   })
 }
 
-function buildContextPromptParts({ prompt, selectedCards }) {
+function buildContextPromptParts({ prompt, selectedCards, attachments }) {
   const cardContext = buildContextFromCards(selectedCards)
   return [
     ...(cardContext ? [{ type: 'text', text: cardContext, synthetic: true }] : []),
     { type: 'text', text: prompt },
+    ...(Array.isArray(attachments)
+      ? attachments
+          .filter((attachment) => attachment?.dataUrl && attachment?.mime)
+          .map((attachment) => ({
+            type: 'file',
+            mime: attachment.mime,
+            filename: attachment.name,
+            url: attachment.dataUrl,
+          }))
+      : []),
     {
       type: 'text',
       text: '',
@@ -1022,6 +1134,57 @@ async function getLatestTurnPartReferences(client, sessionID, directory, signal)
 }
 
 // opencode WithParts → UI message：text/reasoning 分别从 parts 提取拼接。
+// OpenCode 的一次 Agent 回复可能由多个连续 assistant message 组成：前面的 message
+// 是工具调用前后的过程说明，最后一个才是给用户的正式答复。历史恢复时必须按 user turn
+// 归并，否则每个内部 step（包括空 text step）都会被渲染成独立气泡。
+function toUIConversationMessages(withPartsList) {
+  const result = []
+  let assistantSteps = []
+
+  const flushAssistantTurn = () => {
+    if (!assistantSteps.length) return
+    const converted = assistantSteps.map(toUIMessage).filter(Boolean)
+    const finalMessage = [...converted].reverse().find((message) => message.text?.trim())
+    if (finalMessage) {
+      result.push({
+        ...finalMessage,
+        workflowParts: converted.flatMap((message) => message.workflowParts || []),
+        usage: mergeMessageUsage(converted.map((message) => message.usage).filter(Boolean)),
+        reasoning: converted.map((message) => message.reasoning).filter(Boolean).join('\n\n'),
+      })
+    }
+    assistantSteps = []
+  }
+
+  for (const withParts of withPartsList || []) {
+    if (withParts?.info?.role === 'user') {
+      flushAssistantTurn()
+      const message = toUIMessage(withParts)
+      if (message?.text?.trim() || message?.attachments?.length) result.push(message)
+    } else if (withParts?.info?.role === 'assistant') {
+      assistantSteps.push(withParts)
+    }
+  }
+  flushAssistantTurn()
+  return result
+}
+
+function mergeMessageUsage(usages) {
+  if (!usages.length) return undefined
+  return usages.reduce(
+    (total, usage) => ({
+      input: total.input + (Number.isFinite(usage.input) ? usage.input : 0),
+      output: total.output + (Number.isFinite(usage.output) ? usage.output : 0),
+      reasoning: total.reasoning + (Number.isFinite(usage.reasoning) ? usage.reasoning : 0),
+      cache: {
+        read: total.cache.read + (Number.isFinite(usage.cache?.read) ? usage.cache.read : 0),
+        write: total.cache.write + (Number.isFinite(usage.cache?.write) ? usage.cache.write : 0),
+      },
+    }),
+    { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+  )
+}
+
 function toUIMessage(withParts) {
   if (!withParts || typeof withParts !== 'object') return null
   const info = withParts.info || {}
@@ -1054,12 +1217,22 @@ function toUIMessage(withParts) {
     .filter((p) => p && p.type === 'reasoning' && typeof p.text === 'string')
     .map((p) => p.text)
     .join('\n')
+  const attachments = parts
+    .filter((part) => part?.type === 'file' && typeof part.url === 'string')
+    .map((part) => ({
+      id: part.id || `attachment-${Math.random().toString(36).slice(2, 8)}`,
+      name: part.filename || '附件',
+      mime: part.mime || 'application/octet-stream',
+      kind: String(part.mime || '').startsWith('image/') ? 'image' : 'file',
+      dataUrl: part.url,
+    }))
   return {
     id: info.id,
     role: info.role === 'user' ? 'user' : 'assistant',
     time: formatClock(info.time?.created),
     createdAt: info.time?.created,
     text,
+    ...(attachments.length ? { attachments } : {}),
     partIDs: normalizePartIDs(
       parts
         .filter((p) => p && p.type === 'text' && !p.synthetic && !p.ignored && typeof p.id === 'string')
@@ -1130,7 +1303,11 @@ async function sendOpencodeMessage({ sessionId, title, messages, signal, selecte
   const promptText = latestUserMessage.text
   const response = await requestOpencode(withOpencodeDirectory(`/session/${encodeURIComponent(session.id)}/message`, projectDirectory), {
     method: 'POST',
-    body: buildOpencodePromptPayload(buildContextPromptParts({ prompt: promptText, selectedCards }), chatConfig),
+    body: buildOpencodePromptPayload(buildContextPromptParts({
+      prompt: promptText,
+      selectedCards,
+      attachments: latestUserMessage.attachments,
+    }), chatConfig),
     signal,
   })
   return extractOpencodeAssistantText(response)
@@ -1321,7 +1498,24 @@ function basicAuthHeader(username, password) {
 
 function opencodeChatPromptGuardPayload(chatConfig) {
   const system = buildChatSystemPrompt(chatConfig)
-  if (env.VITE_OPENCODE_CHAT_ENABLE_TOOLS === 'true') return { system }
+  if (env.VITE_OPENCODE_CHAT_ENABLE_TOOLS === 'true') {
+    const config = normalizeChatConfig(chatConfig)
+    const disabled = new Set(OPENCODE_CHAT_ALWAYS_DISABLED_TOOLS)
+    if (config.toolPermissions.readFiles === 'deny') {
+      for (const tool of ['read', 'grep', 'glob', 'lsp']) disabled.add(tool)
+    }
+    if (config.toolPermissions.runTests === 'deny') disabled.add('bash')
+    // 浏览器聊天区暂不承接 OpenCode 的交互式确认；只有明确允许时才开放写入。
+    if (config.toolPermissions.writeFiles !== 'allow') disabled.add('edit')
+    if (config.toolPermissions.network === 'deny') {
+      disabled.add('webfetch')
+      disabled.add('websearch')
+    }
+    return {
+      system,
+      tools: Object.fromEntries([...disabled].map((tool) => [tool, false])),
+    }
+  }
   return {
     system,
     tools: Object.fromEntries(OPENCODE_CHAT_DISABLED_TOOLS.map((tool) => [tool, false])),
@@ -1350,6 +1544,23 @@ function buildChatSystemPrompt(chatConfig) {
     `验收标准：${config.acceptanceCriteria || '给出清晰、可执行的下一步。'}`,
     `项目记忆：${config.projectMemory || '暂无。'}`,
     '将以上配置视为本会话的持续约束；工具是否真正可用仍以运行环境实际授予的权限为准。',
+    '',
+    '【响应效率规则】',
+    '- 优先尽快给出可用答案。工具预算按“当前这一轮用户请求”独立计算，过去轮次的调用不计入当前预算。',
+    `- 当前轮最多调用 ${OPENCODE_CHAT_MAX_TOOL_CALLS} 次工具，最多进行两轮工具动作；达到任一上限后必须立即基于已有证据给出正式答案。`,
+    '- 第一轮只做覆盖面检索，第二轮只核验最关键的来源；不要对同一问题连续改写关键词反复搜索。',
+    '- 联网发现信息使用 websearch，获取明确 URL 使用 webfetch；禁止使用 bash、curl 或脚本进行网络检索。联网权限为“允许”时应直接调用工具，不要再次要求用户回复“继续”或重复授权。',
+    '- 单个网页返回 403、404、429 或传输错误，只表示该来源不可访问，不代表系统没有联网。请改用 websearch 或其它权威来源；最终答案应准确说明具体来源失败，禁止笼统声称“当前环境没有联网”。',
+    '- 同一来源抓取失败后最多换一种方式重试一次；连续两次失败就停止抓取，根据已有证据作答并说明限制。',
+    '- 如果用户要求的资料在当前会话已经检索过，优先复用已有结果；只补查缺失的关键证据，不要从头重复检索。',
+    '- 不要把工具尝试过程、命令调试过程或内部计划写入最终答案。',
+    '- 达到工具或时间预算后立即综合已有结果，不要为了追求穷尽性持续搜索。',
+    '',
+    '【Markdown 文档制品】',
+    '- 当用户要求“生成、导出、输出 Markdown/MD 文档或报告”，但没有明确要求写入项目中的具体路径时，不要询问写入权限或文件路径，也不要调用写文件工具。',
+    '- 直接在回答中生成完整文档，并严格使用以下容器输出：<contextpilot-artifact filename="文件名.md">完整 Markdown 内容</contextpilot-artifact>。容器外可以有一句简短说明。',
+    '- filename 必须是简洁、安全且以 .md 结尾的文件名；容器内部必须是可直接保存的完整 Markdown，不要再套 Markdown 代码块。',
+    '- 只有用户明确要求修改项目文件或给出了项目内目标路径时，才进入项目写入流程；若写入权限为“需确认”，只请求一次确认，确认后直接执行，不要再次询问路径。',
   ].join('\n')
 }
 
