@@ -338,14 +338,19 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
 }
 
 // 启动时从 opencode 加载真实历史会话（仅当前项目 directory）。
-// 返回 UI session 数组；失败或为空返回 null，由调用方回退 mock。
+// 返回 { connected, attempted, sessions }：
+//   - 未启用 opencode 后端      → { connected: false, attempted: false, sessions: null }
+//   - 尝试连接但失败            → { connected: false, attempted: true,  sessions: null }
+//   - 已连接但无会话            → { connected: true,  attempted: true,  sessions: null }
+//   - 已连接且有会话            → { connected: true,  attempted: true,  sessions: UI session[] }
+// attempted 用来区分"根本没用 opencode"与"想连但没连上"，调用方据此决定是否提示。
 export async function loadHistory(directory) {
-  if (backend !== 'opencode') return null
+  if (backend !== 'opencode') return { connected: false, attempted: false, sessions: null }
   const projectDirectory = resolveProjectDirectory(directory)
   const client = getBridgeClient()
   try {
     const list = await client.listSessions({ directory: projectDirectory })
-    if (!Array.isArray(list) || list.length === 0) return null
+    if (!Array.isArray(list) || list.length === 0) return { connected: true, attempted: true, sessions: null }
 
     const supervisorByMainId = new Map()
     for (const oc of list) {
@@ -439,10 +444,10 @@ export async function loadHistory(directory) {
         needsSupervisorSummary: latestTurnNeedsSupervisor(messages, contextCards),
       })
     }
-    return result
+    return { connected: true, attempted: true, sessions: result }
   } catch (error) {
-    console.warn('[chatAdapter] loadHistory 失败，回退 mock：', error?.message || error)
-    return null
+    console.warn('[chatAdapter] loadHistory 失败，按未连接处理：', error?.message || error)
+    return { connected: false, attempted: true, sessions: null }
   }
 }
 

@@ -298,7 +298,15 @@ kbd {
   min-width: 0;
   flex: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-heading-label {
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .project-heading strong {
@@ -1131,12 +1139,18 @@ kbd {
 .search-box input {
   width: 100%;
   min-height: 40px;
-  padding: 0 46px 0 42px;
+  /* 左侧搜索图标 42px；右侧清空按钮（有输入时）占位 38px，无输入时仅留 14px 透气。 */
+  padding: 0 14px 0 42px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   color: var(--text);
   background: var(--surface);
   box-shadow: none;
+}
+
+/* 有清空按钮时，给右侧留出空间避免文字被遮挡 */
+.search-box:has(.search-clear) input {
+  padding-right: 38px;
 }
 
 .search-box input::placeholder {
@@ -1146,6 +1160,45 @@ kbd {
 .search-box input:focus {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+/* 清空按钮：固定在查询框最右侧，仅在有输入时出现 */
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  color: var(--subtle);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.search-clear:hover {
+  color: var(--text);
+  background: var(--surface-soft);
+}
+
+.search-clear:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+.context-empty-action {
+  color: var(--brand-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.context-empty-action:hover {
+  text-decoration: underline;
 }
 
 .search-box kbd {
@@ -3085,31 +3138,128 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* 自定义阶段下拉：原生 <select> 的弹出菜单由系统渲染、风格不统一，
+   这里用触发器 + 浮层列表实现，边框/聚焦态与 textarea、input 保持一致。 */
 .config-select {
+  position: relative;
   min-height: 46px;
-  padding: 0 13px;
   border: 1px solid var(--line);
   border-radius: 9px;
-  display: flex;
-  align-items: center;
-  color: var(--text);
   background: var(--surface);
 }
 
-.config-select select {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  appearance: none;
-  color: inherit;
-  background: transparent;
-  font-weight: 600;
-  outline: none;
+.config-select.open,
+.config-select:focus-within {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
 }
 
-.config-select .app-icon {
+.config-select-trigger {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.config-select-value {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-select-caret {
+  flex: 0 0 auto;
   color: var(--subtle);
-  transform: rotate(90deg);
+  transition: transform 0.18s var(--ease);
+}
+
+.config-select.open .config-select-caret {
+  transform: rotate(180deg);
+}
+
+.config-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.config-select-option {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.config-select-option:hover {
+  background: var(--surface-soft);
+}
+
+.config-select-option.active {
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
+  color: var(--brand-text);
+}
+
+.config-select-option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.config-select-option-mark {
+  flex: 0 0 auto;
+  color: var(--brand-text);
+}
+
+.config-select-pop-enter-active,
+.config-select-pop-leave-active {
+  transition: opacity 0.16s var(--ease), transform 0.16s var(--ease);
+}
+
+.config-select-pop-enter-from,
+.config-select-pop-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 .config-rules {

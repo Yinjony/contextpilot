@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch, onBeforeUnmount } from 'vue'
 import AppIcon from './AppIcon.vue'
 import { createDefaultChatConfig, normalizeChatConfig } from '../model/chatAdapter.js'
 
@@ -23,6 +23,50 @@ const tools = [
 
 const draft = ref(createDefaultChatConfig())
 const newRule = ref('')
+
+// 自定义阶段下拉：原生 <select> 的弹出菜单由系统渲染、无法统一风格，这里改成
+// 与弹窗设计语言一致的自定义浮层（触发器 + 列表 + 选中态），并支持点击外部/ESC 关闭。
+const stageMenuOpen = ref(false)
+const stageSelectRef = ref(null)
+
+function toggleStageMenu() {
+  stageMenuOpen.value = !stageMenuOpen.value
+}
+
+async function chooseStage(stage) {
+  draft.value.stage = stage
+  stageMenuOpen.value = false
+}
+
+function onDocumentClick(event) {
+  if (!stageMenuOpen.value) return
+  if (stageSelectRef.value && !stageSelectRef.value.contains(event.target)) {
+    stageMenuOpen.value = false
+  }
+}
+
+function onDocumentKeydown(event) {
+  if (event.key === 'Escape' && stageMenuOpen.value) stageMenuOpen.value = false
+}
+
+watch(stageMenuOpen, (open) => {
+  if (open) {
+    document.addEventListener('click', onDocumentClick)
+    document.addEventListener('keydown', onDocumentKeydown)
+    nextTick(() => {
+      const active = stageSelectRef.value?.querySelector('.config-select-option.active')
+      active?.scrollIntoView({ block: 'nearest' })
+    })
+  } else {
+    document.removeEventListener('click', onDocumentClick)
+    document.removeEventListener('keydown', onDocumentKeydown)
+  }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
+  document.removeEventListener('keydown', onDocumentKeydown)
+})
 
 watch(
   () => props.config,
@@ -127,13 +171,34 @@ function submit() {
                 <p>帮助模型聚焦当前的协作重点</p>
               </div>
             </div>
-            <label class="config-select">
-              <span class="sr-only">当前阶段</span>
-              <select v-model="draft.stage">
-                <option v-for="stage in stages" :key="stage" :value="stage">{{ stage }}</option>
-              </select>
-              <AppIcon name="chevron" :size="17" />
-            </label>
+            <div ref="stageSelectRef" class="config-select" :class="{ open: stageMenuOpen }">
+              <button
+                type="button"
+                class="config-select-trigger"
+                aria-haspopup="listbox"
+                :aria-expanded="stageMenuOpen"
+                @click="toggleStageMenu"
+              >
+                <span class="config-select-value">{{ draft.stage }}</span>
+                <AppIcon name="chevron-down" :size="17" class="config-select-caret" />
+              </button>
+
+              <transition name="config-select-pop">
+                <ul v-if="stageMenuOpen" class="config-select-menu" role="listbox" aria-label="当前阶段">
+                  <li v-for="stage in stages" :key="stage" role="option" :aria-selected="stage === draft.stage">
+                    <button
+                      type="button"
+                      class="config-select-option"
+                      :class="{ active: stage === draft.stage }"
+                      @click="chooseStage(stage)"
+                    >
+                      <span class="config-select-option-label">{{ stage }}</span>
+                      <AppIcon v-if="stage === draft.stage" name="check" :size="14" class="config-select-option-mark" />
+                    </button>
+                  </li>
+                </ul>
+              </transition>
+            </div>
           </div>
 
           <div class="config-row">

@@ -28,17 +28,25 @@ const emit = defineEmits([
 ])
 
 const openMenuId = ref('')
+const projectMenu = ref(null)
+const projectMenuRef = ref(null)
 
 const activeProject = computed(() =>
   props.projects.find((project) => project.directory === props.activeProjectDirectory) || props.projects[0] || null,
 )
 
+function projectInitials(project) {
+  return String(project?.name || '').trim().slice(0, 2).toUpperCase() || 'CP'
+}
+
 function closeMenus() {
   openMenuId.value = ''
+  projectMenu.value = null
 }
 
 function toggleMenu(id) {
   openMenuId.value = openMenuId.value === id ? '' : id
+  projectMenu.value = null
 }
 
 function selectSession(id) {
@@ -51,7 +59,26 @@ function runAction(type, id) {
   emit(type, id)
 }
 
+function selectProject(directory) {
+  closeMenus()
+  emit('select-project', directory)
+}
+
+// 右键项目环境头像：弹出“从侧边栏移除”菜单。
+function openProjectMenu(event, directory) {
+  event.preventDefault()
+  openMenuId.value = ''
+  projectMenu.value = { x: event.clientX, y: event.clientY, directory }
+}
+
+function removeProject() {
+  const directory = projectMenu.value?.directory
+  closeMenus()
+  if (directory) emit('remove-project', directory)
+}
+
 function handleDocumentClick(event) {
+  if (projectMenu.value && !projectMenuRef.value?.contains(event.target)) projectMenu.value = null
   openMenuId.value = ''
 }
 
@@ -84,9 +111,35 @@ onBeforeUnmount(() => {
     </button>
 
     <template v-else>
+      <nav class="project-rail" aria-label="project environments">
+        <button
+          type="button"
+          class="project-rail-add"
+          title="创建项目环境"
+          aria-label="创建项目环境"
+          @click="$emit('create-project')"
+        >
+          <AppIcon name="plus" :size="17" />
+        </button>
+        <button
+          v-for="project in projects"
+          :key="project.directory"
+          type="button"
+          class="project-rail-item"
+          :class="{ active: project.directory === activeProjectDirectory }"
+          :title="project.directory"
+          :aria-label="project.name"
+          @click="selectProject(project.directory)"
+          @contextmenu="openProjectMenu($event, project.directory)"
+        >
+          {{ projectInitials(project) }}
+        </button>
+      </nav>
+
       <div class="sidebar-content">
         <div class="sidebar-header">
           <div class="project-heading">
+            <span class="project-heading-label">项目环境</span>
             <strong :title="activeProject?.directory">{{ activeProject?.name || '&#x9879;&#x76EE;' }}</strong>
           </div>
           <span v-if="projectLoading" class="project-loading" aria-label="loading"></span>
@@ -175,6 +228,19 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
+      <div
+        v-if="projectMenu"
+        ref="projectMenuRef"
+        class="project-context-menu"
+        :style="{ top: `${projectMenu.y}px`, left: `${projectMenu.x}px` }"
+        role="menu"
+        @click.stop
+      >
+        <button type="button" role="menuitem" @click="removeProject">
+          <AppIcon name="x" :size="15" />
+          <span>从侧边栏移除</span>
+        </button>
+      </div>
     </template>
   </aside>
 </template>

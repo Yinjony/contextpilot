@@ -6,8 +6,9 @@ import ChatPanel from './components/ChatPanel.vue'
 import SessionConfigModal from './components/SessionConfigModal.vue'
 import WorkflowModal from './components/WorkflowModal.vue'
 import MigrationExportModal from './components/MigrationExportModal.vue'
-import { sessions, totalSessions, contextCards } from './data/workspace.js'
+import { totalSessions, contextCards } from './data/workspace.js'
 import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, getRemoteBusySessionIds, abortRemoteGeneration, deleteRemoteSession, renameRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig, getDefaultProjectDirectory } from './model/chatAdapter.js'
+import { ElMessage } from './lib/notify.js'
 
 const PROJECT_ENVIRONMENTS_STORAGE_KEY = 'contextpilot:project-environments'
 const ACTIVE_PROJECT_ENVIRONMENT_STORAGE_KEY = 'contextpilot:active-project-environment'
@@ -68,20 +69,11 @@ const projectEnvironments = computed(() =>
 )
 
 // 当前活动会话（驱动聊天区标题与消息）
-const chatSessions = ref(
-  sessions.map((session) => ({
-    ...session,
-    directory: defaultProjectDirectory,
-    messages: session.messages.map((message) => ({ ...message })),
-    // mock / 本地回退会话也必须有自己的卡片副本；否则 UI 展示的是全局卡片，
-    // 发送时却从 session.contextCards 读取空数组，造成“勾选了但模型没收到”。
-    contextCards: (session.contextCards || contextCards).map((card) => ({
-      ...card,
-      partIDs: normalizePartIDs(card.partIDs),
-    })),
-  })),
-)
-const activeSessionId = ref(sessions[0]?.id)
+// 当前活动会话（驱动聊天区标题与消息）。
+// 启动即用空草稿占位：未连接 opencode 时不再展示 workspace.js 里的 mock 历史会话，
+// 真实历史由 onMounted 里的 loadHistory 在连上后端后填充。
+const chatSessions = ref([buildNewSession(defaultProjectDirectory)])
+const activeSessionId = ref(chatSessions.value[0]?.id || '')
 const localSendingSessionIds = ref(new Set())
 const remoteBusySessionIds = ref(new Set())
 const activeAbortControllers = new Map()
@@ -100,7 +92,7 @@ async function syncRemoteBusySessions() {
   if (ids) remoteBusySessionIds.value = new Set(ids)
 }
 
-// 启动时从 opencode 加载真实历史会话；失败/为空则保留 mock（sessions）。
+// 启动时从 opencode 加载真实历史会话；连上后端才有内容，未连接时会话区保持空白。
 const isLoadingHistory = ref(true)
 
 function persistProjectDirectories() {
@@ -145,24 +137,36 @@ async function loadProjectEnvironment(directory, { initial = false } = {}) {
   activeProjectDirectory.value = target
   persistProjectDirectories()
   try {
-    const remote = await loadHistory(target)
-    if (remote && remote.length) {
+    const { connected, attempted, sessions: remote } = await loadHistory(target)
+
+    // 已连接且有真实历史：直接用远端会话。
+    if (connected && remote && remote.length) {
       activateProjectSessions(target, remote)
       return
     }
 
-    const cached = projectSessionCache.get(projectDirectoryKey(target))
-    if (cached?.length) {
-      activateProjectSessions(target, cached)
+    // 已连接但当前项目暂无会话：优先恢复切走时缓存的本地草稿，否则给一个空草稿。
+    if (connected) {
+      const cached = projectSessionCache.get(projectDirectoryKey(target))
+      if (cached?.length) {
+        activateProjectSessions(target, cached)
+        return
+      }
+      activateProjectSessions(target, [])
       return
     }
 
-    if (initial && projectDirectoryKey(target) === projectDirectoryKey(defaultProjectDirectory)) {
-      activateProjectSessions(target, chatSessions.value)
-      return
-    }
-
+    // 未连接 opencode：会话区保持空白（不再回退 mock 历史会话），并提示用户。
+    // attempted=false 表示根本没用 opencode 后端（如 openai-compatible 模式），此时不提示。
     activateProjectSessions(target, [])
+    if (initial && attempted) {
+      ElMessage({
+        message: '尚未连接 opencode，会话区暂时为空。请确认 opencode 服务已启动（默认地址 http://127.0.0.1:4096）。',
+        type: 'warning',
+        duration: 4500,
+        showClose: true,
+      })
+    }
   } finally {
     isLoadingProject.value = false
   }

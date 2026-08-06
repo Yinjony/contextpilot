@@ -13,6 +13,8 @@ defineEmits(['collapse', 'expand', 'update-priority', 'toggle'])
 
 // 类型筛选：按 category 动态生成，计数对应实际卡片；点击可过滤列表
 const activeFilter = ref('全部')
+// 关键词搜索：匹配 title/body/category/topic，与类型筛选叠加生效；空值不过滤。
+const searchQuery = ref('')
 const filterBarRef = ref(null)
 const isFilterDragging = ref(false)
 const filterDragMoved = ref(false)
@@ -31,11 +33,25 @@ const filters = computed(() => {
     })),
   ]
 })
-const filteredCards = computed(() =>
-  activeFilter.value === '全部'
+const filteredCards = computed(() => {
+  let list = activeFilter.value === '全部'
     ? props.cards
-    : props.cards.filter((c) => c.category === activeFilter.value),
-)
+    : props.cards.filter((c) => c.category === activeFilter.value)
+
+  const query = searchQuery.value.trim().toLowerCase()
+  if (query) {
+    list = list.filter((card) =>
+      [card.title, card.body, card.category, card.topic].some(
+        (value) => typeof value === 'string' && value.toLowerCase().includes(query),
+      ),
+    )
+  }
+  return list
+})
+
+function clearSearch() {
+  searchQuery.value = ''
+}
 
 // 当前筛选分类被清空时回退到「全部」。
 watch(
@@ -197,7 +213,21 @@ const metrics = computed(() => {
       <label class="search-box">
         <span class="search-ico"><AppIcon name="search" :size="16" /></span>
         <span class="sr-only">搜索上下文片段</span>
-        <input type="search" placeholder="搜索上下文片段..." />
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="搜索上下文片段..."
+          aria-label="搜索上下文片段"
+        />
+        <button
+          v-if="searchQuery"
+          type="button"
+          class="search-clear"
+          aria-label="清空搜索"
+          @click="clearSearch"
+        >
+          <AppIcon name="x" :size="14" />
+        </button>
       </label>
 
       <div class="context-toolbar">
@@ -222,8 +252,9 @@ const metrics = computed(() => {
     </div>
     <div v-else-if="!isSummarizing" class="context-empty" aria-live="polite">
       <span class="empty-icon"><AppIcon name="layers" :size="22" /></span>
-      <h3>暂无上下文数据</h3>
-      <p>发送第一条消息后，监督助手会自动总结成本卡片。</p>
+      <h3>{{ searchQuery ? '没有匹配的上下文片段' : '暂无上下文数据' }}</h3>
+      <p v-if="searchQuery">换个关键词，或<span class="context-empty-action" role="button" tabindex="0" @click="clearSearch" @keydown.enter="clearSearch">清空搜索</span>。</p>
+      <p v-else>发送第一条消息后，监督助手会自动总结成本卡片。</p>
     </div>
     </template>
   </section>
