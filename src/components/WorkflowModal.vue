@@ -262,7 +262,7 @@ watch(() => [filteredTurns.value.length, conversationActions.value.length, actio
         <div>
           <div class="workflow-title-row">
             <span class="workflow-title-icon"><AppIcon name="workflow" :size="19" /></span>
-            <h2 id="workflow-title">执行追踪&项目概况</h2>
+            <h2 id="workflow-title">执行追踪&对话概况</h2>
             <span class="modal-session-context" :title="sessionTitle">
               <small>当前会话</small>
               <strong>{{ sessionTitle }}</strong>

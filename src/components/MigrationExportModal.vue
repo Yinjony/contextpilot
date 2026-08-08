@@ -316,7 +316,7 @@ onBeforeUnmount(() => {
   place-items: center;
   padding: 22px;
   background: rgba(15, 23, 42, .48);
-  backdrop-filter: blur(5px);
+  /* 不使用 backdrop-filter 模糊：全屏 blur 在内容较多时会很卡，仅保留半透明遮罩即可。 */
 }
 
 .migration-modal {

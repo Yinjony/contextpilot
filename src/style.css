@@ -3838,15 +3838,23 @@ kbd {
   overflow: hidden;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 264px;
+  /* 显式约束单行高度为容器高度，子项（workflow-stage）才会被限定高度、
+     从而在内容超出时触发自身的纵向滚动，露出下方「动作分布」。 */
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .workflow-stage {
   min-width: 0;
   min-height: 0;
-  padding: 4px 0;
+  padding: 4px 0 12px;
   display: grid;
   grid-template-rows: minmax(360px, 1fr) auto;
-  overflow: hidden;
+  /* 高度不足时整体可纵向滚动，保证「动作分布」始终能下滑看到；
+     高度充足时 1fr 仍会让执行链路撑满、动作分布贴底，不出现滚动条。 */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
 }
 

@@ -219,7 +219,7 @@ onBeforeUnmount(() => {
           </button>
           <button type="button" class="sidebar-utility-action" @click="$emit('workflow')">
             <AppIcon name="workflow" :size="16" />
-            <span>&#x6267;&#x884C;&#x8FFD;&#x8E2A;&amp;&#x9879;&#x76EE;&#x6982;&#x51B5;</span>
+            <span>&#x6267;&#x884C;&#x8FFD;&#x8E2A;&amp;&#x5BF9;&#x8BDD;&#x6982;&#x51B5;</span>
           </button>
           <button type="button" class="sidebar-utility-action" @click="$emit('migrate')">
             <AppIcon name="file-text" :size="16" />
