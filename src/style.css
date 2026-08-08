@@ -1454,8 +1454,68 @@ kbd {
   -webkit-line-clamp: 3;
 }
 
-.context-card.expanded .card-description {
-  -webkit-line-clamp: 5;
+.card-description-full {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.card-detail-list {
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.card-detail-list li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+}
+
+.card-detail-marker {
+  width: 5px;
+  height: 5px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.card-detail-copy {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 7px;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.card-detail-copy strong {
+  flex: 0 0 auto;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.card-detail-copy em {
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  color: var(--amber);
+  background: var(--amber-soft);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.card-detail-copy em[data-validity='conflict'] {
+  color: var(--red);
+  background: var(--red-soft);
 }
 
 .card-footer {

@@ -1075,19 +1075,33 @@ function validateSupervisorCardPartIDs(incomingCards, existingCards, sourceParts
 
 function buildContextPromptParts({ prompt, selectedCards, attachments }) {
   const cardContext = buildContextFromCards(selectedCards)
+  const attachmentParts = Array.isArray(attachments)
+    ? attachments.flatMap((attachment) => {
+        if (attachment?.extractedText && (attachment?.mime === 'application/pdf' || /\.pdf$/i.test(attachment?.name || ''))) {
+          const truncationNote = attachment.textTruncated ? '\n\n[文件内容较长，以上为截取内容]' : ''
+          return [{
+            type: 'text',
+            text: [
+              `以下是 PDF 文件“${attachment.name || '未命名文件'}”提取出的文本内容`,
+              attachment.pageCount ? `（共 ${attachment.pageCount} 页）` : '',
+              `：\n\n${attachment.extractedText}${truncationNote}`,
+            ].join(''),
+            synthetic: true,
+          }]
+        }
+        if (!attachment?.dataUrl || !attachment?.mime) return []
+        return [{
+          type: 'file',
+          mime: attachment.mime,
+          filename: attachment.name,
+          url: attachment.dataUrl,
+        }]
+      })
+    : []
   return [
     ...(cardContext ? [{ type: 'text', text: cardContext, synthetic: true }] : []),
     { type: 'text', text: prompt },
-    ...(Array.isArray(attachments)
-      ? attachments
-          .filter((attachment) => attachment?.dataUrl && attachment?.mime)
-          .map((attachment) => ({
-            type: 'file',
-            mime: attachment.mime,
-            filename: attachment.name,
-            url: attachment.dataUrl,
-          }))
-      : []),
+    ...attachmentParts,
     {
       type: 'text',
       text: '',

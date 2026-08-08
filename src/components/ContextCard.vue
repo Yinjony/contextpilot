@@ -12,6 +12,10 @@ defineEmits(['toggle', 'update-priority'])
 const expanded = ref(false)
 const descriptionId = computed(() => `context-card-description-${props.card.id}`)
 const normalizedBody = computed(() => String(props.card.body || '').replace(/\s+/g, ' ').trim())
+const items = computed(() => Array.isArray(props.card.items) ? props.card.items : [])
+const currentItems = computed(() => items.value.filter((item) =>
+  ['active', 'pending', 'conflict'].includes(item.validity),
+))
 const linkedCount = computed(() => {
   const count = Array.isArray(props.card.partIDs) ? props.card.partIDs.length : 0
   return count ? `${count} 个片段` : '1 个主题'
@@ -36,7 +40,22 @@ const bodySize = computed(() => `约 ${normalizedBody.value.length} 字`)
       </div>
     </div>
     <h3>{{ card.title }}</h3>
-    <p :id="descriptionId" class="card-description">{{ normalizedBody }}</p>
+    <p v-if="!expanded" :id="descriptionId" class="card-description">{{ normalizedBody }}</p>
+
+    <ul v-else-if="currentItems.length" :id="descriptionId" class="card-detail-list">
+      <li v-for="item in currentItems" :key="item.id">
+        <span class="card-detail-marker" aria-hidden="true"></span>
+        <div class="card-detail-copy">
+          <strong v-if="item.attribute">{{ item.attribute }}</strong>
+          <span>{{ item.value }}</span>
+          <em v-if="item.validity !== 'active'" :data-validity="item.validity">
+            {{ item.validity === 'pending' ? '待确认' : '信息冲突' }}
+          </em>
+        </div>
+      </li>
+    </ul>
+
+    <p v-else :id="descriptionId" class="card-description card-description-full">{{ normalizedBody }}</p>
 
     <div class="card-footer">
       <div class="card-metadata" aria-label="上下文片段信息">

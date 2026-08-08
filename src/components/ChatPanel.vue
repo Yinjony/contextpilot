@@ -3,6 +3,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import AppIcon from './AppIcon.vue'
 import ChatMessage from './ChatMessage.vue'
 import { createDefaultChatConfig, normalizeChatConfig } from '../model/chatAdapter.js'
+import { extractPdfText } from '../lib/pdf-text.js'
 
 const props = defineProps({
   title: { type: String, default: 'AI 对话窗口' },
@@ -134,6 +135,8 @@ async function addAttachments(fileList, kind) {
       continue
     }
     try {
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+      const pdf = isPdf ? await extractPdfText(file) : null
       next.push({
         id: `attachment-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         name: file.name,
@@ -142,6 +145,7 @@ async function addAttachments(fileList, kind) {
         sizeLabel: formatFileSize(file.size),
         kind,
         dataUrl: await readAsDataURL(file),
+        ...(pdf ? { extractedText: pdf.text, pageCount: pdf.pageCount, textTruncated: pdf.truncated } : {}),
       })
     } catch (cause) {
       attachmentError.value = cause?.message || String(cause)

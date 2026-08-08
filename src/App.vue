@@ -184,8 +184,22 @@ async function selectProjectEnvironment(directory) {
 }
 
 async function createProjectEnvironment() {
-  const raw = window.prompt('\u8bf7\u7c98\u8d34\u65b0\u9879\u76ee\u7684\u7edd\u5bf9\u8def\u5f84\uff08\u4f8b\u5982 C:\\\\Projects\\\\my-app\uff09\uff1a', '')
-  const target = normalizeProjectDirectory(raw)
+  if (isLoadingProject.value || isSending.value) return
+  let result
+  try {
+    const response = await fetch('/__contextpilot/select-directory', { method: 'POST' })
+    result = await response.json()
+    if (!response.ok) throw new Error(result?.error || '无法打开文件夹选择器')
+  } catch (error) {
+    ElMessage({
+      message: `选择文件夹失败：${error?.message || '请确认本地前端服务已启动。'}`,
+      type: 'error',
+      duration: 4200,
+      showClose: true,
+    })
+    return
+  }
+  const target = normalizeProjectDirectory(result?.directory)
   if (!target) return
   if (!projectDirectories.value.some((directory) => projectDirectoryKey(directory) === projectDirectoryKey(target))) {
     projectDirectories.value = [...projectDirectories.value, target]

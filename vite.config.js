@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { execFile } from 'node:child_process'
 import { spawn, spawnSync } from 'node:child_process'
 import net from 'node:net'
 
@@ -7,6 +8,64 @@ import net from 'node:net'
 // 可用环境变量 OPENCODE_SERVE_PORT 覆盖；设 VITE_AUTO_START_OPENCODE=false 可彻底禁用自动启动。
 const OPENCODE_SERVE_PORT = process.env.OPENCODE_SERVE_PORT || '4096'
 const AUTO_START_DISABLED = process.env.VITE_AUTO_START_OPENCODE === 'false'
+
+function runFilePicker(command, args) {
+  return new Promise((resolve, reject) => {
+    execFile(command, args, { encoding: 'utf8' }, (error, stdout) => {
+      if (error) {
+        // Native pickers use a non-zero exit code when the user presses Cancel.
+        if (error.code === 1 || error.code === 130) resolve('')
+        else reject(error)
+        return
+      }
+      resolve(String(stdout || '').trim())
+    })
+  })
+}
+
+async function selectLocalDirectory() {
+  if (process.platform === 'darwin') {
+    return runFilePicker('osascript', [
+      '-e',
+      'POSIX path of (choose folder with prompt "选择项目文件夹")',
+    ])
+  }
+  if (process.platform === 'win32') {
+    const script = [
+      'Add-Type -AssemblyName System.Windows.Forms',
+      '$dialog = New-Object System.Windows.Forms.FolderBrowserDialog',
+      '$dialog.Description = "选择项目文件夹"',
+      '$dialog.ShowNewFolderButton = $true',
+      'if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { $dialog.SelectedPath }',
+    ].join('; ')
+    return runFilePicker('powershell.exe', ['-NoProfile', '-STA', '-Command', script])
+  }
+  return runFilePicker('zenity', ['--file-selection', '--directory', '--title=选择项目文件夹'])
+}
+
+function localDirectoryPicker() {
+  return {
+    name: 'contextpilot:local-directory-picker',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/__contextpilot/select-directory', async (request, response) => {
+        response.setHeader('Content-Type', 'application/json; charset=utf-8')
+        if (request.method !== 'POST') {
+          response.statusCode = 405
+          response.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+        try {
+          const directory = await selectLocalDirectory()
+          response.end(JSON.stringify({ directory }))
+        } catch (error) {
+          response.statusCode = 500
+          response.end(JSON.stringify({ error: error?.message || '无法打开文件夹选择器' }))
+        }
+      })
+    },
+  }
+}
 
 // 探测端口是否已被占用（说明 opencode 已在运行），避免重复启动导致端口冲突。
 function isPortInUse(port, host = '127.0.0.1') {
@@ -126,7 +185,7 @@ function startOpencodeBackend() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), startOpencodeBackend()],
+  plugins: [vue(), localDirectoryPicker(), startOpencodeBackend()],
   optimizeDeps: {
     entries: ['index.html'],
   },

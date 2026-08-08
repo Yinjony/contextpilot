@@ -115,8 +115,9 @@ onBeforeUnmount(() => {
         <button
           type="button"
           class="project-rail-add"
-          title="创建项目环境"
-          aria-label="创建项目环境"
+          title="选择项目文件夹"
+          aria-label="选择项目文件夹并添加为项目环境"
+          :disabled="projectLoading"
           @click="$emit('create-project')"
         >
           <AppIcon name="plus" :size="17" />
