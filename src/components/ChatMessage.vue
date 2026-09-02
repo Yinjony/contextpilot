@@ -27,9 +27,11 @@ const renderedText = computed(() => {
 const parsedContent = computed(() => {
   const source = String(props.message.text || '')
   const artifacts = []
-  const pattern = /<contextpilot-artifact(?:\s+filename="([^"]+)")?\s*>([\s\S]*?)<\/contextpilot-artifact>/gi
-  let text = source.replace(pattern, (_, filename, content) => {
-    const safeName = String(filename || `document-${artifacts.length + 1}.md`)
+  const pattern = /<contextpilot-artifact\b([^>]*)>([\s\S]*?)<\/contextpilot-artifact\s*>/gi
+  let text = source.replace(pattern, (_, attributes, content) => {
+    const filename = String(attributes || '').match(/\bfilename\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/i)
+    const requestedName = filename?.[1] || filename?.[2] || filename?.[3]
+    const safeName = String(requestedName || `document-${artifacts.length + 1}.md`)
       .replace(/[\\/:*?"<>|]/g, '-')
       .trim()
     artifacts.push({

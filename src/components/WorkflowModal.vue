@@ -6,6 +6,7 @@ import ActionIcon from './ActionIcon.vue'
 const props = defineProps({
   sessionTitle: { type: String, default: '当前对话' },
   messages: { type: Array, default: () => [] },
+  sessionUsage: { type: Object, default: null },
 })
 
 defineEmits(['close'])
@@ -183,14 +184,18 @@ const contextLimit = Number.isFinite(configuredContextLimit) && configuredContex
 
 function normalizeUsage(usage) {
   if (!usage || typeof usage !== 'object') return null
-  const number = (value) => Number.isFinite(value) ? Math.max(0, value) : 0
+  const number = (value) => {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0
+  }
   const input = number(usage.input)
   const output = number(usage.output)
   const reasoning = number(usage.reasoning)
   const cacheRead = number(usage.cache?.read)
   const cacheWrite = number(usage.cache?.write)
-  const total = Number.isFinite(usage.total)
-    ? Math.max(0, usage.total)
+  const parsedTotal = Number(usage.total)
+  const total = Number.isFinite(parsedTotal)
+    ? Math.max(0, parsedTotal)
     : input + output + reasoning + cacheRead + cacheWrite
   return { input, output, reasoning, cacheRead, cacheWrite, total }
 }
@@ -199,11 +204,19 @@ const usages = computed(() => props.messages
   .map((message) => normalizeUsage(message.usage))
   .filter(Boolean))
 
-const totalTokenUsage = computed(() => usages.value.reduce((total, usage) => total + usage.total, 0))
+const authoritativeSessionUsage = computed(() => normalizeUsage(props.sessionUsage))
+const messageTokenUsage = computed(() => usages.value.reduce((total, usage) => total + usage.total, 0))
+const totalTokenUsage = computed(() => Math.max(
+  authoritativeSessionUsage.value?.total || 0,
+  messageTokenUsage.value,
+))
 const latestUsage = computed(() => usages.value.at(-1))
+const currentContextUsage = computed(() => {
+  const usage = latestUsage.value || authoritativeSessionUsage.value
+  return usage ? usage.input + usage.cacheRead : 0
+})
 const contextRemaining = computed(() => {
-  const used = latestUsage.value ? latestUsage.value.input + latestUsage.value.cacheRead : 0
-  return Math.max(0, contextLimit - used)
+  return Math.max(0, contextLimit - currentContextUsage.value)
 })
 const contextUsed = computed(() => Math.min(contextLimit, Math.max(0, contextLimit - contextRemaining.value)))
 const contextUsagePercent = computed(() => contextLimit > 0 ? (contextUsed.value / contextLimit) * 100 : 0)
@@ -343,7 +356,7 @@ watch(() => [filteredTurns.value.length, conversationActions.value.length, actio
                   <strong>执行链路</strong>
                   <span>共 {{ filteredTurns.length }} 轮 · {{ totalActionCount }} 项</span>
                 </div>
-                <small>按对话轮次分组 · 区域内显示 3 轮</small>
+                <small>按对话轮次分组 · 区域内显示 4 轮</small>
               </div>
               <div v-if="filteredTurns.length" ref="turnsViewportRef" class="workflow-turns-viewport">
                 <section v-for="turn in filteredTurns" :key="turn.id" class="workflow-turn">

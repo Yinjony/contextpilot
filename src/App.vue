@@ -7,7 +7,7 @@ import SessionConfigModal from './components/SessionConfigModal.vue'
 import WorkflowModal from './components/WorkflowModal.vue'
 import MigrationExportModal from './components/MigrationExportModal.vue'
 import { totalSessions, contextCards } from './data/workspace.js'
-import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, getRemoteBusySessionIds, abortRemoteGeneration, deleteRemoteSession, renameRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig, getDefaultProjectDirectory } from './model/chatAdapter.js'
+import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, getRemoteBusySessionIds, getRemoteSessionUsage, abortRemoteGeneration, deleteRemoteSession, renameRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig, getDefaultProjectDirectory, dedupeContextCards, ensureMarkdownArtifactResponse } from './model/chatAdapter.js'
 import { ElMessage } from './lib/notify.js'
 
 const PROJECT_ENVIRONMENTS_STORAGE_KEY = 'contextpilot:project-environments'
@@ -60,6 +60,7 @@ const projectDirectories = ref(loadStoredProjectDirectories(defaultProjectDirect
 const activeProjectDirectory = ref(loadActiveProjectDirectory(projectDirectories.value, defaultProjectDirectory))
 const projectSessionCache = new Map()
 const isLoadingProject = ref(false)
+const experimentDataErrors = new Set()
 
 const projectEnvironments = computed(() =>
   projectDirectories.value.map((directory) => ({
@@ -90,6 +91,11 @@ async function syncRemoteBusySessions() {
   const ids = await getRemoteBusySessionIds()
   // null 表示状态请求失败；保留上一次结果，避免网络抖动时误解除“生成中”。
   if (ids) remoteBusySessionIds.value = new Set(ids)
+  const session = activeSession.value
+  if (session && (isWorkflowOpen.value || ids?.includes(session.id))) {
+    const usage = await getRemoteSessionUsage(session.id, session.directory || activeProjectDirectory.value)
+    if (usage) session.usage = usage
+  }
 }
 
 // 启动时从 opencode 加载真实历史会话；连上后端才有内容，未连接时会话区保持空白。
@@ -104,10 +110,57 @@ function persistProjectDirectories() {
   }
 }
 
+function sessionExportSnapshot(session) {
+  return {
+    id: session.id,
+    title: session.title,
+    directory: session.directory,
+    createdAt: session.createdAt || null,
+    updatedAt: session.updatedAt || null,
+    status: session.status,
+    summary: session.summary,
+    messages: session.messages || [],
+    contextCards: session.contextCards || [],
+    chatConfig: session.metadata?.chatConfig || null,
+  }
+}
+
+async function syncExperimentData(directory = activeProjectDirectory.value, sessions = chatSessions.value) {
+  const projectDirectory = normalizeProjectDirectory(directory)
+  if (!projectDirectory) return false
+  try {
+    const response = await fetch('/__contextpilot/sync-experiment-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectDirectory,
+        sessions: (sessions || []).filter((session) => !session.isDraft || session.messages?.length).map(sessionExportSnapshot),
+      }),
+    })
+    const result = await response.json()
+    if (!response.ok) throw new Error(result?.error || '保存实验会话失败。')
+    experimentDataErrors.delete(projectDirectoryKey(projectDirectory))
+    return true
+  } catch (error) {
+    const key = projectDirectoryKey(projectDirectory)
+    if (!experimentDataErrors.has(key)) {
+      experimentDataErrors.add(key)
+      ElMessage({
+        message: `实验会话自动保存失败：${error?.message || '请检查项目文件夹写入权限。'}`,
+        type: 'error',
+        duration: 5000,
+        showClose: true,
+      })
+    }
+    return false
+  }
+}
+
 function normalizeProjectSessions(items, directory) {
   return (items || []).map((session) => ({
     ...session,
     directory: normalizeProjectDirectory(session.directory || directory),
+    contextCards: dedupeContextCards(session.contextCards || []),
   }))
 }
 
@@ -142,6 +195,7 @@ async function loadProjectEnvironment(directory, { initial = false } = {}) {
     // 已连接且有真实历史：直接用远端会话。
     if (connected && remote && remote.length) {
       activateProjectSessions(target, remote)
+      await syncExperimentData(target, remote)
       return
     }
 
@@ -150,15 +204,18 @@ async function loadProjectEnvironment(directory, { initial = false } = {}) {
       const cached = projectSessionCache.get(projectDirectoryKey(target))
       if (cached?.length) {
         activateProjectSessions(target, cached)
+        await syncExperimentData(target, cached)
         return
       }
       activateProjectSessions(target, [])
+      await syncExperimentData(target, [])
       return
     }
 
     // 未连接 opencode：会话区保持空白（不再回退 mock 历史会话），并提示用户。
     // attempted=false 表示根本没用 opencode 后端（如 openai-compatible 模式），此时不提示。
     activateProjectSessions(target, [])
+    await syncExperimentData(target, [])
     if (initial && attempted) {
       ElMessage({
         message: '尚未连接 opencode，会话区暂时为空。请确认 opencode 服务已启动（默认地址 http://127.0.0.1:4096）。',
@@ -240,7 +297,9 @@ onBeforeUnmount(() => {
 const activeSession = computed(
   () => chatSessions.value.find((s) => s.id === activeSessionId.value) ?? chatSessions.value[0],
 )
-const activeContextCards = computed(() => activeSession.value?.contextCards ?? baseContextCards.value)
+const activeContextCards = computed(() =>
+  (activeSession.value?.contextCards ?? baseContextCards.value).filter((card) => !card.deleted),
+)
 const isChartSession = computed(() => activeSession.value?.id === 'chart')
 
 watch(
@@ -283,11 +342,20 @@ function openChatConfig() {
   isChatConfigOpen.value = true
 }
 
-function openWorkflow() {
-  if (!activeSession.value) return
+async function openWorkflow() {
+  const session = activeSession.value
+  if (!session) return
   isChatConfigOpen.value = false
   isMigrationExportOpen.value = false
   isWorkflowOpen.value = true
+
+  // Do not wait for the 3s busy-status poll: the overview should have fresh
+  // token data as soon as it opens, including for idle historical sessions.
+  const usage = await getRemoteSessionUsage(
+    session.id,
+    session.directory || activeProjectDirectory.value,
+  )
+  if (usage && activeSession.value?.id === session.id) session.usage = usage
 }
 
 function openMigrationExport() {
@@ -393,6 +461,7 @@ async function refreshSupervisorCards(sessionId) {
 
 function buildNewSession(directory = activeProjectDirectory.value) {
   const id = `chat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+  const now = new Date().toISOString()
   return {
     id,
     directory: normalizeProjectDirectory(directory),
@@ -402,6 +471,8 @@ function buildNewSession(directory = activeProjectDirectory.value) {
     time: '刚刚',
     summary: '等待第一条消息',
     messages: [],
+    createdAt: now,
+    updatedAt: now,
     metadata: { type: 'main', chatConfig: createDefaultChatConfig() },
     contextCards: [],
     isDraft: true,
@@ -415,6 +486,7 @@ function createNewSession() {
   activeSessionId.value = session.id
   projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
   chatError.value = ''
+  syncExperimentData()
 }
 
 async function shareSession(id) {
@@ -464,6 +536,8 @@ async function renameSession(id) {
     return
   }
   projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
+  session.updatedAt = new Date().toISOString()
+  await syncExperimentData(session.directory || activeProjectDirectory.value)
 }
 
 async function deleteSession(id) {
@@ -487,6 +561,7 @@ async function deleteSession(id) {
   }
   projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
   chatError.value = ok ? '' : '后端会话删除失败，刷新后该会话可能仍在。'
+  await syncExperimentData(session.directory || activeProjectDirectory.value)
 }
 
 function updateContextPriority({ id, priority }) {
@@ -495,6 +570,19 @@ function updateContextPriority({ id, priority }) {
   card.priority = priority
   const session = activeSession.value
   if (session) persistSessionCards(session)
+}
+
+function deleteContextCard(id) {
+  const session = activeSession.value
+  if (!session) return
+  const card = (session.contextCards || []).find((item) => item.id === id)
+  if (!card) return
+  card.deleted = true
+  card.deletedAt = new Date().toISOString()
+  card.selected = false
+  persistSessionCards(session)
+  syncExperimentData(session.directory || activeProjectDirectory.value)
+  ElMessage.success('已删除卡片')
 }
 
 // —— 监督总结（工作台卡片自动生成）——
@@ -559,10 +647,12 @@ async function summarizeSupervisorTurn(session, turnMessages) {
     }
     if (incoming?.length) {
       session.contextCards = mergeCards(session.contextCards || [], incoming)
-      persistSessionCards(session)
+      await persistSessionCards(session)
     } else if (cardAssociationsChanged) {
-      persistSessionCards(session)
+      await persistSessionCards(session)
     }
+    session.updatedAt = new Date().toISOString()
+    await syncExperimentData(session.directory || activeProjectDirectory.value)
   } catch (error) {
     console.warn('[App] 监督总结失败：', error?.message || error)
   }
@@ -623,7 +713,7 @@ function mergeCards(existing, incoming) {
       remember(result[result.length - 1], result.length - 1)
     }
   }
-  return result
+  return dedupeContextCards(result)
 }
 
 function normalizeCardKey(value) {
@@ -633,6 +723,23 @@ function normalizeCardKey(value) {
 function normalizePartIDs(value) {
   if (!Array.isArray(value)) return []
   return [...new Set(value.filter((id) => typeof id === 'string' && id.trim()).map((id) => id.trim()))]
+}
+
+async function revealAssistantText(message, value, signal) {
+  const characters = Array.from(String(value || ''))
+  if (!characters.length) {
+    message.text = ''
+    return
+  }
+
+  const chunkSize = Math.max(2, Math.ceil(characters.length / 60))
+  message.text = ''
+  for (let index = 0; index < characters.length; index += chunkSize) {
+    if (signal?.aborted) throw signal.reason || new DOMException('Aborted', 'AbortError')
+    message.text = characters.slice(0, index + chunkSize).join('')
+    await new Promise((resolve) => window.setTimeout(resolve, 20))
+  }
+  message.text = characters.join('')
 }
 
 function persistSessionCards(session) {
@@ -677,6 +784,7 @@ async function handleSendMessage(payload) {
   )
 
   session.messages.push(userMessage, assistantMessage)
+  session.updatedAt = new Date().toISOString()
   if (session.isDraft) {
     session.title = createSessionTitle(content)
     session.summary = content
@@ -746,8 +854,14 @@ async function handleSendMessage(payload) {
           }
         },
         onWorkflowPart: upsertWorkflowPart,
+        onUsage: (usage) => {
+          assistantMessage.usage = usage
+        },
       })
-      assistantMessage.text = reply
+      assistantMessage.text = ensureMarkdownArtifactResponse(reply, typedContent)
+      if (!assistantMessage.text) {
+        throw new Error('模型没有返回可显示的正文，请重新发送或更换模型。')
+      }
       if (reasoning) assistantMessage.reasoning = reasoning
       assistantMessage.partIDs = normalizePartIDs(partIDs)
       // 后台触发监督总结，更新工作台卡片（不阻塞 UI）。
@@ -761,7 +875,8 @@ async function handleSendMessage(payload) {
         chatConfig: requestChatConfig,
         directory: session.directory || activeProjectDirectory.value,
       })
-      assistantMessage.text = reply
+      const displayReply = ensureMarkdownArtifactResponse(reply, typedContent)
+      await revealAssistantText(assistantMessage, displayReply, requestController.signal)
       runSupervisor(session, buildSupervisorTurn(userMessage, assistantMessage))
     }
   } catch (error) {
@@ -786,6 +901,10 @@ async function handleSendMessage(payload) {
       activeAbortControllers.delete(session.id)
     }
     await syncRemoteBusySessions()
+    const usage = await getRemoteSessionUsage(session.id, session.directory || activeProjectDirectory.value)
+    if (usage) session.usage = usage
+    session.updatedAt = new Date().toISOString()
+    await syncExperimentData(session.directory || activeProjectDirectory.value)
   }
 }
 
@@ -875,6 +994,7 @@ function refreshSessionContext() {}
       @collapse="contextCollapsed = true"
       @expand="contextCollapsed = false"
       @toggle="toggleCardSelection"
+      @delete-card="deleteContextCard"
       @update-priority="updateContextPriority"
     />
 
@@ -920,6 +1040,7 @@ function refreshSessionContext() {}
       v-if="isWorkflowOpen && activeSession"
       :session-title="activeSession.title"
       :messages="activeSession.messages"
+      :session-usage="activeSession.usage"
       @close="isWorkflowOpen = false"
     />
 

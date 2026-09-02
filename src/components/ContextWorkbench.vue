@@ -9,7 +9,7 @@ const props = defineProps({
   isSummarizing: { type: Boolean, default: false },
 })
 
-defineEmits(['collapse', 'expand', 'update-priority', 'toggle'])
+defineEmits(['collapse', 'expand', 'update-priority', 'toggle', 'delete-card'])
 
 // 类型筛选：按 category 动态生成，计数对应实际卡片；点击可过滤列表
 const activeFilter = ref('全部')
@@ -23,20 +23,22 @@ let filterDragStartScrollLeft = 0
 let filterPointerLabel = ''
 
 const filters = computed(() => {
-  const categories = [...new Set(props.cards.map((c) => c.category))]
+  const visibleCards = props.cards.filter((card) => !card.deleted)
+  const categories = [...new Set(visibleCards.map((c) => c.category))]
   return [
-    { label: '全部', count: props.cards.length, active: activeFilter.value === '全部' },
+    { label: '全部', count: visibleCards.length, active: activeFilter.value === '全部' },
     ...categories.map((cat) => ({
       label: cat,
-      count: props.cards.filter((c) => c.category === cat).length,
+      count: visibleCards.filter((c) => c.category === cat).length,
       active: activeFilter.value === cat,
     })),
   ]
 })
 const filteredCards = computed(() => {
+  const visibleCards = props.cards.filter((card) => !card.deleted)
   let list = activeFilter.value === '全部'
-    ? props.cards
-    : props.cards.filter((c) => c.category === activeFilter.value)
+    ? visibleCards
+    : visibleCards.filter((c) => c.category === activeFilter.value)
 
   const query = searchQuery.value.trim().toLowerCase()
   if (query) {
@@ -59,7 +61,7 @@ watch(
   () => {
     if (
       activeFilter.value !== '全部' &&
-      !props.cards.some((c) => c.category === activeFilter.value)
+      !props.cards.some((c) => !c.deleted && c.category === activeFilter.value)
     ) {
       activeFilter.value = '全部'
     }
@@ -129,8 +131,9 @@ function handleFilterPointerUp() {
 
 // 顶部指标随选择状态联动：总片段数 = 已选中 + 隐藏（基于全部片段）
 const metrics = computed(() => {
-  const total = props.cards.length
-  const selected = props.cards.filter((c) => c.selected).length
+  const visibleCards = props.cards.filter((card) => !card.deleted)
+  const total = visibleCards.length
+  const selected = visibleCards.filter((c) => c.selected).length
   return [
     { label: '总片段数', value: String(total), icon: 'layers', tone: 'violet' },
     { label: '已选中', value: String(selected), icon: 'check', tone: 'green' },
@@ -247,6 +250,7 @@ const metrics = computed(() => {
         :card="card"
         :selected="card.selected"
         @toggle="$emit('toggle', card.id)"
+        @delete="$emit('delete-card', card.id)"
         @update-priority="$emit('update-priority', $event)"
       />
     </div>

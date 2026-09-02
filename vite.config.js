@@ -3,6 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import { execFile } from 'node:child_process'
 import { spawn, spawnSync } from 'node:child_process'
 import net from 'node:net'
+import { mkdir, rename, writeFile } from 'node:fs/promises'
+import path from 'node:path'
 
 // opencode headless 后端端口：默认 4096（与 src/model/chatAdapter.js 的默认 baseUrl 对齐）。
 // 可用环境变量 OPENCODE_SERVE_PORT 覆盖；设 VITE_AUTO_START_OPENCODE=false 可彻底禁用自动启动。
@@ -61,6 +63,75 @@ function localDirectoryPicker() {
         } catch (error) {
           response.statusCode = 500
           response.end(JSON.stringify({ error: error?.message || '无法打开文件夹选择器' }))
+        }
+      })
+    },
+  }
+}
+
+function readJsonBody(request, limit = 25 * 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    let size = 0
+    request.on('data', (chunk) => {
+      size += chunk.length
+      if (size > limit) {
+        reject(new Error('会话数据超过 25MB，无法保存。'))
+        request.destroy()
+        return
+      }
+      chunks.push(chunk)
+    })
+    request.on('end', () => {
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'))
+      } catch {
+        reject(new Error('会话数据格式无效。'))
+      }
+    })
+    request.on('error', reject)
+  })
+}
+
+function experimentDataWriter() {
+  return {
+    name: 'contextpilot:experiment-data-writer',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/__contextpilot/sync-experiment-data', async (request, response) => {
+        response.setHeader('Content-Type', 'application/json; charset=utf-8')
+        if (request.method !== 'POST') {
+          response.statusCode = 405
+          response.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+        try {
+          const payload = await readJsonBody(request)
+          const requestedDirectory = String(payload?.projectDirectory || '').trim()
+          if (!requestedDirectory || !path.isAbsolute(requestedDirectory) || !Array.isArray(payload?.sessions)) {
+            throw new Error('缺少有效的项目目录或会话数据。')
+          }
+          const projectDirectory = path.resolve(requestedDirectory)
+
+          const dataDirectory = path.join(projectDirectory, 'experiment-data')
+          const target = path.join(dataDirectory, 'sessions.json')
+          const temporary = path.join(dataDirectory, '.sessions.json.tmp')
+          await mkdir(dataDirectory, { recursive: true })
+          await writeFile(
+            temporary,
+            `${JSON.stringify({
+              schemaVersion: 1,
+              projectDirectory,
+              savedAt: new Date().toISOString(),
+              sessions: payload.sessions,
+            }, null, 2)}\n`,
+            'utf8',
+          )
+          await rename(temporary, target)
+          response.end(JSON.stringify({ ok: true, file: target }))
+        } catch (error) {
+          response.statusCode = 500
+          response.end(JSON.stringify({ error: error?.message || '保存实验会话失败。' }))
         }
       })
     },
@@ -185,7 +256,7 @@ function startOpencodeBackend() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), localDirectoryPicker(), startOpencodeBackend()],
+  plugins: [vue(), localDirectoryPicker(), experimentDataWriter(), startOpencodeBackend()],
   optimizeDeps: {
     entries: ['index.html'],
   },

@@ -1,4 +1,5 @@
 import { createOpenCodeBridge, isAbortError } from '../lib/opencode-bridge/index.js'
+import { buildTurnFallbackCard, normalizeCardTitle, repairCardTitle } from './supervisorCards.js'
 
 const OPENCODE_DEFAULT_BASE_URL = 'http://127.0.0.1:4096'
 const OPENCODE_DEFAULT_PROVIDER_ID = 'opencode'
@@ -209,17 +210,17 @@ function getBridgeClient() {
 
 // 流式版发送：复用同步路径的 session 缓存、首轮上下文注入、禁工具 guard、provider/model 配置。
 // onDelta(delta, fullText) 由底层 runPrompt 在每个文本增量时回调；fullText 是已拼接的完整文本。
-export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning, onWorkflowPart, selectedCards, chatConfig, directory }) {
-  if (backend === 'openai-compatible') {
-    // 该后端 v1 不支持流式：走同步接口，再整体回调一次。
-    const text = await sendOpenAICompatibleMessage({ messages, signal, chatConfig })
-    if (onDelta) onDelta(text, text)
-    return { text, sessionID: null }
-  }
-
+export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning, onWorkflowPart, onUsage, selectedCards, chatConfig, directory }) {
   const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user')
   if (!latestUserMessage?.text?.trim()) {
     throw new Error('没有可发送的用户消息。')
+  }
+
+  if (backend === 'openai-compatible') {
+    // 该后端 v1 不支持流式：走同步接口，再整体回调一次。
+    const text = await sendOpenAICompatibleMessage({ messages, signal, chatConfig, selectedCards })
+    if (onDelta) onDelta(text, text)
+    return { text, sessionID: null }
   }
 
   // 复用同步路径的 session 缓存（按 client session id 映射到 opencode session id）。
@@ -234,7 +235,7 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
     selectedCards,
     attachments: latestUserMessage.attachments,
   })
-  const guard = opencodeChatPromptGuardPayload(chatConfig)
+  const guard = opencodeChatPromptGuardPayload(chatConfig, selectedCards, basePrompt)
   const requestDirectory = projectDirectory
 
   const client = getBridgeClient()
@@ -250,6 +251,7 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
 
   // 收集模型重试信息（session.status: retry），失败时给出真实网关原因，而非笼统“超时”。
   let lastRetry = null
+  const usageByStep = new Map()
   const handleUpdate = (update) => {
     if (update?.part && onWorkflowPart) {
       const part = update.part
@@ -266,6 +268,10 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
         text: typeof part.text === 'string' ? part.text.slice(0, 240) : '',
         error: typeof part.state?.error === 'string' ? part.state.error.slice(0, 240) : '',
       })
+    }
+    if (update?.part?.type === 'step-finish' && update.part.tokens && typeof update.part.tokens === 'object') {
+      usageByStep.set(update.part.id || `step-${usageByStep.size}`, update.part.tokens)
+      if (onUsage) onUsage(mergeMessageUsage([...usageByStep.values()]))
     }
     if (update?.type === 'status' && update.status?.type === 'retry') {
       lastRetry = update.status
@@ -431,6 +437,8 @@ export async function loadHistory(directory) {
       result.push({
         id: oc.id,
         directory: oc.directory || projectDirectory,
+        createdAt: oc.time?.created || null,
+        updatedAt: oc.time?.updated || oc.time?.created || null,
         // OpenCode 可能在首次生成后自动改写 title；用户手动标题拥有最高优先级。
         title: metadata.manualTitle || oc.title || '未命名对话',
         time: formatRelative(oc.time?.updated || oc.time?.created),
@@ -439,6 +447,7 @@ export async function loadHistory(directory) {
         tone: 'progress',
         isDraft: false,
         messages,
+        usage: oc.tokens && typeof oc.tokens === 'object' ? oc.tokens : undefined,
         metadata: uiMetadata,
         contextCards,
         needsSupervisorSummary: latestTurnNeedsSupervisor(messages, contextCards),
@@ -448,6 +457,24 @@ export async function loadHistory(directory) {
   } catch (error) {
     console.warn('[chatAdapter] loadHistory 失败，按未连接处理：', error?.message || error)
     return { connected: false, attempted: true, sessions: null }
+  }
+}
+
+// 获取 OpenCode 会话聚合后的权威 token 统计。生成过程中 OpenCode 会持续更新该字段，
+// 前端状态轮询与单轮完成后均调用它，避免执行概况长期停留在 0。
+export async function getRemoteSessionUsage(sessionId, directory, signal) {
+  if (backend !== 'opencode') return null
+  const projectDirectory = resolveProjectDirectory(directory)
+  const mapped = opencodeSessions.get(sessionId)
+  const remoteId = mapped?.id || (String(sessionId || '').startsWith('ses_') ? sessionId : '')
+  if (!remoteId) return null
+  try {
+    const sessions = await getBridgeClient().listSessions({ directory: projectDirectory }, signal)
+    const session = Array.isArray(sessions) ? sessions.find((item) => item?.id === remoteId) : null
+    return session?.tokens && typeof session.tokens === 'object' ? session.tokens : null
+  } catch (error) {
+    console.warn('[chatAdapter] 获取会话 token 统计失败：', error?.message || error)
+    return null
   }
 }
 
@@ -602,9 +629,15 @@ export async function startMigrationAnalysis({ sessions, signal, directory: targ
       },
       signal,
     )
+    const analysisText = await resolvePromptAssistantText(client, result, {
+      sessionID,
+      directory,
+      signal,
+      emptyMessage: '\u8fc1\u79fb\u5206\u6790\u5df2\u5b8c\u6210\uff0c\u4f46\u6ca1\u6709\u8fd4\u56de\u53ef\u7528\u7684\u5019\u9009\u5185\u5bb9\u3002',
+    })
     return {
       sessionID,
-      candidates: parseMigrationCandidates(extractOpencodeAssistantText(result), sessions),
+      candidates: parseMigrationCandidates(analysisText, sessions),
     }
   } catch (error) {
     if (sessionID) await discardMigrationSession(sessionID, undefined, directory)
@@ -636,10 +669,31 @@ export async function generateMigrationDocument({ sessionID, sessions, selectedT
       },
       signal,
     )
-    return extractOpencodeAssistantText(result)
+    return await resolvePromptAssistantText(client, result, {
+      sessionID,
+      directory,
+      signal,
+      emptyMessage: '\u8fc1\u79fb\u6587\u6863\u5df2\u751f\u6210\uff0c\u4f46\u540e\u7aef\u6ca1\u6709\u8fd4\u56de\u53ef\u663e\u793a\u7684 Markdown \u5185\u5bb9\u3002',
+    })
   } finally {
     await discardMigrationSession(sessionID, undefined, directory)
   }
+}
+
+async function resolvePromptAssistantText(client, response, { sessionID, directory, signal, emptyMessage }) {
+  let text = extractOpencodeAssistantText(response, { allowIncomplete: true }).trim()
+  if (text) return text
+
+  // OpenCode \u5076\u5c14\u5148\u8fd4\u56de assistant \u5b8c\u6210\u4e8b\u4ef6\uff0c\u6700\u540e\u4e00\u4e2a text part \u7a0d\u540e\u624d\u843d\u76d8\u3002
+  // \u5728\u5220\u9664\u8fc1\u79fb\u4e34\u65f6\u4f1a\u8bdd\u524d\u8865\u8bfb\u6570\u6b21\uff0c\u907f\u514d\u8fdb\u5165\u7a7a\u767d\u9884\u89c8\u3002
+  for (const delay of [120, 300, 700]) {
+    await new Promise((resolve) => setTimeout(resolve, delay))
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError')
+    const history = await client.messages({ sessionID, directory }, signal)
+    text = extractOpencodeAssistantText(history, { allowIncomplete: true }).trim()
+    if (text) return text
+  }
+  throw new Error(emptyMessage || '\u6a21\u578b\u6ca1\u6709\u8fd4\u56de\u53ef\u663e\u793a\u7684\u6587\u672c\u3002')
 }
 
 export async function discardMigrationSession(sessionID, signal, targetDirectory) {
@@ -647,12 +701,29 @@ export async function discardMigrationSession(sessionID, signal, targetDirectory
   const client = getBridgeClient()
   const directory = resolveProjectDirectory(targetDirectory)
   try {
+    await waitForMigrationSessionSettled(client, sessionID, directory)
     await client.removeSession({ sessionID, directory }, signal)
     return true
   } catch (error) {
     console.warn('[chatAdapter] failed to remove migration session', error?.message || error)
     return false
   }
+}
+
+async function waitForMigrationSessionSettled(client, sessionID, directory) {
+  // /message \u53ef\u80fd\u5728\u6700\u540e\u4e00\u4e2a part \u843d\u76d8\u524d\u5df2\u8fd4\u56de\u3002\u5982\u679c\u7acb\u5373 DELETE session\uff0c
+  // OpenCode \u7684 cleanup \u4f1a\u56e0 part.session_id \u5916\u952e\u5931\u6548\u800c\u4e22\u5931\u6700\u7ec8\u6587\u672c\u3002
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      const statuses = await client.sessionStatus({ directory })
+      const status = statuses?.[sessionID]
+      if (!status || (status.type !== 'busy' && status.type !== 'retry')) break
+    } catch {
+      break
+    }
+    await new Promise((resolve) => setTimeout(resolve, 160))
+  }
+  await new Promise((resolve) => setTimeout(resolve, 300))
 }
 
 function buildMigrationAnalysisSystemPrompt() {
@@ -792,14 +863,18 @@ export async function runSupervisorSummary({ mainSessionId, turnMessages, messag
   }
 
   // mainSessionId 可能只是前端临时 ID；查询 parts 必须使用 ensure 后的真实 OpenCode ID。
-  const sourceParts = await getLatestTurnPartReferences(client, main.id, directory, signal)
+  // 优先以本次 UI 轮次携带的真实 partID 为准。此前一律请求远端“最新一轮”，
+  // 连续发送、保存延迟或切换会话时可能取到另一轮/空数组，导致卡片没有关联项。
+  const remoteSourceParts = await getLatestTurnPartReferences(client, main.id, directory, signal)
+  const sourceParts = resolveTurnSourceParts(turnMessages || messages, remoteSourceParts)
   const prompt = buildSupervisorPrompt(turnMessages || messages, cards, sourceParts)
   // 60s 超时，避免同步 /message 卡死。
   const timeout = new AbortController()
   const timer = setTimeout(() => timeout.abort(), 60000)
+  const onSignalAbort = () => timeout.abort()
   if (signal) {
     if (signal.aborted) timeout.abort()
-    else signal.addEventListener('abort', () => timeout.abort(), { once: true })
+    else signal.addEventListener('abort', onSignalAbort, { once: true })
   }
   try {
     const result = await client.prompt(
@@ -808,14 +883,32 @@ export async function runSupervisorSummary({ mainSessionId, turnMessages, messag
         directory,
         model: { providerID: opencodeProviderID(), modelID: opencodeModelID() },
         system: SUPERVISOR_SYSTEM_PROMPT,
+        tools: Object.fromEntries(OPENCODE_CHAT_DISABLED_TOOLS.map((tool) => [tool, false])),
         parts: [{ type: 'text', text: prompt }],
       },
       timeout.signal,
     )
     const text = extractOpencodeAssistantText(result, { allowIncomplete: true })
     const parsed = parseCardsFromText(text)
+    const validated = dedupeContextCards(validateSupervisorCardPartIDs(parsed, cards, sourceParts))
+    const sourceIDs = new Set((sourceParts || []).map((part) => part.partID).filter(Boolean))
+    const requestedDirection = [...(turnMessages || messages || [])]
+      .reverse()
+      .find((message) => message?.role === 'user')
+      ?.text?.match(/方向\s*([A-Za-z0-9一二三四五六七八九十]+)/i)?.[1]
+    const directionPattern = requestedDirection
+      ? new RegExp(`方向\\s*${requestedDirection}(?![A-Za-z0-9一二三四五六七八九十])`, 'i')
+      : null
+    const currentTurnCovered = validated.some((card) => {
+      const hasSourcePart = normalizePartIDs(card.partIDs).some((partID) => sourceIDs.has(partID))
+      if (!hasSourcePart) return false
+      return !directionPattern || directionPattern.test(`${card.topic || ''} ${card.title || ''}`)
+    })
+    const turnFallback = currentTurnCovered
+      ? null
+      : buildTurnFallbackCard(turnMessages || messages, sourceParts)
     return {
-      cards: validateSupervisorCardPartIDs(parsed, cards, sourceParts),
+      cards: turnFallback ? [...validated, turnFallback] : validated,
       supervisorId,
       sourceParts,
     }
@@ -824,6 +917,7 @@ export async function runSupervisorSummary({ mainSessionId, turnMessages, messag
     return { cards: [], supervisorId, sourceParts }
   } finally {
     clearTimeout(timer)
+    signal?.removeEventListener('abort', onSignalAbort)
   }
 }
 
@@ -884,7 +978,7 @@ export async function getSupervisorCards(supervisorId, signal, targetDirectory) 
       .filter((p) => p && p.type === 'text' && typeof p.text === 'string')
       .map((p) => p.text)
       .join('\n')
-    return parseCardsFromText(text)
+    return dedupeContextCards(parseCardsFromText(text))
   } catch (error) {
     console.warn('[chatAdapter] getSupervisorCards 失败：', error?.message || error)
     return []
@@ -912,13 +1006,16 @@ function buildSupervisorPrompt(turnMessages, cards, sourceParts) {
     '1. 只输出更新后的完整 JSON 数组，每个元素形如 {"id":"","topic":"","category":"","title":"","body":"","partIDs":[]}。',
     '2. 卡片代表一个边界清晰、可独立复用的研究子任务，而不是整个会话的大方向。判断是否更新旧卡片时，必须同时满足：研究对象/概念相同，用户当前目标或交付物相同，任务阶段连续。仅仅同属一个上位领域，不算同一主题。',
     '3. 出现以下任一变化时，应追加一个新卡片，而不是扩写旧卡片：用户明确改变调研方向或研究对象；开始调研一个新理论、概念或框架；从论文检索转向理论综述、实验设计、方法分析、系统实现等不同目标；用户使用“另外、转向、接下来、我想了解、围绕某个新方向”等表达开启可独立成立的子任务。',
+    '3.1 用户要求“探索方向 N / 生成方向 N 方案”时，该方向必须生成独立卡片，不能因旧卡片已概览多个方向而跳过，也不能把它并回多方向概览卡。',
     '4. 只有本轮是在补充、追问、验证或细化同一个研究对象且目标未改变时，才更新已有卡片；此时必须保留原来的 id、topic 和 partIDs，并追加真正支撑本轮更新的 source partID。',
-    '5. 拿不准是合并还是拆分时，优先拆分为新卡片，避免单张卡片不断膨胀；每轮最多追加一个最能代表本轮新目标的卡片。新卡片可以省略 id 或把 id 留空，topic 应使用“研究对象 + 任务目标”的稳定表述。',
+    '5. 拿不准是合并还是拆分时，优先拆分为新卡片，避免单张卡片不断膨胀。卡片数量由本轮实际包含的独立目标决定：一个目标生成一张，多个可独立复用的目标可以生成多张，不设固定数量上限。新卡片可以省略 id 或把 id 留空，topic 应使用“研究对象 + 任务目标”的稳定表述。',
     '6. 与本轮无关的旧卡片原样保留在数组里。',
-    '7. category 从 [问题分析, 修复方案, 关键报错, 旧假设, 概念说明, 进展, 论文调研, 理论调研, 实验设计] 里选最接近的，必要时可自拟。',
+    '7. category 应根据本轮内容的真实用途概括，可使用问题分析、修复方案、进展、论文调研、实验设计、文档总结等，也可以为新内容自拟准确分类，不受固定枚举限制。',
     '8. title 一句话概括主题；body 用约 90–160 个中文字符完整介绍该主题，只保留该子任务的背景、核心信息和当前结论，不要把其他卡片主题揉进来。',
     '9. partIDs 只能使用“本轮可关联 source parts”中给出的 partID，或保留已有卡片原有的 partIDs；不得编造。与本轮无关的旧卡片必须原样保留其 partIDs。',
-    '10. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
+    '10. AI 回复中的 <contextpilot-artifact> 是正式 Markdown 文档内容，不是格式噪声。必须阅读其标题、章节和结论，并依据文档实际主题新增或更新卡片；不得因为回复是 Markdown、报告或制品而跳过本轮。',
+    '11. 输出前必须检查重复主题：如果两张卡片描述同一研究对象、同一方案组合和同一交付目标，即使 category、title 措辞或 id 不同，也必须合并为一张；保留更完整正文并合并 partIDs。',
+    '12. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
     '',
     '过去卡片：',
     cardsBlock,
@@ -947,9 +1044,9 @@ function parseCardsFromText(text) {
       .filter((c) => c && typeof c === 'object')
       .map((c) => ({
         id: String(c.id || '').trim(),
-        topic: String(c.topic || c.title || '').trim(),
+        topic: normalizeCardTitle(c.topic || c.title),
         category: String(c.category || '其他').trim(),
-        title: String(c.title || '').trim(),
+        title: normalizeCardTitle(c.title || c.topic),
         body: String(c.body || '').trim(),
         partIDs: normalizePartIDs(c.partIDs || c.part_ids),
       }))
@@ -963,7 +1060,10 @@ function parseCardsFromText(text) {
 function buildContextFromCards(selectedCards) {
   if (!Array.isArray(selectedCards) || selectedCards.length === 0) return ''
   const blocks = selectedCards.map((c) => `【${c.title}】\n${c.body}`)
-  return `以下是用户在工作台选定的上下文模块，回答时请参考这些内容：\n\n${blocks.join('\n\n')}`
+  return [
+    '以下是用户在工作台明确选定的上下文模块。回答当前问题时必须优先依据这些内容；不得忽略、替换或与未选中的卡片混用。若卡片信息不足以回答，请明确指出缺少的信息。',
+    ...blocks,
+  ].join('\n\n')
 }
 
 function normalizePartIDs(value) {
@@ -975,6 +1075,84 @@ function cardIdentity(card) {
   return [card?.id, card?.topic, card?.title]
     .map((value) => String(value || '').trim().toLowerCase())
     .filter(Boolean)
+}
+
+function normalizedCardTitle(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\s\p{P}\p{S}]+/gu, '')
+    .replace(/(?:两个|项目|设计方案|方案|的|与)/g, '')
+}
+
+function cardTitleBigrams(value) {
+  const text = normalizedCardTitle(value)
+  if (text.length < 2) return text ? [text] : []
+  return Array.from({ length: text.length - 1 }, (_, index) => text.slice(index, index + 2))
+}
+
+function cardTitleSimilarity(left, right) {
+  const leftParts = cardTitleBigrams(left)
+  const rightParts = cardTitleBigrams(right)
+  if (!leftParts.length || !rightParts.length) return 0
+  const counts = new Map()
+  for (const part of leftParts) counts.set(part, (counts.get(part) || 0) + 1)
+  let overlap = 0
+  for (const part of rightParts) {
+    const count = counts.get(part) || 0
+    if (!count) continue
+    overlap += 1
+    counts.set(part, count - 1)
+  }
+  return (2 * overlap) / (leftParts.length + rightParts.length)
+}
+
+function mergeDuplicateCard(base, candidate) {
+  const richer = String(candidate?.body || '').length > String(base?.body || '').length ? candidate : base
+  const other = richer === base ? candidate : base
+  const mergeUnique = (left, right) => [...new Set([...(left || []), ...(right || [])])]
+  const items = [...(base?.items || []), ...(candidate?.items || [])]
+  const itemIDs = new Set()
+  return {
+    ...other,
+    ...richer,
+    id: base?.id || candidate?.id,
+    selected: Boolean(base?.selected || candidate?.selected),
+    partIDs: normalizePartIDs([...(base?.partIDs || []), ...(candidate?.partIDs || [])]),
+    sourceMessageIds: mergeUnique(base?.sourceMessageIds, candidate?.sourceMessageIds),
+    ...(items.length
+      ? { items: items.filter((item) => {
+          const key = item?.id || `${item?.attribute || ''}:${item?.value || ''}`
+          if (!key || itemIDs.has(key)) return false
+          itemIDs.add(key)
+          return true
+        }) }
+      : {}),
+  }
+}
+
+export function dedupeContextCards(cards) {
+  const result = []
+  for (const sourceCard of Array.isArray(cards) ? cards : []) {
+    const title = repairCardTitle(sourceCard?.title, sourceCard?.body)
+    const card = {
+      ...sourceCard,
+      title,
+      topic: sourceCard?.topic === sourceCard?.title
+        ? title
+        : repairCardTitle(sourceCard?.topic || title, sourceCard?.body),
+    }
+    const exact = findMatchingCard(result, card)
+    const duplicate = exact || result.find((existing) =>
+      cardTitleSimilarity(existing?.title, card?.title) >= 0.72,
+    )
+    if (!duplicate) {
+      result.push(card)
+      continue
+    }
+    const index = result.indexOf(duplicate)
+    result[index] = mergeDuplicateCard(duplicate, card)
+  }
+  return result
 }
 
 function findMatchingCard(cards, target) {
@@ -1004,6 +1182,8 @@ function mergeLoadedContextCards(supervisorCards, storedCards, validPartIDs) {
             priority: saved.priority || card.priority || '中',
             source: saved.source || card.source || 'AI 总结',
             time: saved.time || card.time,
+            deleted: Boolean(saved.deleted),
+            deletedAt: saved.deletedAt || null,
           }
         : {
             // 主 session 尚未持久化到的监督新卡片，按新增卡片规则默认加入上下文。
@@ -1029,7 +1209,7 @@ function mergeLoadedContextCards(supervisorCards, storedCards, validPartIDs) {
       partIDs: filterExistingPartIDs(card.partIDs, validPartIDs),
     })
   }
-  return result
+  return dedupeContextCards(result)
 }
 
 // 检测最新一轮正式回答是否尚未被任何总结卡片关联。它用于补偿前端超时、
@@ -1074,7 +1254,6 @@ function validateSupervisorCardPartIDs(incomingCards, existingCards, sourceParts
 }
 
 function buildContextPromptParts({ prompt, selectedCards, attachments }) {
-  const cardContext = buildContextFromCards(selectedCards)
   const attachmentParts = Array.isArray(attachments)
     ? attachments.flatMap((attachment) => {
         if (attachment?.extractedText && (attachment?.mime === 'application/pdf' || /\.pdf$/i.test(attachment?.name || ''))) {
@@ -1099,7 +1278,6 @@ function buildContextPromptParts({ prompt, selectedCards, attachments }) {
       })
     : []
   return [
-    ...(cardContext ? [{ type: 'text', text: cardContext, synthetic: true }] : []),
     { type: 'text', text: prompt },
     ...attachmentParts,
     {
@@ -1150,6 +1328,28 @@ async function getLatestTurnPartReferences(client, sessionID, directory, signal)
     console.warn('[chatAdapter] 获取本轮 source parts 失败：', error?.message || error)
     return []
   }
+}
+
+// 将远端 part 与当前 UI 轮次对齐；远端尚未可见时，仍保留本轮已完成回复的
+// partID 和正文，确保监督器可以生成并持久化卡片，下一次历史加载会再校正关联。
+function resolveTurnSourceParts(turnMessages, remoteParts) {
+  const turn = Array.isArray(turnMessages) ? turnMessages : []
+  const knownIDs = new Set(normalizePartIDs(turn.flatMap((message) => message?.partIDs || [])))
+  const remote = Array.isArray(remoteParts) ? remoteParts : []
+  if (knownIDs.size) {
+    const matched = remote.filter((part) => knownIDs.has(part?.partID))
+    if (matched.length) return matched
+    const synthetic = turn.flatMap((message) =>
+      normalizePartIDs(message?.partIDs).map((partID) => ({
+        partID,
+        messageID: message?.id || '',
+        role: message?.role || 'assistant',
+        text: String(message?.text || '').slice(0, 12000),
+      })),
+    ).filter((part) => part.text.trim())
+    if (synthetic.length) return synthetic
+  }
+  return remote
 }
 
 // opencode WithParts → UI message：text/reasoning 分别从 parts 提取拼接。
@@ -1305,7 +1505,7 @@ function formatClock(ts) {
 
 export async function sendChatMessage({ sessionId, title, messages, signal, selectedCards, chatConfig, directory }) {
   if (backend === 'openai-compatible') {
-    return sendOpenAICompatibleMessage({ messages, signal, chatConfig })
+    return sendOpenAICompatibleMessage({ messages, signal, chatConfig, selectedCards })
   }
 
   return sendOpencodeMessage({ sessionId, title, messages, signal, selectedCards, chatConfig, directory })
@@ -1318,18 +1518,55 @@ async function sendOpencodeMessage({ sessionId, title, messages, signal, selecte
   }
 
   const projectDirectory = resolveProjectDirectory(directory)
-  const session = await ensureOpencodeSession(sessionId, title, signal, chatConfig, projectDirectory)
-  const promptText = latestUserMessage.text
-  const response = await requestOpencode(withOpencodeDirectory(`/session/${encodeURIComponent(session.id)}/message`, projectDirectory), {
-    method: 'POST',
-    body: buildOpencodePromptPayload(buildContextPromptParts({
-      prompt: promptText,
-      selectedCards,
-      attachments: latestUserMessage.attachments,
-    }), chatConfig),
-    signal,
-  })
-  return extractOpencodeAssistantText(response)
+  const timeoutController = new AbortController()
+  const onExternalAbort = () => timeoutController.abort(signal?.reason)
+  const timer = setTimeout(
+    () => timeoutController.abort(new DOMException('OpenCode prompt timed out', 'AbortError')),
+    OPENCODE_CHAT_TIMEOUT_MS,
+  )
+  if (signal) {
+    if (signal.aborted) onExternalAbort()
+    else signal.addEventListener('abort', onExternalAbort, { once: true })
+  }
+
+  let session
+  try {
+    session = await ensureOpencodeSession(
+      sessionId,
+      title,
+      timeoutController.signal,
+      chatConfig,
+      projectDirectory,
+    )
+    const promptText = latestUserMessage.text
+    const response = await requestOpencode(withOpencodeDirectory(`/session/${encodeURIComponent(session.id)}/message`, projectDirectory), {
+      method: 'POST',
+      body: buildOpencodePromptPayload(buildContextPromptParts({
+        prompt: promptText,
+        selectedCards,
+        attachments: latestUserMessage.attachments,
+      }), chatConfig, selectedCards, promptText),
+      signal: timeoutController.signal,
+    })
+    return extractOpencodeAssistantText(response)
+  } catch (error) {
+    if (timeoutController.signal.aborted && !signal?.aborted) {
+      if (session?.id) {
+        try {
+          await requestOpencode(withOpencodeDirectory(`/session/${encodeURIComponent(session.id)}/abort`, projectDirectory), {
+            method: 'POST',
+          })
+        } catch (abortError) {
+          console.warn('[chatAdapter] 同步请求超时后终止 session 失败：', abortError?.message || abortError)
+        }
+      }
+      throw new Error(`模型生成超时（${Math.round(OPENCODE_CHAT_TIMEOUT_MS / 1000)} 秒未完成），请稍后重试或更换模型。`)
+    }
+    throw error
+  } finally {
+    clearTimeout(timer)
+    signal?.removeEventListener('abort', onExternalAbort)
+  }
 }
 
 async function ensureOpencodeSession(clientSessionId, title, signal, chatConfig, directory) {
@@ -1365,11 +1602,11 @@ function buildOpencodeSessionPayload(title, chatConfig) {
   }
 }
 
-function buildOpencodePromptPayload(parts, chatConfig) {
+function buildOpencodePromptPayload(parts, chatConfig, selectedCards, prompt) {
   return {
     ...(env.VITE_OPENCODE_AGENT ? { agent: env.VITE_OPENCODE_AGENT } : {}),
     ...(env.VITE_OPENCODE_MODEL_VARIANT ? { variant: env.VITE_OPENCODE_MODEL_VARIANT } : {}),
-    ...opencodeChatPromptGuardPayload(chatConfig),
+    ...opencodeChatPromptGuardPayload(chatConfig, selectedCards, prompt),
     model: {
       providerID: opencodeProviderID(),
       modelID: opencodeModelID(),
@@ -1397,19 +1634,20 @@ async function requestOpencode(path, options = {}) {
   }
 }
 
-async function sendOpenAICompatibleMessage({ messages, signal, chatConfig }) {
+async function sendOpenAICompatibleMessage({ messages, signal, chatConfig, selectedCards }) {
   const baseURL = env.VITE_OPENAI_BASE_URL
   if (!baseURL) {
     throw new Error('缺少 VITE_OPENAI_BASE_URL，无法调用 OpenAI-compatible 模型接口。')
   }
 
   const url = `${trimTrailingSlash(baseURL)}${normalizePath(env.VITE_OPENAI_CHAT_PATH || OPENAI_COMPATIBLE_DEFAULT_PATH)}`
+  const latestUserPrompt = [...messages].reverse().find((message) => message.role === 'user')?.text || ''
   const payload = {
     model: env.VITE_OPENAI_MODEL || 'default',
     messages: [
       {
         role: 'system',
-        content: buildChatSystemPrompt(chatConfig),
+        content: buildChatSystemPrompt(chatConfig, selectedCards, latestUserPrompt),
       },
       ...normalizeMessages(messages),
     ],
@@ -1515,8 +1753,8 @@ function basicAuthHeader(username, password) {
   return { Authorization: `Basic ${btoa(`${username}:${password}`)}` }
 }
 
-function opencodeChatPromptGuardPayload(chatConfig) {
-  const system = buildChatSystemPrompt(chatConfig)
+function opencodeChatPromptGuardPayload(chatConfig, selectedCards, prompt) {
+  const system = buildChatSystemPrompt(chatConfig, selectedCards, prompt)
   if (env.VITE_OPENCODE_CHAT_ENABLE_TOOLS === 'true') {
     const config = normalizeChatConfig(chatConfig)
     const disabled = new Set(OPENCODE_CHAT_ALWAYS_DISABLED_TOOLS)
@@ -1541,9 +1779,50 @@ function opencodeChatPromptGuardPayload(chatConfig) {
   }
 }
 
-function buildChatSystemPrompt(chatConfig) {
+export function explicitlyRequestsMarkdownFile(prompt) {
+  const text = String(prompt || '').trim().toLowerCase()
+  if (!text) return false
+
+  const markdown = '(?:markdown|\\.md\\b|md\\s*(?:格式|文件|文档|报告))'
+  const action = '(?:生成|导出|输出|创建|制作|保存|写入|写成|写一份|整理|转换|转成|转为|generate|export|create|save|write|convert)'
+  const format = '(?:格式(?:为|是|用)?|保存为|输出为|导出为|转成|转为|as)'
+  const negation = '(?:不要|无需|不需要|禁止|别|停止|取消|do\\s+not|don[’\']?t|without)'
+  if (new RegExp(`${negation}.{0,24}${markdown}|${markdown}.{0,24}${negation}`, 'i').test(text)) return false
+  return new RegExp(
+    `${action}[^。！？!?\\n]{0,80}${markdown}|${markdown}[^。！？!?\\n]{0,80}${action}|${format}\\s*${markdown}`,
+    'i',
+  ).test(text)
+}
+
+export function ensureMarkdownArtifactResponse(response, prompt) {
+  const text = String(response || '').trim()
+  if (!text || !explicitlyRequestsMarkdownFile(prompt)) return text
+
+  if (/<contextpilot-artifact(?:\s|>)/i.test(text)) {
+    return /<\/contextpilot-artifact\s*>/i.test(text)
+      ? text
+      : `${text}\n</contextpilot-artifact>`
+  }
+
+  const fenced = text.match(/^```(?:markdown|md)?\s*\n([\s\S]*?)\n```$/i)
+  const content = String(fenced?.[1] || text).trim()
+  const heading = content.match(/^\s*#{1,2}\s+(.+)$/m)?.[1]
+  const requested = String(prompt || '').match(/(?:文件名|命名为|保存为|导出为|输出为)[：:\s]*[`"“]?([^`"”\n]+?\.md)\b/i)?.[1]
+  const baseName = String(requested || heading || '生成文档')
+    .replace(/\.md$/i, '')
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/\s+/g, '-')
+    .slice(0, 60)
+    .replace(/-+$/g, '') || '生成文档'
+
+  return `<contextpilot-artifact filename="${baseName}.md">\n${content}\n</contextpilot-artifact>`
+}
+
+function buildChatSystemPrompt(chatConfig, selectedCards, prompt) {
   const basePrompt = env.VITE_OPENCODE_SYSTEM_PROMPT || OPENCODE_CHAT_SYSTEM_PROMPT
+  const cardContext = buildContextFromCards(selectedCards)
   const config = normalizeChatConfig(chatConfig)
+  const allowMarkdownArtifact = explicitlyRequestsMarkdownFile(prompt)
   const permissionLabel = (key) => {
     const value = config.toolPermissions[key]
     return value === 'allow' ? '允许' : value === 'confirm' ? '需先征得用户确认' : '禁止'
@@ -1552,6 +1831,7 @@ function buildChatSystemPrompt(chatConfig) {
 
   return [
     basePrompt,
+    ...(cardContext ? ['', '【当前轮选中上下文】', cardContext] : []),
     '',
     '【当前会话对话底盘配置】',
     `对话目标：${config.goal || '未设置，围绕用户当前问题推进。'}`,
@@ -1575,11 +1855,17 @@ function buildChatSystemPrompt(chatConfig) {
     '- 不要把工具尝试过程、命令调试过程或内部计划写入最终答案。',
     '- 达到工具或时间预算后立即综合已有结果，不要为了追求穷尽性持续搜索。',
     '',
-    '【Markdown 文档制品】',
-    '- 当用户要求“生成、导出、输出 Markdown/MD 文档或报告”，但没有明确要求写入项目中的具体路径时，不要询问写入权限或文件路径，也不要调用写文件工具。',
-    '- 直接在回答中生成完整文档，并严格使用以下容器输出：<contextpilot-artifact filename="文件名.md">完整 Markdown 内容</contextpilot-artifact>。容器外可以有一句简短说明。',
-    '- filename 必须是简洁、安全且以 .md 结尾的文件名；容器内部必须是可直接保存的完整 Markdown，不要再套 Markdown 代码块。',
-    '- 只有用户明确要求修改项目文件或给出了项目内目标路径时，才进入项目写入流程；若写入权限为“需确认”，只请求一次确认，确认后直接执行，不要再次询问路径。',
+    '【Markdown 文件规则】',
+    ...(allowMarkdownArtifact
+      ? [
+          '- 当前用户消息已明确要求生成或导出 Markdown/.md 文件。若未指定项目路径，不要调用写文件工具，直接使用以下容器输出：<contextpilot-artifact filename="文件名.md">完整 Markdown 内容</contextpilot-artifact>。',
+          '- filename 必须简洁、安全且以 .md 结尾；容器内部必须是完整 Markdown，不要再套代码块。',
+          '- 只有用户明确给出项目内目标路径时才写入项目文件；写入权限为“需确认”时先请求一次确认。',
+        ]
+      : [
+          '- 当前用户消息没有明确要求生成 Markdown/.md 文件。禁止输出 <contextpilot-artifact> 容器，禁止创建、写入、保存或导出任何 .md 文件。',
+          '- 即使用户要求报告、总结、方案、清单或文档，也只在普通对话正文中回答；除非当前消息明确要求 Markdown 或 .md 文件。',
+        ]),
   ].join('\n')
 }
 

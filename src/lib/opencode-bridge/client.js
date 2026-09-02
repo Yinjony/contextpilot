@@ -124,6 +124,38 @@ function errorToMessage(error) {
   }
 }
 
+function latestAssistantText(messages) {
+  if (!Array.isArray(messages)) return ''
+  const lastUserIndex = messages.findLastIndex((message) => message?.info?.role === 'user')
+  return messages
+    .slice(lastUserIndex + 1)
+    .filter((message) => message?.info?.role === 'assistant')
+    .flatMap((message) => Array.isArray(message.parts) ? message.parts : [])
+    .filter((part) => part?.type === 'text' && !part.synthetic && !part.ignored)
+    .map((part) => typeof part.text === 'string' ? part.text : '')
+    .join('')
+    .trim()
+}
+
+function wait(delayMs, signal) {
+  if (!delayMs) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const finish = () => {
+      signal?.removeEventListener('abort', abort)
+      resolve()
+    }
+    const timer = setTimeout(finish, delayMs)
+    if (!signal) return
+    const abort = () => {
+      clearTimeout(timer)
+      signal.removeEventListener('abort', abort)
+      reject(signal.reason ?? new DOMException('Aborted', 'AbortError'))
+    }
+    if (signal.aborted) abort()
+    else signal.addEventListener('abort', abort, { once: true })
+  })
+}
+
 export class OpenCodeBridgeClient {
   constructor(config) {
     this.config = config
@@ -316,6 +348,8 @@ export class OpenCodeBridgeClient {
     // messageID → role：用于跳过回放的用户消息 part（只取 assistant 输出）。
     const messageRole = new Map()
     const messageIDs = new Set()
+    const baselineMessageIDs = new Set()
+    let currentTurnObserved = false
     const events = []
 
     const text = () => partOrder.map((partID) => partText.get(partID) ?? '').join('')
@@ -366,10 +400,17 @@ export class OpenCodeBridgeClient {
           if (targetSessionID && sessionID && sessionID !== targetSessionID) continue
           if (targetSessionID && !sessionID) continue
 
+          // A fresh global SSE connection can replay an existing session's tail before
+          // prompt_async is submitted. Those events belong to the previous turn and must
+          // not mark the new turn as observed or contribute text/status to this run.
+          if (!promptSubmitted) continue
+
           events.push(event)
 
           if (payload.type === 'message.updated') {
             const info = payload.properties.info
+            if (baselineMessageIDs.has(info.id)) continue
+            currentTurnObserved = true
             messageIDs.add(info.id)
             if (info.role) messageRole.set(info.id, info.role)
 
@@ -401,6 +442,8 @@ export class OpenCodeBridgeClient {
 
           if (payload.type === 'message.part.updated') {
             const part = payload.properties.part
+            if (baselineMessageIDs.has(part.messageID)) continue
+            currentTurnObserved = true
             // 跳过回放的用户消息 part，只累积 assistant 输出。
             if (messageRole.get(part.messageID) === 'user') continue
             messageIDs.add(part.messageID)
@@ -444,6 +487,8 @@ export class OpenCodeBridgeClient {
 
           if (payload.type === 'message.part.delta') {
             if (payload.properties.field !== 'text') continue
+            if (baselineMessageIDs.has(payload.properties.messageID)) continue
+            currentTurnObserved = true
             // 跳过回放的用户消息 delta，只累积 assistant 输出。
             if (messageRole.get(payload.properties.messageID) === 'user') continue
             messageIDs.add(payload.properties.messageID)
@@ -489,7 +534,7 @@ export class OpenCodeBridgeClient {
               status: payload.properties.status,
               event,
             })
-            if (promptSubmitted && payload.properties.status.type === 'idle') {
+            if (promptSubmitted && currentTurnObserved && payload.properties.status.type === 'idle') {
               settled = true
               resolveDone()
               return
@@ -527,6 +572,17 @@ export class OpenCodeBridgeClient {
         targetSessionID = session.id
       }
 
+      // /global/event may replay the tail of an existing session after reconnecting.
+      // Snapshot IDs before submitting so old completed/idle events cannot finish this run.
+      const baselineMessages = await this.messages({
+        sessionID: targetSessionID,
+        directory,
+        workspace,
+      }, signal)
+      for (const message of Array.isArray(baselineMessages) ? baselineMessages : []) {
+        if (message?.info?.id) baselineMessageIDs.add(message.info.id)
+      }
+
       promptSubmitted = true
       await this.promptAsync(
         {
@@ -548,9 +604,31 @@ export class OpenCodeBridgeClient {
 
       await done
 
+      // OpenCode 偶尔会先推送 assistant 的完成事件，再推送最后一个 text part。
+      // 此时 SSE 监听已经结束，直接返回会得到空字符串，UI 就只剩用户气泡，
+      // 看起来像“发送后不回复”。用服务端已落盘的本轮消息做一次可靠兜底。
+      let finalText = text().trim()
+      if (!finalText) {
+        // Persistence can trail the completion event briefly. Poll instead of turning a
+        // successful generation into a visible error during that small consistency gap.
+        for (let attempt = 0; attempt < 6 && !finalText; attempt += 1) {
+          if (attempt) await wait(200, signal)
+          const history = await this.messages({
+            sessionID: targetSessionID,
+            directory,
+            workspace,
+          }, signal)
+          finalText = latestAssistantText(history)
+        }
+      }
+
+      if (!finalText) {
+        throw new Error('模型已结束生成，但没有返回可显示的正文。请重新发送或更换模型。')
+      }
+
       return {
         sessionID: targetSessionID,
-        text: text(),
+        text: finalText,
         reasoning: reasoning(),
         partText: Object.fromEntries(partText.entries()),
         reasoningText: Object.fromEntries(reasoningText.entries()),

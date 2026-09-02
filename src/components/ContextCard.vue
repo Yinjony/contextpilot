@@ -7,7 +7,7 @@ const props = defineProps({
   selected: { type: Boolean, default: false },
 })
 
-defineEmits(['toggle', 'update-priority'])
+defineEmits(['toggle', 'delete', 'update-priority'])
 
 const expanded = ref(false)
 const descriptionId = computed(() => `context-card-description-${props.card.id}`)
@@ -29,6 +29,15 @@ const bodySize = computed(() => `约 ${normalizedBody.value.length} 字`)
     <div class="card-topline">
       <span class="category-pill" :data-category="card.category">{{ card.category }}</span>
       <div class="card-actions">
+        <button
+          type="button"
+          class="card-delete"
+          title="删除卡片"
+          aria-label="删除卡片"
+          @click="$emit('delete')"
+        >
+          <AppIcon name="trash" :size="13" />
+        </button>
         <label
           class="card-check"
           :class="{ checked: selected }"

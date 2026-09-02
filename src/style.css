@@ -1355,7 +1355,7 @@ kbd {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
 .source-pill,
@@ -1401,6 +1401,7 @@ kbd {
 }
 
 /* 选择对钩 */
+.card-delete,
 .card-check {
   position: relative;
   flex: 0 0 auto;
@@ -1415,6 +1416,25 @@ kbd {
   cursor: pointer;
   transition: background 0.18s var(--ease), border-color 0.18s var(--ease),
     color 0.18s var(--ease);
+}
+
+.card-delete {
+  padding: 0;
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.04);
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.card-delete:hover {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.09);
+  border-color: rgba(239, 68, 68, 0.42);
+}
+
+.card-delete:focus-visible,
+.card-check:focus-within {
+  outline: 2px solid rgba(99, 102, 241, 0.26);
+  outline-offset: 2px;
 }
 
 .card-check input {
@@ -3961,9 +3981,9 @@ kbd {
 
 .workflow-turns-viewport {
   --workflow-turn-height: 104px;
-  height: calc(var(--workflow-turn-height) * 3 + 16px);
-  min-height: calc(var(--workflow-turn-height) * 3 + 16px);
-  max-height: calc(var(--workflow-turn-height) * 3 + 16px);
+  height: calc(var(--workflow-turn-height) * 4 + 24px);
+  min-height: calc(var(--workflow-turn-height) * 4 + 24px);
+  max-height: calc(var(--workflow-turn-height) * 4 + 24px);
   display: grid;
   gap: 8px;
   overflow-y: auto;
