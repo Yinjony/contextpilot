@@ -44,7 +44,7 @@ const parsedContent = computed(() => {
   // 流式生成时先隐藏尚未闭合的制品容器，避免 XML 标记和半成品正文闪现在聊天气泡中。
   const pendingArtifactIndex = text.search(/<contextpilot-artifact(?:\s|>)/i)
   if (props.message.pending && pendingArtifactIndex >= 0) {
-    text = `${text.slice(0, pendingArtifactIndex).trim()}\n\n正在生成 Markdown 文档…`.trim()
+    text = `${text.slice(0, pendingArtifactIndex).trim()}\n\nGenerating Markdown document…`.trim()
   }
   return { text, artifacts }
 })
@@ -64,8 +64,8 @@ const projectMarkdownFiles = computed(() => {
 const writeConfirmation = computed(() => {
   if (props.message.role !== 'assistant' || props.message.pending || props.message.error || artifacts.value.length) return false
   const text = String(props.message.text || '')
-  const asksForConfirmation = /(请确认|是否同意|若同意|需要.{0,12}确认|同意我)/i.test(text)
-  const concernsWriting = /(写入|修改|新建|创建|保存).{0,24}(文件|项目|目录)|(文件|项目|目录).{0,24}(写入|修改|新建|创建|保存)/i.test(text)
+  const asksForConfirmation = /(please confirm|do you approve|if you approve|needs?.{0,12}confirmation|approve me|confirm this)/i.test(text)
+  const concernsWriting = /(write|modify|create|save).{0,24}(file|project|directory)|(file|project|directory).{0,24}(write|modify|create|save)/i.test(text)
   return asksForConfirmation && concernsWriting
 })
 
@@ -92,7 +92,7 @@ async function saveArtifact(artifact) {
   try {
     const handle = await window.showSaveFilePicker({
       suggestedName: artifact.filename,
-      types: [{ description: 'Markdown 文档', accept: { 'text/markdown': ['.md'] } }],
+      types: [{ description: 'Markdown document', accept: { 'text/markdown': ['.md'] } }],
     })
     const writable = await handle.createWritable()
     await writable.write(artifact.content)
@@ -116,7 +116,7 @@ async function openArtifact(artifact) {
       ...artifact,
       content: '',
       loading: false,
-      error: error instanceof Error ? error.message : '文件读取失败。',
+      error: error instanceof Error ? error.message : 'Failed to read file.',
     }
   }
 }
@@ -131,7 +131,7 @@ async function openArtifact(artifact) {
         class="reasoning"
         open
       >
-        <summary class="reasoning-summary">思考过程</summary>
+        <summary class="reasoning-summary">Reasoning</summary>
         <div class="reasoning-text">{{ message.reasoning }}</div>
       </details>
 
@@ -139,7 +139,7 @@ async function openArtifact(artifact) {
       <p v-if="message.role !== 'assistant' || message.error">{{ message.text }}</p>
       <div v-else-if="displayText" class="markdown-body" v-html="renderedText"></div>
 
-      <div v-if="artifacts.length" class="message-artifacts" aria-label="生成的 Markdown 文档">
+      <div v-if="artifacts.length" class="message-artifacts" aria-label="Generated Markdown documents">
         <button
           v-for="artifact in artifacts"
           :key="artifact.id"
@@ -150,13 +150,13 @@ async function openArtifact(artifact) {
           <span class="message-artifact-icon"><AppIcon name="file-text" :size="20" /></span>
           <span>
             <strong>{{ artifact.filename }}</strong>
-            <small>Markdown 文档 · 点击预览</small>
+            <small>Markdown document · Click to preview</small>
           </span>
           <AppIcon name="chevron" :size="15" />
         </button>
       </div>
 
-      <div v-if="projectMarkdownFiles.length" class="message-artifacts" aria-label="项目中的 Markdown 文档">
+      <div v-if="projectMarkdownFiles.length" class="message-artifacts" aria-label="Project Markdown documents">
         <button
           v-for="artifact in projectMarkdownFiles"
           :key="artifact.id"
@@ -167,21 +167,21 @@ async function openArtifact(artifact) {
           <span class="message-artifact-icon"><AppIcon name="file-text" :size="20" /></span>
           <span>
             <strong>{{ artifact.filename }}</strong>
-            <small>{{ artifact.path }} · 点击预览</small>
+            <small>{{ artifact.path }} · Click to preview</small>
           </span>
           <AppIcon name="chevron" :size="15" />
         </button>
       </div>
 
-      <div v-if="writeConfirmation" class="message-approval" aria-label="写入项目确认">
-        <p><strong>需要写入项目文件</strong><span>本次授权仅对下一轮写入生效。</span></p>
+      <div v-if="writeConfirmation" class="message-approval" aria-label="Project file write confirmation">
+        <p><strong>Project file write required</strong><span>This approval applies only to the next write turn.</span></p>
         <div>
-          <button type="button" class="message-approval-secondary" @click="$emit('reject-write')">改为生成 MD</button>
-          <button type="button" class="message-approval-primary" @click="$emit('approve-write')">同意写入</button>
+          <button type="button" class="message-approval-secondary" @click="$emit('reject-write')">Generate MD Instead</button>
+          <button type="button" class="message-approval-primary" @click="$emit('approve-write')">Approve Write</button>
         </div>
       </div>
 
-      <div v-if="message.attachments?.length" class="message-attachments" aria-label="消息附件">
+      <div v-if="message.attachments?.length" class="message-attachments" aria-label="Message attachments">
         <div v-for="attachment in message.attachments" :key="attachment.id || attachment.name" class="message-attachment">
           <img v-if="attachment.kind === 'image'" :src="attachment.dataUrl" :alt="attachment.name" />
           <span v-else class="message-attachment-icon"><AppIcon name="file-text" :size="17" /></span>
@@ -208,18 +208,18 @@ async function openArtifact(artifact) {
           <header>
             <div>
               <span class="message-artifact-icon"><AppIcon name="file-text" :size="20" /></span>
-              <div><small>Markdown 文档预览</small><h2 id="artifact-preview-title">{{ previewArtifact.filename }}</h2></div>
+              <div><small>Markdown Preview</small><h2 id="artifact-preview-title">{{ previewArtifact.filename }}</h2></div>
             </div>
-            <button type="button" class="icon-btn" aria-label="关闭预览" @click="previewArtifact = null"><AppIcon name="x" :size="18" /></button>
+            <button type="button" class="icon-btn" aria-label="Close preview" @click="previewArtifact = null"><AppIcon name="x" :size="18" /></button>
           </header>
-          <div v-if="previewArtifact.loading" class="artifact-preview-state" role="status">正在读取项目文件…</div>
+          <div v-if="previewArtifact.loading" class="artifact-preview-state" role="status">Reading project file…</div>
           <div v-else-if="previewArtifact.error" class="artifact-preview-state is-error" role="alert">
-            <strong>无法预览文件</strong><span>{{ previewArtifact.error }}</span>
+            <strong>Cannot preview file</strong><span>{{ previewArtifact.error }}</span>
           </div>
           <div v-else class="artifact-preview-body markdown-body" v-html="renderedArtifact"></div>
           <footer>
-            <button type="button" class="secondary-action" :disabled="!previewArtifact.content" @click="downloadArtifact(previewArtifact)">下载 .md</button>
-            <button type="button" class="primary-action" :disabled="!previewArtifact.content" @click="saveArtifact(previewArtifact)">保存到…</button>
+            <button type="button" class="secondary-action" :disabled="!previewArtifact.content" @click="downloadArtifact(previewArtifact)">Download .md</button>
+            <button type="button" class="primary-action" :disabled="!previewArtifact.content" @click="saveArtifact(previewArtifact)">Save As…</button>
           </footer>
         </section>
       </div>

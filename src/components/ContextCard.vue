@@ -18,22 +18,39 @@ const currentItems = computed(() => items.value.filter((item) =>
 ))
 const linkedCount = computed(() => {
   const count = Array.isArray(props.card.partIDs) ? props.card.partIDs.length : 0
-  return count ? `${count} 个片段` : '1 个主题'
+  return count ? `${count} parts` : '1 topic'
 })
-const sourceLabel = computed(() => props.card.source || '对话')
-const bodySize = computed(() => `约 ${normalizedBody.value.length} 字`)
+const sourceLabel = computed(() => props.card.source || 'Chat')
+const bodySize = computed(() => `~${normalizedBody.value.length} chars`)
+const labelMap = new Map([
+  ['问题分析', 'Issue Analysis'],
+  ['修复方案', 'Fix Plan'],
+  ['关键报错', 'Key Error'],
+  ['旧假设', 'Old Assumption'],
+  ['实验设计', 'Study Design'],
+  ['论文调研', 'Literature Review'],
+  ['方案设计', 'Solution Design'],
+  ['产品方案探索', 'Product Design'],
+  ['文档总结', 'Document Summary'],
+  ['进展', 'Progress'],
+  ['对话', 'Chat'],
+  ['文件', 'File'],
+  ['工具', 'Tool'],
+])
+const displayCategory = computed(() => labelMap.get(props.card.category) || props.card.category)
+const displaySource = computed(() => labelMap.get(sourceLabel.value) || sourceLabel.value)
 </script>
 
 <template>
   <article class="context-card" :class="{ selected, expanded }">
     <div class="card-topline">
-      <span class="category-pill" :data-category="card.category">{{ card.category }}</span>
+      <span class="category-pill" :data-category="displayCategory">{{ displayCategory }}</span>
       <div class="card-actions">
         <button
           type="button"
           class="card-delete"
-          title="删除卡片"
-          aria-label="删除卡片"
+          title="Delete card"
+          aria-label="Delete card"
           @click="$emit('delete')"
         >
           <AppIcon name="trash" :size="13" />
@@ -41,7 +58,7 @@ const bodySize = computed(() => `约 ${normalizedBody.value.length} 字`)
         <label
           class="card-check"
           :class="{ checked: selected }"
-          :title="selected ? '取消选择该片段' : '选择该片段'"
+          :title="selected ? 'Remove from context' : 'Add to context'"
         >
           <input type="checkbox" :checked="selected" @change="$emit('toggle')" />
           <AppIcon name="check" :size="13" />
@@ -58,7 +75,7 @@ const bodySize = computed(() => `约 ${normalizedBody.value.length} 字`)
           <strong v-if="item.attribute">{{ item.attribute }}</strong>
           <span>{{ item.value }}</span>
           <em v-if="item.validity !== 'active'" :data-validity="item.validity">
-            {{ item.validity === 'pending' ? '待确认' : '信息冲突' }}
+            {{ item.validity === 'pending' ? 'Pending' : 'Conflict' }}
           </em>
         </div>
       </li>
@@ -67,8 +84,8 @@ const bodySize = computed(() => `约 ${normalizedBody.value.length} 字`)
     <p v-else :id="descriptionId" class="card-description card-description-full">{{ normalizedBody }}</p>
 
     <div class="card-footer">
-      <div class="card-metadata" aria-label="上下文片段信息">
-        <span><AppIcon name="file-text" :size="15" />{{ sourceLabel }}</span>
+      <div class="card-metadata" aria-label="Context card metadata">
+        <span><AppIcon name="file-text" :size="15" />{{ displaySource }}</span>
         <i aria-hidden="true">·</i>
         <span><AppIcon name="bookmark" :size="15" />{{ linkedCount }}</span>
         <i aria-hidden="true">·</i>
@@ -81,7 +98,7 @@ const bodySize = computed(() => `约 ${normalizedBody.value.length} 字`)
         :aria-controls="descriptionId"
         @click="expanded = !expanded"
       >
-        {{ expanded ? '收起预览' : '展开预览' }}
+        {{ expanded ? 'Collapse Preview' : 'Expand Preview' }}
         <AppIcon name="chevron-down" :size="15" />
       </button>
     </div>

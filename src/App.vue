@@ -12,6 +12,7 @@ import { ElMessage } from './lib/notify.js'
 
 const PROJECT_ENVIRONMENTS_STORAGE_KEY = 'contextpilot:project-environments'
 const ACTIVE_PROJECT_ENVIRONMENT_STORAGE_KEY = 'contextpilot:active-project-environment'
+const CONTEXT_PANEL_WIDTH_STORAGE_KEY = 'contextpilot:context-panel-width'
 
 function normalizeProjectDirectory(value) {
   return String(value || '').trim().replace(/\\/g, '/').replace(/\/+$/, '')
@@ -51,6 +52,118 @@ function loadActiveProjectDirectory(projects, fallback) {
     return projects.find((directory) => projectDirectoryKey(directory) === projectDirectoryKey(saved)) || fallback
   } catch {
     return fallback
+  }
+}
+
+function loadStoredContextPanelWidth() {
+  try {
+    return clampContextPanelWidth(window.localStorage.getItem(CONTEXT_PANEL_WIDTH_STORAGE_KEY))
+  } catch {
+    return 520
+  }
+}
+
+const legacyCardTranslations = [
+  {
+    title: 'Five Idle-Item Product Directions',
+    category: 'Solution Design',
+    body: 'Five alternatives for campus idle-item exchange: dorm lockers, course-based circulation, dorm community market, school charity storage, and anonymous bargaining. MVP: start with dorm lockers.',
+  },
+  {
+    title: 'Full-Category Marketplace Directions',
+    category: 'Solution Design',
+    body: 'Reframes the app as a unified marketplace covering textbooks, stationery, daily necessities, and course tools, with one posting flow and private chat.',
+  },
+  {
+    title: 'Convenience and Simplicity Comparison',
+    category: 'Solution Design',
+    body: 'Compares five directions and recommends combining a four-category home structure with nearby dorm/building filters.',
+  },
+  {
+    title: 'Idle Market Feature Scope',
+    category: 'Progress',
+    body: 'Defines the executable first-version scope: category navigation, unified posting, building filters, anonymous chat, auto-delisting, and personal management.',
+  },
+  {
+    title: 'Initial Idle Market Design Plan',
+    category: 'Solution Design',
+    body: 'Summarizes target users, core problems, main functions, user flow, MVP scope, and interview-based validation plan.',
+  },
+  {
+    title: 'v0.2 Multi-Campus and Gender Section',
+    category: 'Solution Design',
+    body: 'Adds campus-level filtering and a girls-focused item section while keeping posting and private chat unified.',
+  },
+  {
+    title: 'v0.3 Daily Necessities Subsection',
+    category: 'Solution Design',
+    body: 'Moves the girls-focused section under Daily Necessities to keep the home page simple while supporting specific browsing needs.',
+  },
+  {
+    title: 'v0.3 Markdown Deliverable',
+    category: 'Document Summary',
+    body: 'Packages the v0.3 design into a deliverable Markdown plan covering overview, users, problems, functions, flow, checks, and next steps.',
+  },
+  {
+    title: 'v0.3 Markdown Export',
+    category: 'Document Summary',
+    body: 'Exports the v0.3 product plan as a complete Markdown document for a multi-campus, all-category idle-item platform.',
+  },
+  {
+    title: 'v0.3 .md File Delivery',
+    category: 'Document Summary',
+    body: 'Delivers the v0.3 product design as an .md artifact with concise sections for direct reuse.',
+  },
+  {
+    title: 'v0.4 Graduation-Season Scope',
+    category: 'Solution Design',
+    body: 'Narrows the first phase to graduation-season item clearance and clarifies that the school does not arbitrate price, quality, or disputes.',
+  },
+  {
+    title: 'v0.5 Wireframes, Fields, Responsibility Copy',
+    category: 'Solution Design',
+    body: 'Deepens the plan with page structure, a 14-field posting form, nearby filters, and responsibility-boundary copy.',
+  },
+  {
+    title: 'v0.5 Deliverable Markdown Plan',
+    category: 'Document Summary',
+    body: 'Summarizes the final v0.5 artifact: product scope, users, problems, architecture, fields, responsibility boundaries, checks, and next steps.',
+  },
+]
+
+const legacyCardIdOrder = new Map([
+  ['card-1786970461367-8c6k', 0],
+  ['card-1786970759512-2b1o', 1],
+  ['card-1786970934813-9i3z', 2],
+  ['card-1786971028919-v89o', 3],
+  ['card-1786971121207-njuu', 4],
+  ['card-1786971488688-i3p0', 5],
+  ['card-1786971524908-uqk0', 6],
+  ['card-1786971572268-cdpf', 7],
+  ['card-1786971656510-pd5o', 8],
+  ['card-1786971672994-h7jq', 9],
+  ['card-1786971888284-5dwf', 10],
+  ['card-1786972059286-kg3u', 11],
+  ['card-1786972105250-5ual', 12],
+])
+
+function hasChinese(value) {
+  return /[\u4e00-\u9fff]/.test(String(value || ''))
+}
+
+function normalizeLegacyContextCard(card, index) {
+  const translation = legacyCardTranslations[legacyCardIdOrder.get(card.id) ?? index]
+  const needsTranslation = hasChinese(card.title) || hasChinese(card.body) || hasChinese(card.topic) || hasChinese(card.category)
+  if (!translation || !needsTranslation) return card
+  return {
+    ...card,
+    topic: translation.title,
+    category: translation.category,
+    title: translation.title,
+    body: translation.body,
+    source: 'AI Summary',
+    priority: 'Medium',
+    items: undefined,
   }
 }
 
@@ -138,7 +251,7 @@ async function syncExperimentData(directory = activeProjectDirectory.value, sess
       }),
     })
     const result = await response.json()
-    if (!response.ok) throw new Error(result?.error || '保存实验会话失败。')
+    if (!response.ok) throw new Error(result?.error || 'Failed to save experiment sessions.')
     experimentDataErrors.delete(projectDirectoryKey(projectDirectory))
     return true
   } catch (error) {
@@ -146,7 +259,7 @@ async function syncExperimentData(directory = activeProjectDirectory.value, sess
     if (!experimentDataErrors.has(key)) {
       experimentDataErrors.add(key)
       ElMessage({
-        message: `实验会话自动保存失败：${error?.message || '请检查项目文件夹写入权限。'}`,
+        message: `Experiment autosave failed: ${error?.message || 'Please check write access for the project folder.'}`,
         type: 'error',
         duration: 5000,
         showClose: true,
@@ -160,7 +273,9 @@ function normalizeProjectSessions(items, directory) {
   return (items || []).map((session) => ({
     ...session,
     directory: normalizeProjectDirectory(session.directory || directory),
-    contextCards: dedupeContextCards(session.contextCards || []),
+    title: hasChinese(session.title) ? 'New Chat' : session.title,
+    summary: hasChinese(session.summary) ? 'New Chat' : session.summary,
+    contextCards: dedupeContextCards(session.contextCards || []).map(normalizeLegacyContextCard),
   }))
 }
 
@@ -218,7 +333,7 @@ async function loadProjectEnvironment(directory, { initial = false } = {}) {
     await syncExperimentData(target, [])
     if (initial && attempted) {
       ElMessage({
-        message: '尚未连接 opencode，会话区暂时为空。请确认 opencode 服务已启动（默认地址 http://127.0.0.1:4096）。',
+        message: 'OpenCode is not connected yet, so the chat list is temporarily empty. Please make sure the OpenCode service is running at http://127.0.0.1:4096.',
         type: 'warning',
         duration: 4500,
         showClose: true,
@@ -233,7 +348,7 @@ async function selectProjectEnvironment(directory) {
   const target = normalizeProjectDirectory(directory)
   if (!target || projectDirectoryKey(target) === projectDirectoryKey(activeProjectDirectory.value)) return
   if (isSending.value) {
-    window.alert('\u6b63\u5728\u751f\u6210\u56de\u590d\uff0c\u8bf7\u7b49\u5f85\u5f53\u524d\u5bf9\u8bdd\u5b8c\u6210\u540e\u518d\u5207\u6362\u9879\u76ee\u3002')
+    window.alert('A reply is still being generated. Please wait for the current conversation to finish before switching projects.')
     return
   }
   projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
@@ -246,10 +361,10 @@ async function createProjectEnvironment() {
   try {
     const response = await fetch('/__contextpilot/select-directory', { method: 'POST' })
     result = await response.json()
-    if (!response.ok) throw new Error(result?.error || '无法打开文件夹选择器')
+    if (!response.ok) throw new Error(result?.error || 'Could not open the folder picker.')
   } catch (error) {
     ElMessage({
-      message: `选择文件夹失败：${error?.message || '请确认本地前端服务已启动。'}`,
+      message: `Folder selection failed: ${error?.message || 'Please make sure the local frontend service is running.'}`,
       type: 'error',
       duration: 4200,
       showClose: true,
@@ -319,12 +434,45 @@ const chatError = ref('')
 // 两侧栏收起状态
 const sidebarCollapsed = ref(false)
 const contextCollapsed = ref(false)
+const contextPanelWidth = ref(loadStoredContextPanelWidth())
 const isChatConfigOpen = ref(false)
 const isWorkflowOpen = ref(false)
 const isMigrationExportOpen = ref(false)
 const isSavingChatConfig = ref(false)
 const chatConfigError = ref('')
 let inlineConfigSaveTimer = null
+let contextResizeStartX = 0
+let contextResizeStartWidth = 0
+
+function clampContextPanelWidth(value) {
+  return Math.min(760, Math.max(420, Math.round(Number(value) || 520)))
+}
+
+function stopContextResize() {
+  window.removeEventListener('pointermove', resizeContextPanel)
+  window.removeEventListener('pointerup', stopContextResize)
+  try {
+    window.localStorage.setItem(CONTEXT_PANEL_WIDTH_STORAGE_KEY, String(contextPanelWidth.value))
+  } catch {
+    // Width persistence is optional.
+  }
+}
+
+function resizeContextPanel(event) {
+  contextPanelWidth.value = clampContextPanelWidth(
+    contextResizeStartWidth + event.clientX - contextResizeStartX,
+  )
+}
+
+function startContextResize(event) {
+  if (contextCollapsed.value) return
+  contextResizeStartX = event.clientX
+  contextResizeStartWidth = contextPanelWidth.value
+  window.addEventListener('pointermove', resizeContextPanel)
+  window.addEventListener('pointerup', stopContextResize, { once: true })
+}
+
+onBeforeUnmount(stopContextResize)
 
 function openChatConfig() {
   const session = activeSession.value
@@ -394,11 +542,11 @@ async function saveChatConfig(config) {
       session.directory || activeProjectDirectory.value,
     )
     if (!saved) {
-      throw new Error('配置未能同步到数据库，请稍后重试。')
+      throw new Error('Settings could not be synced to the database. Please try again later.')
     }
     isChatConfigOpen.value = false
   } catch (error) {
-    chatConfigError.value = error instanceof Error ? error.message : '配置保存失败，请稍后重试。'
+    chatConfigError.value = error instanceof Error ? error.message : 'Failed to save settings. Please try again later.'
   } finally {
     isSavingChatConfig.value = false
   }
@@ -428,10 +576,10 @@ function updateInlineChatConfig(config) {
         undefined,
         session.directory || activeProjectDirectory.value,
       )
-      if (!saved) throw new Error('配置未能同步到数据库，请稍后重试。')
+      if (!saved) throw new Error('Settings could not be synced to the database. Please try again later.')
       chatConfigError.value = ''
     } catch (error) {
-      chatConfigError.value = error instanceof Error ? error.message : '配置保存失败，请稍后重试。'
+      chatConfigError.value = error instanceof Error ? error.message : 'Failed to save settings. Please try again later.'
     }
   }, 260)
 }
@@ -465,11 +613,11 @@ function buildNewSession(directory = activeProjectDirectory.value) {
   return {
     id,
     directory: normalizeProjectDirectory(directory),
-    title: '新建对话',
-    status: '待开始',
+    title: 'New Chat',
+    status: 'Not Started',
     tone: 'progress',
-    time: '刚刚',
-    summary: '等待第一条消息',
+    time: 'Just now',
+    summary: 'Waiting for the first message',
     messages: [],
     createdAt: now,
     updatedAt: now,
@@ -493,10 +641,10 @@ async function shareSession(id) {
   const session = chatSessions.value.find((item) => item.id === id)
   if (!session) return
 
-  const text = `contexpilot 对话：${session.title}`
+  const text = `ContextPilot chat: ${session.title}`
   try {
     await navigator.clipboard.writeText(text)
-    window.alert('已复制分享信息')
+    window.alert('Share text copied.')
   } catch {
     window.alert(text)
   }
@@ -506,14 +654,14 @@ async function renameSession(id) {
   const session = chatSessions.value.find((item) => item.id === id)
   if (!session) return
 
-  const nextTitle = window.prompt('重命名对话', session.title)?.trim()
+  const nextTitle = window.prompt('Rename chat', session.title)?.trim()
   if (!nextTitle || nextTitle === session.title) return
   const previousTitle = session.title
   const previousSummary = session.summary
   const previousDraftState = session.isDraft
   const previousMetadata = session.metadata
   session.title = nextTitle
-  if (session.summary === '等待第一条消息') {
+  if (session.summary === 'Waiting for the first message') {
     session.summary = nextTitle
   }
   // 手动命名后的空会话不再参与首次消息自动命名，避免再次覆盖用户标题。
@@ -532,7 +680,7 @@ async function renameSession(id) {
     session.summary = previousSummary
     session.isDraft = previousDraftState
     session.metadata = previousMetadata
-    window.alert('会话重命名保存失败，已恢复原名称。请确认 OpenCode 服务正常后重试。')
+    window.alert('Failed to save the chat title, so the previous title has been restored. Please confirm OpenCode is running and try again.')
     return
   }
   projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
@@ -545,7 +693,7 @@ async function deleteSession(id) {
   if (index < 0) return
 
   const session = chatSessions.value[index]
-  if (!window.confirm(`删除对话“${session.title}”？`)) return
+  if (!window.confirm(`Delete chat "${session.title}"?`)) return
 
   // 后端删除（opencode.db）；失败不阻断前端删除，只提示。
   const ok = await deleteRemoteSession(id, undefined, session.directory || activeProjectDirectory.value)
@@ -560,13 +708,13 @@ async function deleteSession(id) {
     activeSessionId.value = next.id
   }
   projectSessionCache.set(projectDirectoryKey(activeProjectDirectory.value), chatSessions.value)
-  chatError.value = ok ? '' : '后端会话删除失败，刷新后该会话可能仍在。'
+  chatError.value = ok ? '' : 'Failed to delete the backend session. It may reappear after refresh.'
   await syncExperimentData(session.directory || activeProjectDirectory.value)
 }
 
 function updateContextPriority({ id, priority }) {
   const card = activeContextCards.value.find((item) => item.id === id)
-  if (!card || !['高', '中', '低'].includes(priority)) return
+  if (!card || !['High', 'Medium', 'Low'].includes(priority)) return
   card.priority = priority
   const session = activeSession.value
   if (session) persistSessionCards(session)
@@ -582,7 +730,7 @@ function deleteContextCard(id) {
   card.selected = false
   persistSessionCards(session)
   syncExperimentData(session.directory || activeProjectDirectory.value)
-  ElMessage.success('已删除卡片')
+  ElMessage.success('Card deleted')
 }
 
 // —— 监督总结（工作台卡片自动生成）——
@@ -654,7 +802,7 @@ async function summarizeSupervisorTurn(session, turnMessages) {
     session.updatedAt = new Date().toISOString()
     await syncExperimentData(session.directory || activeProjectDirectory.value)
   } catch (error) {
-    console.warn('[App] 监督总结失败：', error?.message || error)
+    console.warn('[App] Supervisor summary failed:', error?.message || error)
   }
 }
 
@@ -694,7 +842,7 @@ function mergeCards(existing, incoming) {
         partIDs: nextPartIDs,
         // 仅在本轮真的新增信息时自动勾选；未变化卡片继续尊重用户的手动取消。
         selected: contentChanged || partLinksChanged ? true : Boolean(result[idx].selected),
-        time: contentChanged || partLinksChanged ? `今天 ${currentTime()}` : result[idx].time,
+        time: contentChanged || partLinksChanged ? `Today ${currentTime()}` : result[idx].time,
       }
       remember(result[idx], idx)
     } else {
@@ -705,9 +853,9 @@ function mergeCards(existing, incoming) {
         title: card.title,
         body: card.body,
         partIDs: normalizePartIDs(card.partIDs),
-        time: `今天 ${currentTime()}`,
-        source: 'AI 总结',
-        priority: '中',
+        time: `Today ${currentTime()}`,
+        source: 'AI Summary',
+        priority: 'Medium',
         selected: true,
       })
       remember(result[result.length - 1], result.length - 1)
@@ -771,7 +919,7 @@ async function handleSendMessage(payload) {
   const input = typeof payload === 'string' ? { text: payload, attachments: [] } : (payload || {})
   const attachments = Array.isArray(input.attachments) ? input.attachments : []
   const typedContent = String(input.text || '').trim()
-  const content = typedContent || (attachments.length ? `请查看并分析附件：${attachments.map((item) => item.name).join('、')}` : '')
+  const content = typedContent || (attachments.length ? `Please review and analyze the attached files: ${attachments.map((item) => item.name).join(', ')}` : '')
   const session = activeSession.value
   if (!content || !session || localSendingSessionIds.value.has(session.id) || remoteBusySessionIds.value.has(session.id)) return
 
@@ -780,7 +928,7 @@ async function handleSendMessage(payload) {
   // 用 reactive 包裹：后续流式 onDelta 频繁改 text 必须经过 proxy 才能触发 UI 更新。
   // 否则 push 进响应式数组后，局部变量仍是原始对象，改它不会重渲染（气泡会卡在占位文本）。
   const assistantMessage = reactive(
-    createMessage('assistant', '正在连接模型并生成回复...', { pending: true, reasoning: '' }),
+    createMessage('assistant', 'Connecting to the model and generating a reply...', { pending: true, reasoning: '' }),
   )
 
   session.messages.push(userMessage, assistantMessage)
@@ -788,7 +936,7 @@ async function handleSendMessage(payload) {
   if (session.isDraft) {
     session.title = createSessionTitle(content)
     session.summary = content
-    session.status = '进行中'
+    session.status = 'In Progress'
     session.isDraft = false
   }
   updateSessionSet(localSendingSessionIds, session.id, true)
@@ -860,7 +1008,7 @@ async function handleSendMessage(payload) {
       })
       assistantMessage.text = ensureMarkdownArtifactResponse(reply, typedContent)
       if (!assistantMessage.text) {
-        throw new Error('模型没有返回可显示的正文，请重新发送或更换模型。')
+        throw new Error('The model did not return displayable text. Please resend or switch models.')
       }
       if (reasoning) assistantMessage.reasoning = reasoning
       assistantMessage.partIDs = normalizePartIDs(partIDs)
@@ -880,14 +1028,14 @@ async function handleSendMessage(payload) {
       runSupervisor(session, buildSupervisorTurn(userMessage, assistantMessage))
     }
   } catch (error) {
-    if (isAbortError(error) && !/超时|timed out/i.test(error.message)) {
+    if (isAbortError(error) && !/timed out/i.test(error.message)) {
       // 用户主动停止：保留已流式文本；若几乎没内容则标记为已停止。
-      if (!assistantMessage.text || assistantMessage.text.startsWith('正在连接')) {
-        assistantMessage.text = '(已停止)'
+      if (!assistantMessage.text || assistantMessage.text.startsWith('Connecting')) {
+        assistantMessage.text = '(Stopped)'
       }
       refreshSessionContext(session, userMessage, assistantMessage)
     } else {
-      const message = error instanceof Error ? error.message : '模型调用失败。'
+      const message = error instanceof Error ? error.message : 'Model call failed.'
       assistantMessage.text = message
       assistantMessage.error = true
       chatError.value = message
@@ -919,7 +1067,7 @@ async function handleStopGeneration() {
   updateSessionSet(remoteBusySessionIds, session.id, false)
 
   if (!stopped) {
-    chatError.value = '停止请求未能同步到 OpenCode，请稍后重试或刷新页面。'
+    chatError.value = 'The stop request could not be synced to OpenCode. Please try again later or refresh the page.'
   }
 }
 
@@ -962,6 +1110,7 @@ function refreshSessionContext() {}
   <main
     class="app-shell"
     :class="{ 'hide-sidebar': sidebarCollapsed, 'hide-context': contextCollapsed }"
+    :style="{ '--col-context-expanded': `${contextPanelWidth}px` }"
     aria-label="ContextPilot workspace"
   >
     <SessionSidebar
@@ -996,6 +1145,15 @@ function refreshSessionContext() {}
       @toggle="toggleCardSelection"
       @delete-card="deleteContextCard"
       @update-priority="updateContextPriority"
+    />
+
+    <button
+      v-if="!contextCollapsed"
+      type="button"
+      class="context-resize-handle"
+      aria-label="Resize context workbench"
+      title="Drag to resize Context Workbench"
+      @pointerdown.prevent="startContextResize"
     />
 
     <ChatPanel
@@ -1048,7 +1206,7 @@ function refreshSessionContext() {}
       v-if="isMigrationExportOpen"
       :sessions="activeSession ? [activeSession] : []"
       :directory="activeProjectDirectory"
-      :session-title="activeSession?.title || '未选择会话'"
+      :session-title="activeSession?.title || 'No chat selected'"
       @close="isMigrationExportOpen = false"
     />
   </main>

@@ -61,7 +61,7 @@
 
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    'PingFang SC', 'Microsoft YaHei', sans-serif;
+    Arial, sans-serif;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -184,11 +184,13 @@ kbd {
 
 /* ----------------------------- 整体布局 ----------------------------- */
 .app-shell {
+  position: relative;
   width: 100%;
   height: 100svh;
   display: grid;
   --col-sidebar: 276px;
-  --col-context: minmax(420px, 500px);
+  --col-context-expanded: 520px;
+  --col-context: minmax(420px, var(--col-context-expanded));
   grid-template-columns: var(--col-sidebar) var(--col-context) minmax(520px, 1fr);
   overflow: hidden;
   background: var(--bg-mesh), var(--bg);
@@ -201,6 +203,38 @@ kbd {
 
 .app-shell.hide-context {
   --col-context: 56px;
+}
+
+.context-resize-handle {
+  position: absolute;
+  z-index: 25;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--col-sidebar) + var(--col-context));
+  width: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: col-resize;
+  transform: translateX(-5px);
+}
+
+.context-resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 2px;
+  background: transparent;
+  transition: background 0.16s var(--ease), box-shadow 0.16s var(--ease);
+}
+
+.context-resize-handle:hover::after,
+.context-resize-handle:focus-visible::after {
+  background: rgba(99, 102, 241, 0.48);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 /* ----------------------------- 左栏：侧栏 ----------------------------- */
@@ -883,6 +917,8 @@ kbd {
   background: var(--brand-grad);
   font-size: 12.5px;
   font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .sidebar-utility-action:hover {
@@ -1264,9 +1300,12 @@ kbd {
 .context-list {
   min-height: 0;
   display: grid;
-  gap: 8px;
-  overflow: auto;
-  padding: 2px 6px 2px 0;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 2px 10px 8px 0;
 }
 
 .context-empty,
@@ -1324,11 +1363,15 @@ kbd {
 }
 
 .context-card {
-  padding: 12px 14px;
+  min-height: 176px;
+  padding: 12px 16px;
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   transition: border-color 0.18s var(--ease), background 0.18s var(--ease);
 }
 
@@ -1349,6 +1392,7 @@ kbd {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: 30px;
 }
 
 .card-actions {
@@ -1367,7 +1411,7 @@ kbd {
 }
 
 .category-pill {
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--line);
   background: var(--surface-sunken);
@@ -1376,25 +1420,25 @@ kbd {
   font-weight: 700;
 }
 
-.category-pill[data-category='问题分析'] {
+.category-pill[data-category='Issue Analysis'] {
   color: var(--blue);
   background: var(--blue-soft);
   border-color: var(--blue-line);
 }
 
-.category-pill[data-category='修复方案'] {
+.category-pill[data-category='Fix Plan'] {
   color: var(--green);
   background: var(--green-soft);
   border-color: var(--green-line);
 }
 
-.category-pill[data-category='关键报错'] {
+.category-pill[data-category='Key Error'] {
   color: var(--red);
   background: var(--red-soft);
   border-color: var(--red-line);
 }
 
-.category-pill[data-category='旧假设'] {
+.category-pill[data-category='Old Assumption'] {
   color: var(--amber);
   background: var(--amber-soft);
   border-color: var(--amber-line);
@@ -1455,20 +1499,21 @@ kbd {
 }
 
 .context-card h3 {
-  margin-top: 10px;
+  margin-top: 8px;
   color: var(--text);
   font-size: 15px;
   font-weight: 700;
-  line-height: 1.4;
+  line-height: 1.32;
 }
 
 .card-description {
   display: -webkit-box;
   overflow: hidden;
-  margin-top: 7px;
+  min-height: calc(13px * 1.46 * 3);
+  margin-top: 8px;
   color: var(--muted);
   font-size: 13px;
-  line-height: 1.58;
+  line-height: 1.46;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -1477,6 +1522,7 @@ kbd {
 .card-description-full {
   display: block;
   overflow: visible;
+  min-height: 0;
   -webkit-line-clamp: unset;
 }
 
@@ -1540,24 +1586,25 @@ kbd {
 
 .card-footer {
   min-width: 0;
-  margin-top: 11px;
-  padding-top: 10px;
+  margin-top: auto;
+  padding-top: 7px;
   border-top: 1px solid var(--line-soft);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .card-metadata {
   min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   overflow: hidden;
   color: var(--muted);
-  font-size: 11.5px;
-  line-height: 1;
+  font-size: 11px;
+  line-height: 1.15;
   white-space: nowrap;
 }
 
@@ -1565,7 +1612,18 @@ kbd {
   min-width: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-metadata span:first-child {
+  flex: 0 0 auto;
+}
+
+.card-metadata span:nth-child(3),
+.card-metadata span:nth-child(5) {
+  flex: 0 1 auto;
 }
 
 .card-metadata i {
@@ -1575,23 +1633,23 @@ kbd {
 
 .card-metadata b {
   color: currentColor;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1;
 }
 
 .card-expand {
   flex: 0 0 auto;
-  min-height: 32px;
-  padding: 0 2px 0 8px;
+  min-height: 24px;
+  padding: 0 2px 0 6px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   color: var(--blue);
   background: transparent;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
 }
 
@@ -1648,20 +1706,20 @@ kbd {
   pointer-events: none;
 }
 
-.priority[data-priority='高'],
-.priority-select[data-priority='高'] {
+.priority[data-priority='High'],
+.priority-select[data-priority='High'] {
   color: var(--red);
   background: var(--red-soft);
 }
 
-.priority[data-priority='中'],
-.priority-select[data-priority='中'] {
+.priority[data-priority='Medium'],
+.priority-select[data-priority='Medium'] {
   color: var(--amber);
   background: var(--amber-soft);
 }
 
-.priority[data-priority='低'],
-.priority-select[data-priority='低'] {
+.priority[data-priority='Low'],
+.priority-select[data-priority='Low'] {
   color: var(--subtle);
   background: var(--surface-sunken);
 }
@@ -2986,7 +3044,7 @@ kbd {
 @media (max-width: 1180px) {
   .app-shell {
     --col-sidebar: 260px;
-    --col-context: minmax(360px, 440px);
+    --col-context: minmax(360px, min(var(--col-context-expanded), 440px));
     grid-template-columns: var(--col-sidebar) var(--col-context) minmax(420px, 1fr);
   }
 
@@ -2996,6 +3054,10 @@ kbd {
 }
 
 @media (max-width: 920px) {
+  .context-resize-handle {
+    display: none;
+  }
+
   .app-shell {
     display: block;
     overflow: visible;

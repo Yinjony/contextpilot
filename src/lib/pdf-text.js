@@ -25,7 +25,7 @@ export async function extractPdfText(file) {
       const page = await document.getPage(pageNumber)
       const content = await page.getTextContent()
       const text = pageText(content.items)
-      if (text) pages.push(`--- 第 ${pageNumber} 页 ---\n${text}`)
+      if (text) pages.push(`--- Page ${pageNumber} ---\n${text}`)
       if (pages.join('\n\n').length >= MAX_EXTRACTED_CHARACTERS) break
     }
   } finally {
@@ -34,7 +34,7 @@ export async function extractPdfText(file) {
 
   const text = pages.join('\n\n').slice(0, MAX_EXTRACTED_CHARACTERS).trim()
   if (!text) {
-    throw new Error(`${file.name} 未检测到可提取文字；如果是扫描版 PDF，请先进行 OCR。`)
+    throw new Error(`${file.name} has no extractable text. If this is a scanned PDF, please run OCR first.`)
   }
   return {
     text,

@@ -12,20 +12,20 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save'])
 
-const stages = ['需求澄清', '方案设计', '实现与调试', '测试与验证', '交付与复盘']
-const suggestedRules = ['优先给出可执行结论', '涉及不确定性时说明假设', '改动建议附带验证方式']
+const stages = ['Requirement Clarification', 'Solution Design', 'Implementation & Debugging', 'Testing & Validation', 'Delivery & Review']
+const suggestedRules = ['Lead with an actionable conclusion', 'State assumptions when uncertain', 'Include a verification method for change suggestions']
 const tools = [
-  { key: 'readFiles', label: '读取文件', description: '允许读取当前项目文件与配置', icon: 'layers' },
-  { key: 'runTests', label: '运行测试', description: '允许执行测试与生成验证结果', icon: 'check' },
-  { key: 'writeFiles', label: '写入文件', description: '写入前需要人工确认', icon: 'pencil' },
-  { key: 'network', label: '联网', description: '允许访问外部网络与文档', icon: 'share' },
+  { key: 'readFiles', label: 'Read Files', description: 'Allow reading current project files and configuration', icon: 'layers' },
+  { key: 'runTests', label: 'Run Tests', description: 'Allow running tests and producing verification results', icon: 'check' },
+  { key: 'writeFiles', label: 'Write Files', description: 'Require human confirmation before writing', icon: 'pencil' },
+  { key: 'network', label: 'Network', description: 'Allow access to external networks and documents', icon: 'share' },
 ]
 
 const draft = ref(createDefaultChatConfig())
 const newRule = ref('')
 
-// 自定义阶段下拉：原生 <select> 的弹出菜单由系统渲染、无法统一风格，这里改成
-// 与弹窗设计语言一致的自定义浮层（触发器 + 列表 + 选中态），并支持点击外部/ESC 关闭。
+// Custom stage dropdown: native select popovers are rendered by the OS, so this
+// keeps the dropdown visually consistent with the modal and supports outside click / ESC.
 const stageMenuOpen = ref(false)
 const stageSelectRef = ref(null)
 
@@ -104,7 +104,7 @@ function toolState(key) {
 
 function toolStateLabel(key) {
   const state = toolState(key)
-  return state === 'allow' ? '允许' : state === 'confirm' ? '需确认' : '关闭'
+  return state === 'allow' ? 'Allowed' : state === 'confirm' ? 'Confirm' : 'Off'
 }
 
 function toggleTool(key) {
@@ -134,15 +134,15 @@ function submit() {
         <header class="session-config-header">
           <div>
             <div class="session-config-title-row">
-              <h2 id="session-config-title">对话底盘配置</h2>
+              <h2 id="session-config-title">Conversation Settings</h2>
               <span class="modal-session-context" :title="sessionTitle">
-                <small>当前会话</small>
+                <small>Current Chat</small>
                 <strong>{{ sessionTitle }}</strong>
               </span>
             </div>
-            <p>配置会随当前对话保存，并在后续每轮对话中作为系统指令生效。</p>
+            <p>Settings are saved with this chat and applied as system guidance in later turns.</p>
           </div>
-          <button type="button" class="icon-btn session-config-close" aria-label="关闭对话底盘配置" @click="$emit('close')">
+          <button type="button" class="icon-btn session-config-close" aria-label="Close conversation settings" @click="$emit('close')">
             <AppIcon name="x" :size="18" />
           </button>
         </header>
@@ -152,13 +152,13 @@ function submit() {
             <div class="config-row-label">
               <span class="config-row-number">1</span>
               <div>
-                <h3>对话目标</h3>
-                <p>定义本次对话希望达成的目标与预期产出</p>
+                <h3>Conversation Goal</h3>
+                <p>Define the goal and expected output for this chat</p>
               </div>
             </div>
             <label class="config-field">
-              <span class="sr-only">对话目标</span>
-              <textarea v-model="draft.goal" maxlength="300" placeholder="例如：定位支付回调状态不一致的原因，并给出可验证的修复方案。"></textarea>
+              <span class="sr-only">Conversation goal</span>
+              <textarea v-model="draft.goal" maxlength="300" placeholder="Example: identify why payment callback states are inconsistent and propose a verifiable fix."></textarea>
               <small>{{ draft.goal.length }} / 300</small>
             </label>
           </div>
@@ -167,8 +167,8 @@ function submit() {
             <div class="config-row-label">
               <span class="config-row-number">2</span>
               <div>
-                <h3>当前阶段</h3>
-                <p>帮助模型聚焦当前的协作重点</p>
+                <h3>Current Stage</h3>
+                <p>Help the model focus on the current collaboration priority</p>
               </div>
             </div>
             <div ref="stageSelectRef" class="config-select" :class="{ open: stageMenuOpen }">
@@ -184,7 +184,7 @@ function submit() {
               </button>
 
               <transition name="config-select-pop">
-                <ul v-if="stageMenuOpen" class="config-select-menu" role="listbox" aria-label="当前阶段">
+                <ul v-if="stageMenuOpen" class="config-select-menu" role="listbox" aria-label="Current stage">
                   <li v-for="stage in stages" :key="stage" role="option" :aria-selected="stage === draft.stage">
                     <button
                       type="button"
@@ -205,8 +205,8 @@ function submit() {
             <div class="config-row-label">
               <span class="config-row-number">3</span>
               <div>
-                <h3>对话规则</h3>
-                <p>约束模型在本对话中的回答方式与边界</p>
+                <h3>Conversation Rules</h3>
+                <p>Constrain how the model should answer in this chat</p>
               </div>
             </div>
             <div class="config-rules">
@@ -223,9 +223,9 @@ function submit() {
                 {{ rule }}
               </button>
               <label class="config-add-rule">
-                <span class="sr-only">添加对话规则</span>
-                <input v-model="newRule" maxlength="80" placeholder="添加规则" @keydown.enter.prevent="addRule" />
-                <button type="button" aria-label="添加规则" @click="addRule"><AppIcon name="plus" :size="15" /></button>
+                <span class="sr-only">Add conversation rule</span>
+                <input v-model="newRule" maxlength="80" placeholder="Add rule" @keydown.enter.prevent="addRule" />
+                <button type="button" aria-label="Add rule" @click="addRule"><AppIcon name="plus" :size="15" /></button>
               </label>
               <button
                 v-for="rule in activeRules.filter((rule) => !suggestedRules.includes(rule))"
@@ -245,8 +245,8 @@ function submit() {
             <div class="config-row-label">
               <span class="config-row-number">4</span>
               <div>
-                <h3>工具权限</h3>
-                <p>作为模型本轮及后续对话的工具使用边界</p>
+                <h3>Tool Permissions</h3>
+                <p>Set tool boundaries for this and later turns</p>
               </div>
             </div>
             <div class="config-tool-grid">
@@ -261,7 +261,7 @@ function submit() {
                   type="button"
                   class="config-switch"
                   :class="{ enabled: toolState(tool.key) !== 'deny' }"
-                  :aria-label="`${tool.label}${toolState(tool.key) === 'deny' ? '已关闭，点击开启' : '已开启，点击关闭'}`"
+                  :aria-label="`${tool.label} is ${toolState(tool.key) === 'deny' ? 'off. Click to enable.' : 'on. Click to disable.'}`"
                   :aria-pressed="toolState(tool.key) !== 'deny'"
                   @click="toggleTool(tool.key)"
                 >
@@ -275,13 +275,13 @@ function submit() {
             <div class="config-row-label">
               <span class="config-row-number">5</span>
               <div>
-                <h3>验收标准</h3>
-                <p>定义完成当前目标时需要满足的验证条件</p>
+                <h3>Acceptance Criteria</h3>
+                <p>Define the conditions for completing the current goal</p>
               </div>
             </div>
             <label class="config-field">
-              <span class="sr-only">验收标准</span>
-              <textarea v-model="draft.acceptanceCriteria" maxlength="500" placeholder="例如：给出根因、修改建议、影响范围和可执行的验证步骤。"></textarea>
+              <span class="sr-only">Acceptance criteria</span>
+              <textarea v-model="draft.acceptanceCriteria" maxlength="500" placeholder="Example: provide the root cause, suggested changes, impact scope, and executable verification steps."></textarea>
               <small>{{ draft.acceptanceCriteria.length }} / 500</small>
             </label>
           </div>
@@ -290,13 +290,13 @@ function submit() {
             <div class="config-row-label">
               <span class="config-row-number">6</span>
               <div>
-                <h3>项目记忆</h3>
-                <p>记录需要跨轮持续遵循的事实、决定与约束</p>
+                <h3>Project Memory</h3>
+                <p>Record facts, decisions, and constraints that should persist across turns</p>
               </div>
             </div>
             <label class="config-field">
-              <span class="sr-only">项目记忆</span>
-              <textarea v-model="draft.projectMemory" maxlength="500" placeholder="例如：已确认的技术约束、历史结论、关键接口或待避免的方案。"></textarea>
+              <span class="sr-only">Project memory</span>
+              <textarea v-model="draft.projectMemory" maxlength="500" placeholder="Example: confirmed technical constraints, prior conclusions, key APIs, or approaches to avoid."></textarea>
               <small>{{ draft.projectMemory.length }} / 500</small>
             </label>
           </div>
@@ -306,9 +306,9 @@ function submit() {
             <div class="session-config-actions">
               <button type="submit" class="primary-action" :disabled="saving">
                 <AppIcon name="check" :size="16" />
-                <span>{{ saving ? '正在保存…' : '保存对话配置' }}</span>
+                <span>{{ saving ? 'Saving…' : 'Save Settings' }}</span>
               </button>
-              <button type="button" class="secondary-action" :disabled="saving" @click="$emit('close')">取消</button>
+              <button type="button" class="secondary-action" :disabled="saving" @click="$emit('close')">Cancel</button>
             </div>
           </footer>
         </form>

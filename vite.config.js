@@ -29,20 +29,20 @@ async function selectLocalDirectory() {
   if (process.platform === 'darwin') {
     return runFilePicker('osascript', [
       '-e',
-      'POSIX path of (choose folder with prompt "选择项目文件夹")',
+      'POSIX path of (choose folder with prompt "Choose a project folder")',
     ])
   }
   if (process.platform === 'win32') {
     const script = [
       'Add-Type -AssemblyName System.Windows.Forms',
       '$dialog = New-Object System.Windows.Forms.FolderBrowserDialog',
-      '$dialog.Description = "选择项目文件夹"',
+      '$dialog.Description = "Choose a project folder"',
       '$dialog.ShowNewFolderButton = $true',
       'if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { $dialog.SelectedPath }',
     ].join('; ')
     return runFilePicker('powershell.exe', ['-NoProfile', '-STA', '-Command', script])
   }
-  return runFilePicker('zenity', ['--file-selection', '--directory', '--title=选择项目文件夹'])
+  return runFilePicker('zenity', ['--file-selection', '--directory', '--title=Choose a project folder'])
 }
 
 function localDirectoryPicker() {
@@ -62,7 +62,7 @@ function localDirectoryPicker() {
           response.end(JSON.stringify({ directory }))
         } catch (error) {
           response.statusCode = 500
-          response.end(JSON.stringify({ error: error?.message || '无法打开文件夹选择器' }))
+          response.end(JSON.stringify({ error: error?.message || 'Could not open the folder picker.' }))
         }
       })
     },
@@ -76,7 +76,7 @@ function readJsonBody(request, limit = 25 * 1024 * 1024) {
     request.on('data', (chunk) => {
       size += chunk.length
       if (size > limit) {
-        reject(new Error('会话数据超过 25MB，无法保存。'))
+        reject(new Error('Session data exceeds 25 MB and cannot be saved.'))
         request.destroy()
         return
       }
@@ -86,7 +86,7 @@ function readJsonBody(request, limit = 25 * 1024 * 1024) {
       try {
         resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'))
       } catch {
-        reject(new Error('会话数据格式无效。'))
+        reject(new Error('Invalid session data format.'))
       }
     })
     request.on('error', reject)
@@ -109,7 +109,7 @@ function experimentDataWriter() {
           const payload = await readJsonBody(request)
           const requestedDirectory = String(payload?.projectDirectory || '').trim()
           if (!requestedDirectory || !path.isAbsolute(requestedDirectory) || !Array.isArray(payload?.sessions)) {
-            throw new Error('缺少有效的项目目录或会话数据。')
+            throw new Error('Missing a valid project directory or session data.')
           }
           const projectDirectory = path.resolve(requestedDirectory)
 
@@ -131,7 +131,7 @@ function experimentDataWriter() {
           response.end(JSON.stringify({ ok: true, file: target }))
         } catch (error) {
           response.statusCode = 500
-          response.end(JSON.stringify({ error: error?.message || '保存实验会话失败。' }))
+          response.end(JSON.stringify({ error: error?.message || 'Failed to save experiment sessions.' }))
         }
       })
     },
@@ -177,7 +177,7 @@ function startOpencodeBackend() {
         process.kill(pid, 'SIGTERM')
       }
     } catch (error) {
-      console.warn('[opencode] 停止 opencode 进程失败：', error?.message || error)
+      console.warn('[opencode] Failed to stop the opencode process:', error?.message || error)
     }
   }
 
@@ -208,7 +208,7 @@ function startOpencodeBackend() {
       ;(async () => {
         if (await isPortInUse(Number(OPENCODE_SERVE_PORT))) {
           console.log(
-            `[opencode] 检测到端口 ${OPENCODE_SERVE_PORT} 已有服务，跳过自动启动（复用已有 opencode）。`,
+            `[opencode] Port ${OPENCODE_SERVE_PORT} is already in use; skipping auto-start and reusing the existing opencode service.`,
           )
           return
         }
@@ -219,11 +219,11 @@ function startOpencodeBackend() {
             windowsHide: true,
           })
         } catch (error) {
-          console.warn(`[opencode] 自动启动失败（不影响前端）：${error?.message || error}`)
+          console.warn(`[opencode] Auto-start failed; the frontend can still run: ${error?.message || error}`)
           return
         }
 
-        console.log(`[opencode] 正在启动 opencode serve --port ${OPENCODE_SERVE_PORT} …`)
+        console.log(`[opencode] Starting opencode serve --port ${OPENCODE_SERVE_PORT} …`)
         const write = (stream, chunk) => {
           for (const line of chunk.toString().split(/\r?\n/)) {
             if (line) process[stream].write(`[opencode] ${line}\n`)
@@ -234,10 +234,10 @@ function startOpencodeBackend() {
         child.on('error', (error) => {
           if (error.code === 'ENOENT') {
             console.warn(
-              `[opencode] 未找到 opencode 命令，请先安装 opencode 并确认其在 PATH 中。后端需手动启动：opencode serve --port ${OPENCODE_SERVE_PORT}`,
+              `[opencode] The opencode command was not found. Please install opencode and make sure it is on PATH. Start the backend manually with: opencode serve --port ${OPENCODE_SERVE_PORT}`,
             )
           } else {
-            console.warn(`[opencode] 启动出错：${error.message}`)
+            console.warn(`[opencode] Startup error: ${error.message}`)
           }
         })
         child.on('exit', (code, signal) => {
@@ -245,7 +245,7 @@ function startOpencodeBackend() {
           if (stopping || signal) return
           if (code && code !== 0) {
             console.warn(
-              `[opencode] 进程退出（exit ${code}）。可能是未登录、端口 ${OPENCODE_SERVE_PORT} 被占用，或 opencode 版本不兼容。`,
+              `[opencode] Process exited (exit ${code}). Possible causes: not signed in, port ${OPENCODE_SERVE_PORT} is occupied, or the opencode version is incompatible.`,
             )
           }
         })

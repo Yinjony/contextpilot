@@ -12,7 +12,7 @@ const props = defineProps({
 defineEmits(['collapse', 'expand', 'update-priority', 'toggle', 'delete-card'])
 
 // 类型筛选：按 category 动态生成，计数对应实际卡片；点击可过滤列表
-const activeFilter = ref('全部')
+const activeFilter = ref('All')
 // 关键词搜索：匹配 title/body/category/topic，与类型筛选叠加生效；空值不过滤。
 const searchQuery = ref('')
 const filterBarRef = ref(null)
@@ -21,14 +21,28 @@ const filterDragMoved = ref(false)
 let filterDragStartX = 0
 let filterDragStartScrollLeft = 0
 let filterPointerLabel = ''
+const categoryLabelMap = new Map([
+  ['问题分析', 'Issue Analysis'],
+  ['修复方案', 'Fix Plan'],
+  ['关键报错', 'Key Error'],
+  ['旧假设', 'Old Assumption'],
+  ['实验设计', 'Study Design'],
+  ['论文调研', 'Literature Review'],
+  ['方案设计', 'Solution Design'],
+  ['产品方案探索', 'Product Design'],
+  ['文档总结', 'Document Summary'],
+  ['进展', 'Progress'],
+])
+const displayCategory = (category) => categoryLabelMap.get(category) || category
 
 const filters = computed(() => {
   const visibleCards = props.cards.filter((card) => !card.deleted)
   const categories = [...new Set(visibleCards.map((c) => c.category))]
   return [
-    { label: '全部', count: visibleCards.length, active: activeFilter.value === '全部' },
+    { label: 'All', count: visibleCards.length, active: activeFilter.value === 'All' },
     ...categories.map((cat) => ({
-      label: cat,
+      label: displayCategory(cat),
+      value: cat,
       count: visibleCards.filter((c) => c.category === cat).length,
       active: activeFilter.value === cat,
     })),
@@ -36,7 +50,7 @@ const filters = computed(() => {
 })
 const filteredCards = computed(() => {
   const visibleCards = props.cards.filter((card) => !card.deleted)
-  let list = activeFilter.value === '全部'
+  let list = activeFilter.value === 'All'
     ? visibleCards
     : visibleCards.filter((c) => c.category === activeFilter.value)
 
@@ -60,17 +74,17 @@ watch(
   () => props.cards.map((card) => card.category).join('|'),
   () => {
     if (
-      activeFilter.value !== '全部' &&
+      activeFilter.value !== 'All' &&
       !props.cards.some((c) => !c.deleted && c.category === activeFilter.value)
     ) {
-      activeFilter.value = '全部'
+      activeFilter.value = 'All'
     }
   },
 )
 
 function selectFilter(label) {
   if (filterDragMoved.value) return
-  activeFilter.value = label
+  activeFilter.value = label === 'All' ? 'All' : label
 }
 
 function filterLabelFromEvent(event) {
@@ -135,21 +149,21 @@ const metrics = computed(() => {
   const total = visibleCards.length
   const selected = visibleCards.filter((c) => c.selected).length
   return [
-    { label: '总片段数', value: String(total), icon: 'layers', tone: 'violet' },
-    { label: '已选中', value: String(selected), icon: 'check', tone: 'green' },
-    { label: '隐藏', value: String(total - selected), icon: 'zap', tone: 'blue' },
+    { label: 'Total Cards', value: String(total), icon: 'layers', tone: 'violet' },
+    { label: 'Selected', value: String(selected), icon: 'check', tone: 'green' },
+    { label: 'Hidden', value: String(total - selected), icon: 'zap', tone: 'blue' },
   ]
 })
 </script>
 
 <template>
-  <section class="context-panel" :class="{ collapsed }" aria-label="上下文工作台">
+  <section class="context-panel" :class="{ collapsed }" aria-label="Context workbench">
     <!-- 收起态：窄轨，仅留图标 + 展开按钮 -->
     <button
       v-if="collapsed"
       type="button"
       class="rail-toggle"
-      aria-label="展开上下文栏"
+      aria-label="Expand context panel"
       @click="$emit('expand')"
     >
       <span class="rail-content-icon"><AppIcon name="layers" :size="18" /></span>
@@ -164,14 +178,14 @@ const metrics = computed(() => {
         <button
           type="button"
           class="icon-btn"
-          aria-label="收起上下文栏"
+          aria-label="Collapse context panel"
           @click="$emit('collapse')"
         >
           <AppIcon name="chevrons-left" :size="16" />
         </button>
       </header>
 
-    <div class="metric-grid" aria-label="上下文统计">
+    <div class="metric-grid" aria-label="Context statistics">
       <div
         v-for="m in metrics"
         :key="m.label"
@@ -190,7 +204,7 @@ const metrics = computed(() => {
       ref="filterBarRef"
       class="filter-bar"
       :class="{ dragging: isFilterDragging }"
-      aria-label="上下文类型筛选，可左右滑动"
+      aria-label="Context category filters; scroll horizontally"
       tabindex="0"
       @wheel="handleFilterWheel"
       @pointerdown="startFilterDrag"
@@ -201,11 +215,11 @@ const metrics = computed(() => {
     >
       <button
         v-for="filter in filters"
-        :key="filter.label"
+        :key="filter.value || filter.label"
         type="button"
         :class="{ active: filter.active }"
-        :data-filter-label="filter.label"
-        @click="selectFilter(filter.label)"
+        :data-filter-label="filter.value || filter.label"
+        @click="selectFilter(filter.value || filter.label)"
       >
         {{ filter.label }}
         <span class="count">{{ filter.count }}</span>
@@ -215,18 +229,18 @@ const metrics = computed(() => {
     <div class="search-row">
       <label class="search-box">
         <span class="search-ico"><AppIcon name="search" :size="16" /></span>
-        <span class="sr-only">搜索上下文片段</span>
+        <span class="sr-only">Search context cards</span>
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索上下文片段..."
-          aria-label="搜索上下文片段"
+          placeholder="Search context cards..."
+          aria-label="Search context cards"
         />
         <button
           v-if="searchQuery"
           type="button"
           class="search-clear"
-          aria-label="清空搜索"
+          aria-label="Clear search"
           @click="clearSearch"
         >
           <AppIcon name="x" :size="14" />
@@ -234,13 +248,13 @@ const metrics = computed(() => {
       </label>
 
       <div class="context-toolbar">
-        <button type="button" class="with-icon"><AppIcon name="filter" :size="14" />筛选</button>
+        <button type="button" class="with-icon"><AppIcon name="filter" :size="14" />Filter</button>
       </div>
     </div>
 
     <div v-if="isSummarizing" class="context-status" aria-live="polite">
       <span class="status-dot pulse"></span>
-      监督助手正在总结本轮对话…
+      The supervisor is summarizing this turn…
     </div>
 
     <div v-if="filteredCards.length" class="context-list">
@@ -256,9 +270,9 @@ const metrics = computed(() => {
     </div>
     <div v-else-if="!isSummarizing" class="context-empty" aria-live="polite">
       <span class="empty-icon"><AppIcon name="layers" :size="22" /></span>
-      <h3>{{ searchQuery ? '没有匹配的上下文片段' : '暂无上下文数据' }}</h3>
-      <p v-if="searchQuery">换个关键词，或<span class="context-empty-action" role="button" tabindex="0" @click="clearSearch" @keydown.enter="clearSearch">清空搜索</span>。</p>
-      <p v-else>发送第一条消息后，监督助手会自动总结成本卡片。</p>
+      <h3>{{ searchQuery ? 'No matching context cards' : 'No context cards yet' }}</h3>
+      <p v-if="searchQuery">Try another keyword, or <span class="context-empty-action" role="button" tabindex="0" @click="clearSearch" @keydown.enter="clearSearch">clear search</span>.</p>
+      <p v-else>After the first message, the supervisor will summarize the turn into cards.</p>
     </div>
     </template>
   </section>

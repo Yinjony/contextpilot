@@ -6,7 +6,7 @@ import { createDefaultChatConfig, normalizeChatConfig } from '../model/chatAdapt
 import { extractPdfText } from '../lib/pdf-text.js'
 
 const props = defineProps({
-  title: { type: String, default: 'AI 对话窗口' },
+  title: { type: String, default: 'AI Chat' },
   messages: { type: Array, required: true },
   isSending: { type: Boolean, default: false },
   error: { type: String, default: '' },
@@ -28,12 +28,12 @@ const rulesMenuOpen = ref(false)
 const stageMenuOpen = ref(false)
 const newRule = ref('')
 
-const stages = ['需求澄清', '方案设计', '实现与调试', '测试与验证', '交付与复盘']
+const stages = ['Requirement Clarification', 'Solution Design', 'Implementation & Debugging', 'Testing & Validation', 'Delivery & Review']
 const tools = [
-  { key: 'readFiles', label: '读取文件', icon: 'layers', desc: '允许读取项目内的文件内容' },
-  { key: 'runTests', label: '运行测试', icon: 'check', desc: '允许执行测试与构建命令' },
-  { key: 'writeFiles', label: '写入文件', icon: 'pencil', desc: '允许新建或修改项目文件' },
-  { key: 'network', label: '联网', icon: 'share', desc: '允许访问网络与外部接口' },
+  { key: 'readFiles', label: 'Read Files', icon: 'layers', desc: 'Allow reading files in the current project' },
+  { key: 'runTests', label: 'Run Tests', icon: 'check', desc: 'Allow test and build commands' },
+  { key: 'writeFiles', label: 'Write Files', icon: 'pencil', desc: 'Allow creating or editing project files' },
+  { key: 'network', label: 'Network', icon: 'share', desc: 'Allow network and external API access' },
 ]
 
 watch(
@@ -75,7 +75,7 @@ function toolState(key) {
 
 function toolStateLabel(key) {
   const state = toolState(key)
-  return state === 'allow' ? '允许' : state === 'confirm' ? '需确认' : '关闭'
+  return state === 'allow' ? 'Allowed' : state === 'confirm' ? 'Confirm' : 'Off'
 }
 
 function toggleTool(key) {
@@ -109,7 +109,7 @@ function readAsDataURL(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(String(reader.result || ''))
-    reader.onerror = () => reject(new Error(`无法读取文件：${file.name}`))
+    reader.onerror = () => reject(new Error(`Could not read file: ${file.name}`))
     reader.readAsDataURL(file)
   })
 }
@@ -119,7 +119,7 @@ async function addAttachments(fileList, kind) {
   const incoming = [...(fileList || [])]
   if (!incoming.length) return
   if (attachments.value.length + incoming.length > 5) {
-    attachmentError.value = '每条消息最多添加 5 个附件。'
+    attachmentError.value = 'You can attach up to 5 files per message.'
     return
   }
 
@@ -127,11 +127,11 @@ async function addAttachments(fileList, kind) {
   for (const file of incoming) {
     const maxSize = kind === 'image' ? 5 * 1024 * 1024 : 10 * 1024 * 1024
     if (file.size > maxSize) {
-      attachmentError.value = `${file.name} 超过${kind === 'image' ? ' 5 MB' : ' 10 MB'}限制。`
+      attachmentError.value = `${file.name} exceeds the ${kind === 'image' ? '5 MB' : '10 MB'} limit.`
       continue
     }
     if (kind === 'image' && !file.type.startsWith('image/')) {
-      attachmentError.value = `${file.name} 不是支持的图片格式。`
+      attachmentError.value = `${file.name} is not a supported image format.`
       continue
     }
     try {
@@ -180,7 +180,7 @@ function handlePrimaryAction() {
 function approveWrite() {
   if (props.isSending) return
   emit('send', {
-    text: '同意写入项目。请按你上一条消息中说明的目标文件完成写入，不要再次询问路径或确认。',
+    text: 'I approve writing to the project. Please complete the write operation for the target file described in your previous message without asking again for a path or confirmation.',
     attachments: [],
     approveWrite: true,
   })
@@ -189,7 +189,7 @@ function approveWrite() {
 function rejectWrite() {
   if (props.isSending) return
   emit('send', {
-    text: '暂不写入项目，请改为在对话中生成可预览和下载的 Markdown 文档。',
+    text: 'Do not write to the project for now. Instead, generate a previewable and downloadable Markdown document in the chat.',
     attachments: [],
   })
 }
@@ -217,7 +217,7 @@ watch(
 </script>
 
 <template>
-  <section class="chat-panel" aria-label="AI 对话窗口">
+  <section class="chat-panel" aria-label="AI chat">
     <header class="chat-header">
       <div>
         <h2>{{ title }}</h2>
@@ -237,7 +237,7 @@ watch(
     </div>
 
     <div class="composer-shell">
-      <div class="composer-config-bar" aria-label="当前对话底盘配置">
+      <div class="composer-config-bar" aria-label="Current conversation settings">
         <div class="composer-config-stage">
           <button
             type="button"
@@ -256,12 +256,12 @@ watch(
             v-if="stageMenuOpen"
             class="composer-stage-popover"
             role="dialog"
-            aria-label="选择对话阶段"
+            aria-label="Choose conversation stage"
             @keydown.esc="stageMenuOpen = false"
           >
             <div class="composer-stage-popover-header">
-              <span>对话阶段</span>
-              <small>第 {{ stageIndex + 1 }} / {{ stages.length }} 阶段</small>
+              <span>Conversation Stage</span>
+              <small>Step {{ stageIndex + 1 }} / {{ stages.length }}</small>
             </div>
             <ol class="composer-stage-list">
               <li
@@ -294,8 +294,8 @@ watch(
             :aria-expanded="rulesMenuOpen"
             @click="rulesMenuOpen = !rulesMenuOpen"
           >
-            <span>规则</span>
-            <strong>{{ inlineConfig.rules.length }} 条</strong>
+            <span>Rules</span>
+            <strong>{{ inlineConfig.rules.length }}</strong>
             <AppIcon name="chevron" :size="13" />
           </button>
 
@@ -303,38 +303,38 @@ watch(
             v-if="rulesMenuOpen"
             class="composer-rules-popover"
             role="dialog"
-            aria-label="编辑对话规则"
+            aria-label="Edit conversation rules"
             @keydown.esc="rulesMenuOpen = false"
           >
             <div class="composer-rules-popover-header">
-              <span>对话规则</span>
-              <small>每条规则会同步到底盘配置</small>
+              <span>Conversation Rules</span>
+              <small>Rules are synced to the conversation settings</small>
             </div>
             <div class="composer-rules-list">
               <div v-for="rule in inlineConfig.rules" :key="rule" class="composer-rule-row">
                 <span>{{ rule }}</span>
-                <button type="button" :aria-label="`删除规则：${rule}`" @click="removeRule(rule)">
+                <button type="button" :aria-label="`Delete rule: ${rule}`" @click="removeRule(rule)">
                   <AppIcon name="x" :size="14" />
                 </button>
               </div>
-              <p v-if="!inlineConfig.rules.length" class="composer-rules-empty">暂未设置规则</p>
+              <p v-if="!inlineConfig.rules.length" class="composer-rules-empty">No rules set yet</p>
             </div>
             <form class="composer-rule-add" @submit.prevent="addRule">
-              <input v-model="newRule" maxlength="80" placeholder="添加一条规则" aria-label="添加对话规则" />
-              <button type="submit" aria-label="添加规则"><AppIcon name="plus" :size="15" /></button>
+              <input v-model="newRule" maxlength="80" placeholder="Add a rule" aria-label="Add conversation rule" />
+              <button type="submit" aria-label="Add rule"><AppIcon name="plus" :size="15" /></button>
             </form>
           </div>
         </div>
 
-        <div class="composer-config-tools" role="group" aria-label="工具权限">
-          <span class="composer-config-tools-label">权限</span>
+        <div class="composer-config-tools" role="group" aria-label="Tool permissions">
+          <span class="composer-config-tools-label">Access</span>
           <button
             v-for="tool in tools"
             :key="tool.key"
             type="button"
             class="composer-config-tool"
             :data-state="toolState(tool.key)"
-            :aria-label="`${tool.label}：${toolStateLabel(tool.key)}，点击切换`"
+            :aria-label="`${tool.label}: ${toolStateLabel(tool.key)}. Click to toggle.`"
             :aria-pressed="toolState(tool.key) !== 'deny'"
             @click="toggleTool(tool.key)"
           >
@@ -349,7 +349,7 @@ watch(
       </div>
       <p v-if="error" class="composer-error">{{ error }}</p>
       <p v-if="attachmentError" class="composer-error" role="alert">{{ attachmentError }}</p>
-      <div v-if="attachments.length" class="composer-attachments" aria-label="待发送附件">
+      <div v-if="attachments.length" class="composer-attachments" aria-label="Attachments to send">
         <div v-for="attachment in attachments" :key="attachment.id" class="composer-attachment">
           <img v-if="attachment.kind === 'image'" :src="attachment.dataUrl" :alt="attachment.name" />
           <span v-else class="composer-attachment-icon"><AppIcon name="file-text" :size="17" /></span>
@@ -357,19 +357,19 @@ watch(
             <strong :title="attachment.name">{{ attachment.name }}</strong>
             <small>{{ attachment.sizeLabel }}</small>
           </span>
-          <button type="button" :aria-label="`移除附件：${attachment.name}`" @click="removeAttachment(attachment.id)">
+          <button type="button" :aria-label="`Remove attachment: ${attachment.name}`" @click="removeAttachment(attachment.id)">
             <AppIcon name="x" :size="14" />
           </button>
         </div>
       </div>
-      <form class="composer" aria-label="发送消息" @submit.prevent="handlePrimaryAction">
+      <form class="composer" aria-label="Send message" @submit.prevent="handlePrimaryAction">
         <input ref="fileInput" class="composer-file-input" type="file" multiple @change="selectFiles" />
         <input ref="imageInput" class="composer-file-input" type="file" accept="image/*" multiple @change="selectImages" />
-        <div class="composer-upload-actions" aria-label="添加附件">
-          <button type="button" :disabled="isSending" aria-label="上传文件" title="上传文件（最大 10 MB）" @click="fileInput?.click()">
+        <div class="composer-upload-actions" aria-label="Add attachments">
+          <button type="button" :disabled="isSending" aria-label="Upload file" title="Upload file (max 10 MB)" @click="fileInput?.click()">
             <AppIcon name="paperclip" :size="17" />
           </button>
-          <button type="button" :disabled="isSending" aria-label="上传图片" title="上传图片（最大 5 MB）" @click="imageInput?.click()">
+          <button type="button" :disabled="isSending" aria-label="Upload image" title="Upload image (max 5 MB)" @click="imageInput?.click()">
             <AppIcon name="image" :size="17" />
           </button>
         </div>
@@ -377,11 +377,11 @@ watch(
           v-model="draft"
           type="text"
           :disabled="isSending"
-          placeholder="输入消息，继续当前对话"
+          placeholder="Type a message to continue this conversation"
         />
         <button type="submit" :class="{ 'stop-generation': isSending }" :disabled="!isSending && !canSend">
           <AppIcon :name="isSending ? 'stop' : 'send'" :size="16" />
-          <span>{{ isSending ? '停止生成' : '发送' }}</span>
+          <span>{{ isSending ? 'Stop' : 'Send' }}</span>
         </button>
       </form>
     </div>

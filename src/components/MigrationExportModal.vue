@@ -13,7 +13,7 @@ import {
 const props = defineProps({
   sessions: { type: Array, default: () => [] },
   directory: { type: String, default: '' },
-  sessionTitle: { type: String, default: '当前对话' },
+  sessionTitle: { type: String, default: 'Current Chat' },
 })
 
 const emit = defineEmits(['close'])
@@ -197,7 +197,7 @@ onBeforeUnmount(() => {
             <p>{{ phaseText() }}</p>
           </div>
           <span class="modal-session-context" :title="sessionTitle">
-            <small>当前会话</small>
+            <small>Current Chat</small>
             <strong>{{ sessionTitle }}</strong>
           </span>
         </div>

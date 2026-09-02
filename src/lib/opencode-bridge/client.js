@@ -623,7 +623,7 @@ export class OpenCodeBridgeClient {
       }
 
       if (!finalText) {
-        throw new Error('模型已结束生成，但没有返回可显示的正文。请重新发送或更换模型。')
+        throw new Error('The model finished generating, but returned no displayable text. Please resend or switch models.')
       }
 
       return {

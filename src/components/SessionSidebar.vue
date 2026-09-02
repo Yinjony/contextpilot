@@ -115,8 +115,8 @@ onBeforeUnmount(() => {
         <button
           type="button"
           class="project-rail-add"
-          title="选择项目文件夹"
-          aria-label="选择项目文件夹并添加为项目环境"
+          title="Choose project folder"
+          aria-label="Choose a project folder and add it as an environment"
           :disabled="projectLoading"
           @click="$emit('create-project')"
         >
@@ -140,8 +140,8 @@ onBeforeUnmount(() => {
       <div class="sidebar-content">
         <div class="sidebar-header">
           <div class="project-heading">
-            <span class="project-heading-label">项目环境</span>
-            <strong :title="activeProject?.directory">{{ activeProject?.name || '&#x9879;&#x76EE;' }}</strong>
+            <span class="project-heading-label">Project Environment</span>
+            <strong :title="activeProject?.directory">{{ activeProject?.name || 'Project' }}</strong>
           </div>
           <span v-if="projectLoading" class="project-loading" aria-label="loading"></span>
           <button
@@ -154,19 +154,19 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <nav class="quick-actions" aria-label="快捷操作">
+        <nav class="quick-actions" aria-label="Quick actions">
           <button type="button" class="create-action" @click="$emit('create')">
             <AppIcon name="plus" :size="16" />
-            <span>新建对话</span>
+            <span>New Chat</span>
           </button>
         </nav>
 
-        <section class="session-list" aria-label="会话列表">
+        <section class="session-list" aria-label="Chat list">
           <div class="section-heading">
-            <span>会话</span>
+            <span>Chats</span>
             <strong>{{ sessions.length }}</strong>
           </div>
-          <p v-if="!sessions.length" class="project-empty">当前项目暂无对话</p>
+          <p v-if="!sessions.length" class="project-empty">No chats in this project yet</p>
           <div
             v-for="session in sessions"
             :key="session.id"
@@ -198,15 +198,15 @@ onBeforeUnmount(() => {
               <div v-if="openMenuId === session.id" class="session-menu" role="menu" @click.stop>
                 <button type="button" role="menuitem" @click="runAction('share', session.id)">
                   <AppIcon name="share" :size="17" />
-                  <span>&#x5206;&#x4EAB;</span>
+                  <span>Share</span>
                 </button>
                 <button type="button" role="menuitem" @click="runAction('rename', session.id)">
                   <AppIcon name="pencil" :size="17" />
-                  <span>&#x91CD;&#x547D;&#x540D;</span>
+                  <span>Rename</span>
                 </button>
                 <button type="button" class="danger" role="menuitem" @click="runAction('delete', session.id)">
                   <AppIcon name="trash" :size="17" />
-                  <span>&#x5220;&#x9664;</span>
+                  <span>Delete</span>
                 </button>
               </div>
             </div>
@@ -216,15 +216,15 @@ onBeforeUnmount(() => {
         <div class="sidebar-footer-actions" aria-label="session utilities">
           <button type="button" class="sidebar-utility-action" @click="$emit('configure')">
             <AppIcon name="sliders" :size="16" />
-            <span>&#x5BF9;&#x8BDD;&#x5E95;&#x76D8;&#x914D;&#x7F6E;</span>
+            <span>Conversation Settings</span>
           </button>
           <button type="button" class="sidebar-utility-action" @click="$emit('workflow')">
             <AppIcon name="workflow" :size="16" />
-            <span>&#x6267;&#x884C;&#x8FFD;&#x8E2A;&amp;&#x5BF9;&#x8BDD;&#x6982;&#x51B5;</span>
+            <span>Execution Trace</span>
           </button>
           <button type="button" class="sidebar-utility-action" @click="$emit('migrate')">
             <AppIcon name="file-text" :size="16" />
-            <span>&#x8FC1;&#x79FB;&#x6587;&#x6863;&#x5BFC;&#x51FA;</span>
+            <span>Export Handoff</span>
           </button>
         </div>
       </div>
@@ -239,7 +239,7 @@ onBeforeUnmount(() => {
       >
         <button type="button" role="menuitem" @click="removeProject">
           <AppIcon name="x" :size="15" />
-          <span>从侧边栏移除</span>
+          <span>Remove from sidebar</span>
         </button>
       </div>
     </template>

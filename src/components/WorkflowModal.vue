@@ -4,7 +4,7 @@ import AppIcon from './AppIcon.vue'
 import ActionIcon from './ActionIcon.vue'
 
 const props = defineProps({
-  sessionTitle: { type: String, default: '当前对话' },
+  sessionTitle: { type: String, default: 'Current Chat' },
   messages: { type: Array, default: () => [] },
   sessionUsage: { type: Object, default: null },
 })
@@ -16,27 +16,27 @@ const actionFilter = ref('all')
 const selectedNode = ref(null)
 
 const typeMeta = {
-  UserRequest: { label: '用户请求', group: 'model' },
-  Understand: { label: '理解需求', group: 'model' },
-  Decompose: { label: '拆解任务', group: 'tool' },
-  SearchContext: { label: '检索上下文', group: 'tool' },
-  Plan: { label: '制定计划', group: 'tool' },
-  GenerateCode: { label: '生成代码', group: 'tool' },
-  RunCommand: { label: '运行命令', group: 'tool' },
-  AnalyzeResult: { label: '分析结果', group: 'model' },
-  Response: { label: '生成回复', group: 'model' },
-  Summarize: { label: '总结归纳', group: 'model' },
-  UpdateContext: { label: '更新上下文', group: 'model' },
-  SaveFile: { label: '保存文件', group: 'tool' },
-  RunTest: { label: '执行测试', group: 'tool' },
-  CheckResult: { label: '检查结果', group: 'tool' },
-  Optimize: { label: '优化调整', group: 'tool' },
+  UserRequest: { label: 'User Request', group: 'model' },
+  Understand: { label: 'Understand Request', group: 'model' },
+  Decompose: { label: 'Decompose Task', group: 'tool' },
+  SearchContext: { label: 'Search Context', group: 'tool' },
+  Plan: { label: 'Plan', group: 'tool' },
+  GenerateCode: { label: 'Generate Code', group: 'tool' },
+  RunCommand: { label: 'Run Command', group: 'tool' },
+  AnalyzeResult: { label: 'Analyze Result', group: 'model' },
+  Response: { label: 'Generate Reply', group: 'model' },
+  Summarize: { label: 'Summarize', group: 'model' },
+  UpdateContext: { label: 'Update Context', group: 'model' },
+  SaveFile: { label: 'Save File', group: 'tool' },
+  RunTest: { label: 'Run Test', group: 'tool' },
+  CheckResult: { label: 'Check Result', group: 'tool' },
+  Optimize: { label: 'Optimize', group: 'tool' },
 }
 
 const filters = [
-  { id: 'all', label: '全部动作' },
-  { id: 'model', label: '模型' },
-  { id: 'tool', label: '工具' },
+  { id: 'all', label: 'All Actions' },
+  { id: 'model', label: 'Model' },
+  { id: 'tool', label: 'Tools' },
 ]
 
 function toolActionType(name = '', detail = '') {
@@ -67,8 +67,8 @@ function makeAction(type, message, part, index, detail) {
     label: meta.label,
     group: meta.group,
     status: actionStatus(message, part),
-    detail: detail || part?.text || message.text || '暂无详情',
-    time: message.time || '未知时间',
+    detail: detail || part?.text || message.text || 'No details yet',
+    time: message.time || 'Unknown time',
     messageID: message.id || '',
     partID: part?.id || '',
     callID: part?.callID || '',
@@ -237,7 +237,7 @@ function selectNode(node) {
 
 function statusText(status) {
   return {
-    completed: '已完成', running: '进行中', pending: '待触发', error: '失败',
+    completed: 'Completed', running: 'In Progress', pending: 'Pending', error: 'Failed',
   }[status] || status
 }
 
@@ -275,61 +275,61 @@ watch(() => [filteredTurns.value.length, conversationActions.value.length, actio
         <div>
           <div class="workflow-title-row">
             <span class="workflow-title-icon"><AppIcon name="workflow" :size="19" /></span>
-            <h2 id="workflow-title">执行追踪&对话概况</h2>
+            <h2 id="workflow-title">Execution Trace & Chat Overview</h2>
             <span class="modal-session-context" :title="sessionTitle">
-              <small>当前会话</small>
+              <small>Current Chat</small>
               <strong>{{ sessionTitle }}</strong>
             </span>
           </div>
         </div>
-        <button type="button" class="icon-btn workflow-close" aria-label="关闭工作流" @click="$emit('close')">
+        <button type="button" class="icon-btn workflow-close" aria-label="Close workflow" @click="$emit('close')">
           <AppIcon name="x" :size="18" />
         </button>
       </header>
 
-<!--      <div class="workflow-pipeline" aria-label="工作流数据管线">-->
-<!--        <span>OpenCode parts</span><i></i><span>标准动作模型</span><i></i><strong>可视化工作流</strong>-->
+<!--      <div class="workflow-pipeline" aria-label="Workflow data pipeline">-->
+<!--        <span>OpenCode parts</span><i></i><span>Standard action model</span><i></i><strong>Visual workflow</strong>-->
 <!--      </div>-->
 
       <section class="workflow-context-meter" aria-labelledby="workflow-context-title">
         <div class="workflow-context-head">
           <div>
-            <span id="workflow-context-title">上下文容量</span>
-            <strong>{{ contextUsageLabel }} 已占用</strong>
+            <span id="workflow-context-title">Context Capacity</span>
+            <strong>{{ contextUsageLabel }} used</strong>
           </div>
-          <span class="workflow-context-limit">容量 {{ formatTokenCount(contextLimit) }}</span>
+          <span class="workflow-context-limit">Capacity {{ formatTokenCount(contextLimit) }}</span>
         </div>
 
         <div
           class="workflow-context-track"
           role="progressbar"
-          aria-label="当前上下文占用比例"
+          aria-label="Current context usage"
           :aria-valuenow="Math.round(contextUsagePercent)"
           aria-valuemin="0"
           aria-valuemax="100"
-          :aria-valuetext="`已占用 ${formatTokenCount(contextUsed)}，剩余 ${formatTokenCount(contextRemaining)}`"
+          :aria-valuetext="`Used ${formatTokenCount(contextUsed)}, remaining ${formatTokenCount(contextRemaining)}`"
         >
           <span class="workflow-context-used" :style="{ width: `${contextUsagePercent}%` }"></span>
         </div>
 
         <div class="workflow-context-stats">
           <div class="is-used">
-            <span><i></i>当前上下文占用</span>
+            <span><i></i>Current Context Used</span>
             <strong>{{ formatTokenCount(contextUsed) }}</strong>
           </div>
           <div class="is-remaining">
-            <span><i></i>上下文剩余</span>
+            <span><i></i>Context Remaining</span>
             <strong>{{ formatTokenCount(contextRemaining) }}</strong>
           </div>
           <div class="is-total">
-            <span>累计 Token 消耗</span>
+            <span>Total Token Usage</span>
             <strong>{{ formatTokenCount(totalTokenUsage) }}</strong>
           </div>
         </div>
       </section>
 
       <div class="workflow-toolbar">
-        <div class="workflow-filters" aria-label="动作筛选">
+        <div class="workflow-filters" aria-label="Action filter">
           <button
             v-for="filter in filters"
             :key="filter.id"
@@ -341,9 +341,9 @@ watch(() => [filteredTurns.value.length, conversationActions.value.length, actio
             {{ filter.label }}
           </button>
         </div>
-        <div class="workflow-legend" aria-label="状态图例">
-          <span><i class="completed"></i>完成</span>
-          <span><i class="running"></i>进行中</span>
+        <div class="workflow-legend" aria-label="Status legend">
+          <span><i class="completed"></i>Done</span>
+          <span><i class="running"></i>In Progress</span>
         </div>
       </div>
 
@@ -353,19 +353,19 @@ watch(() => [filteredTurns.value.length, conversationActions.value.length, actio
             <div class="workflow-main-flow">
               <div class="workflow-flow-heading">
                 <div>
-                  <strong>执行链路</strong>
-                  <span>共 {{ filteredTurns.length }} 轮 · {{ totalActionCount }} 项</span>
+                  <strong>Execution Path</strong>
+                  <span>{{ filteredTurns.length }} turns · {{ totalActionCount }} items</span>
                 </div>
-                <small>按对话轮次分组 · 区域内显示 4 轮</small>
+                <small>Grouped by chat turn · showing 4 turns in this area</small>
               </div>
               <div v-if="filteredTurns.length" ref="turnsViewportRef" class="workflow-turns-viewport">
                 <section v-for="turn in filteredTurns" :key="turn.id" class="workflow-turn">
                   <header class="workflow-turn-header">
-                    <span>第 {{ turn.index }} 轮</span>
-                    <strong :title="turn.request?.detail || '历史执行'">{{ brief(turn.request?.detail || '历史执行', 48) }}</strong>
-                    <small>{{ turn.actions.length }} 项</small>
+                    <span>Turn {{ turn.index }}</span>
+                    <strong :title="turn.request?.detail || 'Previous execution'">{{ brief(turn.request?.detail || 'Previous execution', 48) }}</strong>
+                    <small>{{ turn.actions.length }} items</small>
                   </header>
-                  <div class="workflow-turn-track" tabindex="0" :aria-label="`第 ${turn.index} 轮执行链路`">
+                  <div class="workflow-turn-track" tabindex="0" :aria-label="`Turn ${turn.index} execution path`">
                     <template v-for="(node, i) in turn.actions" :key="node.id">
                       <button
                         type="button"
@@ -383,14 +383,14 @@ watch(() => [filteredTurns.value.length, conversationActions.value.length, actio
                   </div>
                 </section>
               </div>
-              <div v-else class="workflow-main-empty">当前筛选下暂无动作</div>
+              <div v-else class="workflow-main-empty">No actions for the current filter</div>
             </div>
           </section>
 
-          <section class="workflow-breakdown" aria-label="动作分布">
+          <section class="workflow-breakdown" aria-label="Action breakdown">
             <div class="workflow-breakdown-head">
-              <strong>动作分布</strong>
-              <span>共 {{ totalActionCount }} 个动作</span>
+              <strong>Action Breakdown</strong>
+              <span>{{ totalActionCount }} actions</span>
             </div>
             <div class="workflow-breakdown-grid">
               <template v-if="typeBreakdown.length">
@@ -399,14 +399,14 @@ watch(() => [filteredTurns.value.length, conversationActions.value.length, actio
                   :key="item.type"
                   class="workflow-breakdown-pill"
                   :data-type="item.type"
-                  :title="`${item.label} · ${item.count} 次`"
+                  :title="`${item.label} · ${item.count} times`"
                 >
                   <ActionIcon :type="item.type" :size="16" :prefix="`bd-${item.type}`" />
                   <span class="workflow-breakdown-name">{{ item.label }}</span>
                   <span class="workflow-breakdown-count">{{ item.count }}</span>
                 </div>
               </template>
-              <div v-else class="workflow-breakdown-empty">暂无动作数据</div>
+              <div v-else class="workflow-breakdown-empty">No action data yet</div>
             </div>
           </section>
 
@@ -418,26 +418,26 @@ watch(() => [filteredTurns.value.length, conversationActions.value.length, actio
               <ActionIcon :type="detailNode.type" :size="18" :prefix="`detail-${detailNode.id}`" />
             </span>
             <div>
-              <small>{{ typeMeta[detailNode.type]?.label || '动作详情' }}</small>
+              <small>{{ typeMeta[detailNode.type]?.label || 'Action Details' }}</small>
               <h3>{{ detailNode.label }}</h3>
             </div>
           </div>
           <span class="workflow-status" :class="`status-${detailNode.status}`">{{ statusText(detailNode.status) }}</span>
           <p>{{ detailNode.detail }}</p>
           <dl>
-            <template v-if="detailNode.category"><dt>分类</dt><dd>{{ detailNode.category }}</dd></template>
-            <template v-if="detailNode.priority"><dt>优先级</dt><dd>{{ detailNode.priority }}</dd></template>
+            <template v-if="detailNode.category"><dt>Category</dt><dd>{{ detailNode.category }}</dd></template>
+            <template v-if="detailNode.priority"><dt>Priority</dt><dd>{{ detailNode.priority }}</dd></template>
             <template v-if="detailNode.messageID"><dt>message</dt><dd><code>{{ detailNode.messageID }}</code></dd></template>
             <template v-if="detailNode.partID"><dt>part</dt><dd><code>{{ detailNode.partID }}</code></dd></template>
             <template v-if="detailNode.callID"><dt>call</dt><dd><code>{{ detailNode.callID }}</code></dd></template>
-            <template v-if="detailNode.durationMs !== null && detailNode.durationMs !== undefined"><dt>耗时</dt><dd>{{ formatDuration(detailNode.durationMs) }}</dd></template>
-            <template v-if="detailNode.partIDs?.length"><dt>关联 parts</dt><dd class="workflow-part-list"><code v-for="partID in detailNode.partIDs" :key="partID">{{ partID }}</code></dd></template>
+            <template v-if="detailNode.durationMs !== null && detailNode.durationMs !== undefined"><dt>Duration</dt><dd>{{ formatDuration(detailNode.durationMs) }}</dd></template>
+            <template v-if="detailNode.partIDs?.length"><dt>Linked parts</dt><dd class="workflow-part-list"><code v-for="partID in detailNode.partIDs" :key="partID">{{ partID }}</code></dd></template>
           </dl>
         </aside>
       </div>
 
       <footer class="workflow-footer workflow-footer--simple">
-        <button type="button" class="secondary-action" @click="$emit('close')">关闭</button>
+        <button type="button" class="secondary-action" @click="$emit('close')">Close</button>
       </footer>
     </section>
   </div>

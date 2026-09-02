@@ -7,9 +7,9 @@ const OPENCODE_DEFAULT_MODEL_ID = 'deepseek-v4-flash-free'
 const OPENCODE_DEFAULT_DIRECTORY = 'C:\\Users\\LYin\\Projects\\contextpilot'
 const OPENAI_COMPATIBLE_DEFAULT_PATH = '/chat/completions'
 const OPENCODE_CHAT_SYSTEM_PROMPT =
-  '你是 ContextPilot 聊天区的普通对话助手。请遵循当前会话的对话底盘配置，直接、清晰、可执行地回答用户问题。'
+  'You are the main chat assistant inside ContextPilot. Follow the current conversation settings and answer the user directly, clearly, and actionably. All visible output must be in English.'
 const SUPERVISOR_SYSTEM_PROMPT =
-  '你是 ContextPilot 的上下文监督助手。你的职责是把主对话按主题总结成结构化上下文卡片，供用户在工作台勾选后注入后续对话。严格按用户指令的 JSON 数组格式输出，不要输出任何解释或多余文字。'
+  'You are ContextPilot’s context supervisor. Your job is to summarize the main conversation into structured English context cards for later reuse. Return only the JSON array requested by the user; do not add explanations or extra text.'
 const OPENCODE_CHAT_DISABLED_TOOLS = [
   'task',
   'todowrite',
@@ -39,8 +39,8 @@ const OPENCODE_CHAT_ALWAYS_DISABLED_TOOLS = [
 
 const CHAT_CONFIG_DEFAULTS = {
   goal: '',
-  stage: '需求澄清',
-  rules: ['优先给出可执行结论', '涉及不确定性时说明假设', '改动建议附带验证方式'],
+  stage: 'Requirement Clarification',
+  rules: ['Lead with an actionable conclusion', 'State assumptions when uncertain', 'Include a verification method for change suggestions'],
   toolPermissions: {
     readFiles: 'allow',
     runTests: 'allow',
@@ -52,23 +52,23 @@ const CHAT_CONFIG_DEFAULTS = {
 }
 
 const CHAT_CONFIG_TOOL_LABELS = {
-  readFiles: '读取文件',
-  runTests: '运行测试',
-  writeFiles: '写入文件',
-  network: '联网',
+  readFiles: 'Read Files',
+  runTests: 'Run Tests',
+  writeFiles: 'Write Files',
+  network: 'Network',
 }
 
 export const MIGRATION_CONTENT_TYPES = [
-  { id: 'taskGoals', label: '\u4efb\u52a1\u76ee\u6807', description: '\u672c\u8f6e\u8981\u89e3\u51b3\u4ec0\u4e48', color: 'blue', recommended: true },
-  { id: 'progress', label: '\u5f53\u524d\u8fdb\u5ea6', description: '\u5b8c\u6210\u5ea6\u4e0e\u5269\u4f59\u4efb\u52a1', color: 'green', recommended: true },
-  { id: 'stableRules', label: '\u7a33\u5b9a\u89c4\u5219', description: '\u7ea6\u675f\u4e0e\u9a8c\u6536\u6807\u51c6', color: 'purple', recommended: true },
-  { id: 'keyDecisions', label: '\u5173\u952e\u51b3\u7b56', description: '\u65b9\u6848\u9009\u62e9\u4e0e\u7406\u7531', color: 'cyan', recommended: true },
-  { id: 'reusableExperience', label: '\u53ef\u590d\u7528\u7ecf\u9a8c', description: '\u6392\u67e5\u4e0e\u4fee\u590d\u6a21\u5f0f', color: 'teal', recommended: true },
-  { id: 'verificationEvidence', label: '\u9a8c\u8bc1\u8bc1\u636e', description: '\u6d4b\u8bd5\u3001Diff \u4e0e\u65e5\u5fd7', color: 'blue', recommended: true },
-  { id: 'failurePaths', label: '\u5931\u8d25\u8def\u5f84', description: '\u88ab\u5426\u5b9a\u7684\u65e7\u5047\u8bbe', color: 'orange', recommended: false },
-  { id: 'risks', label: '\u98ce\u9669\u5f85\u786e\u8ba4', description: '\u4ecd\u9700\u4eba\u5de5\u5224\u65ad\u9879', color: 'red', recommended: true },
-  { id: 'nextPrompt', label: '\u4e0b\u4e00\u8f6e\u63d0\u793a', description: '\u53ef\u76f4\u63a5\u5e26\u5165\u65b0\u4f1a\u8bdd', color: 'blue', recommended: true },
-  { id: 'skillLibrary', label: '\u6280\u80fd\u5e93\u6761\u76ee', description: '\u6c89\u6dc0\u4e3a\u957f\u671f\u65b9\u6cd5\u8bba', color: 'purple', recommended: false },
+  { id: 'taskGoals', label: 'Task Goals', description: 'what this turn needs to solve', color: 'blue', recommended: true },
+  { id: 'progress', label: 'Current Progress', description: 'completed work and remaining tasks', color: 'green', recommended: true },
+  { id: 'stableRules', label: 'Stable Rules', description: 'constraints and acceptance criteria', color: 'purple', recommended: true },
+  { id: 'keyDecisions', label: 'Key Decisions', description: 'chosen options and rationale', color: 'cyan', recommended: true },
+  { id: 'reusableExperience', label: 'Reusable Lessons', description: 'debugging and repair patterns', color: 'teal', recommended: true },
+  { id: 'verificationEvidence', label: 'Verification Evidence', description: 'tests, diffs, and logs', color: 'blue', recommended: true },
+  { id: 'failurePaths', label: 'Discarded Paths', description: 'rejected earlier assumptions', color: 'orange', recommended: false },
+  { id: 'risks', label: 'Open Risks', description: 'items that still need human judgment', color: 'red', recommended: true },
+  { id: 'nextPrompt', label: 'Next Prompt', description: 'ready-to-use prompt for a new conversation', color: 'blue', recommended: true },
+  { id: 'skillLibrary', label: 'Skill Library Entry', description: 'long-term reusable method', color: 'purple', recommended: false },
 ]
 
 const MIGRATION_TYPE_IDS = new Set(MIGRATION_CONTENT_TYPES.map((item) => item.id))
@@ -113,15 +113,25 @@ export function normalizeChatConfig(config) {
   const toolPermissions = input.toolPermissions && typeof input.toolPermissions === 'object'
     ? input.toolPermissions
     : {}
+  const legacyTextMap = new Map([
+    ['需求澄清', 'Requirement Clarification'],
+    ['方案设计', 'Solution Design'],
+    ['实现推进', 'Implementation'],
+    ['验证收尾', 'Validation'],
+    ['优先给出可执行结论', 'Lead with an actionable conclusion'],
+    ['涉及不确定性时说明假设', 'State assumptions when uncertain'],
+    ['改动建议附带验证方式', 'Include a verification method for change suggestions'],
+  ])
   const normalizeText = (value, maxLength) => String(value || '').trim().slice(0, maxLength)
+  const normalizeLabel = (value, maxLength) => legacyTextMap.get(normalizeText(value, maxLength)) || normalizeText(value, maxLength)
   const normalizePermission = (value, fallback) =>
     ['allow', 'confirm', 'deny'].includes(value) ? value : fallback
 
   return {
     goal: normalizeText(input.goal, 300),
-    stage: normalizeText(input.stage, 80) || CHAT_CONFIG_DEFAULTS.stage,
+    stage: normalizeLabel(input.stage, 80) || CHAT_CONFIG_DEFAULTS.stage,
     rules: [...new Set((Array.isArray(input.rules) ? input.rules : CHAT_CONFIG_DEFAULTS.rules)
-      .map((rule) => normalizeText(rule, 80))
+      .map((rule) => normalizeLabel(rule, 80))
       .filter(Boolean))].slice(0, 12),
     toolPermissions: {
       readFiles: normalizePermission(toolPermissions.readFiles, CHAT_CONFIG_DEFAULTS.toolPermissions.readFiles),
@@ -176,20 +186,20 @@ export { isAbortError }
 // 读取模型已经写入当前项目的 Markdown 文件，供聊天区文档卡片预览。
 // 只接受项目内相对路径，避免把聊天文本变成任意本地文件读取入口。
 export async function readProjectMarkdown(path, directory, signal) {
-  if (backend !== 'opencode') throw new Error('当前模型后端不支持项目文件预览。')
+  if (backend !== 'opencode') throw new Error('The current model backend does not support project file preview.')
   const relativePath = String(path || '').trim().replace(/\\/g, '/')
   if (
     !relativePath.toLowerCase().endsWith('.md') ||
     relativePath.startsWith('/') ||
     relativePath.split('/').includes('..')
   ) {
-    throw new Error('只能预览当前项目内的 Markdown 文件。')
+    throw new Error('Only Markdown files inside the current project can be previewed.')
   }
   const projectDirectory = resolveProjectDirectory(directory)
   const query = new URLSearchParams({ directory: projectDirectory, path: relativePath })
   const result = await requestOpencode(`/file/content?${query.toString()}`, { signal })
   if (result?.type !== 'text' || typeof result.content !== 'string') {
-    throw new Error('该路径不是可预览的文本文件。')
+    throw new Error('This path is not a previewable text file.')
   }
   return result.content
 }
@@ -213,7 +223,7 @@ function getBridgeClient() {
 export async function sendChatMessageStream({ sessionId, title, messages, signal, onDelta, onReasoning, onWorkflowPart, onUsage, selectedCards, chatConfig, directory }) {
   const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user')
   if (!latestUserMessage?.text?.trim()) {
-    throw new Error('没有可发送的用户消息。')
+    throw new Error('There is no user message to send.')
   }
 
   if (backend === 'openai-compatible') {
@@ -320,21 +330,21 @@ export async function sendChatMessageStream({ sessionId, title, messages, signal
       try {
         await client.abortSession({ sessionID: session.id, directory: requestDirectory })
       } catch (abortError) {
-        console.warn('[chatAdapter] 超时后终止 OpenCode session 失败：', abortError?.message || abortError)
+        console.warn('[chatAdapter] Failed to abort OpenCode session after timeout:', abortError?.message || abortError)
       }
       // 重试耗尽（innerAbort）或超时：若有 retry 信息，给出真实网关原因。
       if (lastRetry) {
         throw new Error(
-          `模型调用失败：${lastRetry.message}（已重试 ${lastRetry.attempt} 次仍失败）。建议换个模型或稍后重试。`,
+          `Model call failed: ${lastRetry.message}. It still failed after ${lastRetry.attempt} retries. Try another model or try again later.`,
         )
       }
-      throw new Error(`模型生成超时（${Math.round(OPENCODE_CHAT_TIMEOUT_MS / 1000)} 秒未完成），请稍后重试或换个模型。`)
+      throw new Error(`Model generation timed out after ${Math.round(OPENCODE_CHAT_TIMEOUT_MS / 1000)} seconds. Please try again later or switch models.`)
     }
     if (isNetworkError(error) || error?.name === 'OpenCodeSseError') {
       throw new Error(
-        `无法连接 opencode 服务。请先启动 opencode headless server（默认地址 ${
+        `Could not connect to the opencode service. Please start the opencode headless server (default ${
           env.VITE_OPENCODE_BASE_URL || OPENCODE_DEFAULT_BASE_URL
-        }），或设置 VITE_OPENCODE_BASE_URL 指向你的服务。`,
+        }) or set VITE_OPENCODE_BASE_URL to your service URL.`,
       )
     }
     throw error
@@ -424,14 +434,14 @@ export async function loadHistory(directory) {
         try {
           await updateSessionMetadata(client, projectDirectory, oc.id, uiMetadata)
         } catch (error) {
-          console.warn('[chatAdapter] 补写主 session metadata 失败：', error?.message || error)
+          console.warn('[chatAdapter] Failed to backfill main session metadata:', error?.message || error)
         }
       }
       if (supervisorSessionId && supervisorByMainId.get(oc.id) !== supervisorSessionId) {
         try {
           await updateSessionMetadata(client, projectDirectory, supervisorSessionId, buildSupervisorMetadata(oc.id))
         } catch (error) {
-          console.warn('[chatAdapter] 补写监督 session metadata 失败：', error?.message || error)
+          console.warn('[chatAdapter] Failed to backfill supervisor session metadata:', error?.message || error)
         }
       }
       result.push({
@@ -440,10 +450,10 @@ export async function loadHistory(directory) {
         createdAt: oc.time?.created || null,
         updatedAt: oc.time?.updated || oc.time?.created || null,
         // OpenCode 可能在首次生成后自动改写 title；用户手动标题拥有最高优先级。
-        title: metadata.manualTitle || oc.title || '未命名对话',
+        title: metadata.manualTitle || oc.title || 'Untitled Chat',
         time: formatRelative(oc.time?.updated || oc.time?.created),
-        summary: firstUser?.text || oc.title || '等待模型回复',
-        status: '进行中',
+        summary: firstUser?.text || oc.title || 'Waiting for model response',
+        status: 'In Progress',
         tone: 'progress',
         isDraft: false,
         messages,
@@ -455,7 +465,7 @@ export async function loadHistory(directory) {
     }
     return { connected: true, attempted: true, sessions: result }
   } catch (error) {
-    console.warn('[chatAdapter] loadHistory 失败，按未连接处理：', error?.message || error)
+    console.warn('[chatAdapter] loadHistory failed; treating the backend as disconnected:', error?.message || error)
     return { connected: false, attempted: true, sessions: null }
   }
 }
@@ -473,7 +483,7 @@ export async function getRemoteSessionUsage(sessionId, directory, signal) {
     const session = Array.isArray(sessions) ? sessions.find((item) => item?.id === remoteId) : null
     return session?.tokens && typeof session.tokens === 'object' ? session.tokens : null
   } catch (error) {
-    console.warn('[chatAdapter] 获取会话 token 统计失败：', error?.message || error)
+    console.warn('[chatAdapter] Failed to fetch session token usage:', error?.message || error)
     return null
   }
 }
@@ -490,7 +500,7 @@ export async function getRemoteBusySessionIds(signal) {
       .filter(([, status]) => status?.type === 'busy' || status?.type === 'retry')
       .map(([sessionID]) => sessionID)
   } catch (error) {
-    console.warn('[chatAdapter] 获取会话运行状态失败：', error?.message || error)
+    console.warn('[chatAdapter] Failed to fetch running session status:', error?.message || error)
     return null
   }
 }
@@ -506,7 +516,7 @@ export async function abortRemoteGeneration(sessionId, signal) {
   try {
     return Boolean(await getBridgeClient().abortSession({ sessionID: session.id, directory }, signal))
   } catch (error) {
-    console.warn('[chatAdapter] abortRemoteGeneration 失败：', error?.message || error)
+    console.warn('[chatAdapter] abortRemoteGeneration failed:', error?.message || error)
     return false
   }
 }
@@ -523,7 +533,7 @@ export async function deleteRemoteSession(sessionId, signal, directory) {
     opencodeSessions.delete(sessionId)
     return true
   } catch (error) {
-    console.warn('[chatAdapter] deleteRemoteSession 失败：', error?.message || error)
+    console.warn('[chatAdapter] deleteRemoteSession failed:', error?.message || error)
     return false
   }
 }
@@ -546,7 +556,7 @@ export async function renameRemoteSession(sessionId, title, baseMetadata, signal
     }, signal)
     return true
   } catch (error) {
-    console.warn('[chatAdapter] renameRemoteSession 失败：', error?.message || error)
+    console.warn('[chatAdapter] renameRemoteSession failed:', error?.message || error)
     return false
   }
 }
@@ -565,7 +575,7 @@ export async function saveRemoteCards(sessionId, cards, baseMetadata, signal, di
     await updateSessionMetadata(client, directory, oc.id, metadata, signal)
     return true
   } catch (error) {
-    console.warn('[chatAdapter] saveRemoteCards 失败：', error?.message || error)
+    console.warn('[chatAdapter] saveRemoteCards failed:', error?.message || error)
     return false
   }
 }
@@ -734,13 +744,13 @@ function buildMigrationAnalysisSystemPrompt() {
     'Respond with JSON only, no markdown fence or explanation.',
     'Schema: {"candidates":[{"id":"taskGoals","available":true,"recommended":true,"summary":"brief","evidence":"source"}]}.',
     'Allowed ids: ' + MIGRATION_CONTENT_TYPES.map((item) => item.id).join(', ') + '.',
-    'Every allowed id must appear exactly once. Use Chinese in summary and evidence fields.',
+    'Every allowed id must appear exactly once. Use English in summary and evidence fields.',
   ].join('\n')
 }
 
 function buildMigrationDocumentSystemPrompt() {
   return [
-    'Write a concise, handoff-ready project migration document in Chinese.',
+    'Write a concise, handoff-ready project migration document in English.',
     'Base every statement on the previous analysis in this temporary session.',
     'Return markdown only, without a code fence or explanation.',
     'Use a level-two heading for every selected category and clearly distinguish facts, decisions, and open questions.',
@@ -775,33 +785,33 @@ function buildMigrationTranscript(sessions) {
     const config = normalizeChatConfig(session?.metadata?.chatConfig)
     const messages = (Array.isArray(session?.messages) ? session.messages : [])
       .filter((message) => ['user', 'assistant'].includes(message?.role) && message?.text && !message?.pending)
-      .map((message) => (message.role === 'user' ? '\u7528\u6237' : 'Agent') + ': ' + String(message.text).trim())
+      .map((message) => (message.role === 'user' ? 'User' : 'Agent') + ': ' + String(message.text).trim())
       .join('\n\n')
     const configBlock = [
-      config.goal ? '\u5bf9\u8bdd\u76ee\u6807: ' + config.goal : '',
-      config.stage ? '\u5f53\u524d\u9636\u6bb5: ' + config.stage : '',
-      config.rules.length ? '\u5bf9\u8bdd\u89c4\u5219: ' + config.rules.join('\u3001') : '',
-      config.acceptanceCriteria ? '\u9a8c\u6536\u6807\u51c6: ' + config.acceptanceCriteria : '',
-      config.projectMemory ? '\u9879\u76ee\u8bb0\u5fc6: ' + config.projectMemory : '',
+      config.goal ? 'Conversation goal: ' + config.goal : '',
+      config.stage ? 'Current stage: ' + config.stage : '',
+      config.rules.length ? 'Conversation rules: ' + config.rules.join(', ') : '',
+      config.acceptanceCriteria ? 'Acceptance criteria: ' + config.acceptanceCriteria : '',
+      config.projectMemory ? 'Project memory: ' + config.projectMemory : '',
     ]
       .filter(Boolean)
       .join('\n')
     return [
-      '## \u4f1a\u8bdd ' + (index + 1) + ': ' + (session?.title || '\u672a\u547d\u540d\u5bf9\u8bdd'),
+      '## Conversation ' + (index + 1) + ': ' + (session?.title || 'Untitled Chat'),
       configBlock,
-      messages || '(\u8be5\u4f1a\u8bdd\u6ca1\u6709\u53ef\u7528\u7684\u6587\u672c\u6d88\u606f)',
+      messages || '(This conversation has no available text messages.)',
     ]
       .filter(Boolean)
       .join('\n')
   })
   const transcript = blocks.join('\n\n---\n\n')
   if (transcript.length <= 180000) return transcript
-  return transcript.slice(0, 180000) + '\n\n[\u8bb0\u5f55\u8fc7\u957f\uff0c\u540e\u7eed\u5185\u5bb9\u672a\u968f\u672c\u6b21\u8fc1\u79fb\u8bf7\u6c42\u53d1\u9001]'
+  return transcript.slice(0, 180000) + '\n\n[The records are too long; the remaining content was not sent with this migration request.]'
 }
 
 function migrationDocumentTitle(sessions) {
   const first = Array.isArray(sessions) ? sessions.find((session) => session?.title)?.title : ''
-  return (first || '\u9879\u76ee') + ' - \u8fc1\u79fb\u6587\u6863'
+  return (first || 'Project') + ' - Handoff Document'
 }
 
 function parseMigrationCandidates(text, sessions) {
@@ -858,7 +868,7 @@ export async function runSupervisorSummary({ mainSessionId, turnMessages, messag
     main = await ensureOpencodeSession(mainSessionId, undefined, signal, undefined, directory)
     supervisorId = await ensureSupervisorSession(mainSessionId, mainMetadata, signal, directory)
   } catch (error) {
-    console.warn('[chatAdapter] ensureSupervisorSession 失败：', error?.message || error)
+    console.warn('[chatAdapter] ensureSupervisorSession failed:', error?.message || error)
     return { cards: [], supervisorId: null, sourceParts: [] }
   }
 
@@ -895,9 +905,9 @@ export async function runSupervisorSummary({ mainSessionId, turnMessages, messag
     const requestedDirection = [...(turnMessages || messages || [])]
       .reverse()
       .find((message) => message?.role === 'user')
-      ?.text?.match(/方向\s*([A-Za-z0-9一二三四五六七八九十]+)/i)?.[1]
+      ?.text?.match(/direction\s*([A-Za-z0-9]+)/i)?.[1]
     const directionPattern = requestedDirection
-      ? new RegExp(`方向\\s*${requestedDirection}(?![A-Za-z0-9一二三四五六七八九十])`, 'i')
+      ? new RegExp(`direction\\s*${requestedDirection}(?![A-Za-z0-9])`, 'i')
       : null
     const currentTurnCovered = validated.some((card) => {
       const hasSourcePart = normalizePartIDs(card.partIDs).some((partID) => sourceIDs.has(partID))
@@ -913,7 +923,7 @@ export async function runSupervisorSummary({ mainSessionId, turnMessages, messag
       sourceParts,
     }
   } catch (error) {
-    console.warn('[chatAdapter] runSupervisorSummary 失败：', error?.message || error)
+    console.warn('[chatAdapter] runSupervisorSummary failed:', error?.message || error)
     return { cards: [], supervisorId, sourceParts }
   } finally {
     clearTimeout(timer)
@@ -936,12 +946,12 @@ async function ensureSupervisorSession(mainSessionId, mainMetadata, signal, targ
     try {
       await updateSessionMetadata(client, directory, mainId, buildMainMetadata(baseMainMetadata, cached), signal)
     } catch (error) {
-      console.warn('[chatAdapter] 写主 session supervisorSessionId 失败：', error?.message || error)
+      console.warn('[chatAdapter] Failed to write supervisorSessionId to the main session:', error?.message || error)
     }
     try {
       await updateSessionMetadata(client, directory, cached, buildSupervisorMetadata(mainId), signal)
     } catch (error) {
-      console.warn('[chatAdapter] 写监督 session mainSessionId 失败：', error?.message || error)
+      console.warn('[chatAdapter] Failed to write mainSessionId to the supervisor session:', error?.message || error)
     }
     return cached
   }
@@ -958,12 +968,12 @@ async function ensureSupervisorSession(mainSessionId, mainMetadata, signal, targ
   try {
     await updateSessionMetadata(client, directory, mainId, buildMainMetadata(baseMainMetadata, sup.id), signal)
   } catch (error) {
-    console.warn('[chatAdapter] 写主 session supervisorSessionId 失败：', error?.message || error)
+    console.warn('[chatAdapter] Failed to write supervisorSessionId to the main session:', error?.message || error)
   }
   return sup.id
 }
 
-// 拉取监督 session 的最新总结，解析成卡片（选择对话时刷新工作台用）。
+// Load the latest supervisor summary and parse it into context cards.
 export async function getSupervisorCards(supervisorId, signal, targetDirectory) {
   if (backend !== 'opencode' || !supervisorId) return []
   const client = getBridgeClient()
@@ -971,7 +981,7 @@ export async function getSupervisorCards(supervisorId, signal, targetDirectory) 
   try {
     const withParts = await client.messages({ sessionID: supervisorId, directory }, signal)
     if (!Array.isArray(withParts)) return []
-    // 取最后一条 assistant 总结的 text（最新卡片集）。
+    // Use the last assistant summary as the latest card set.
     const last = [...withParts].reverse().find((m) => m?.info?.role === 'assistant')
     if (!last) return []
     const text = (last.parts || [])
@@ -980,15 +990,15 @@ export async function getSupervisorCards(supervisorId, signal, targetDirectory) 
       .join('\n')
     return dedupeContextCards(parseCardsFromText(text))
   } catch (error) {
-    console.warn('[chatAdapter] getSupervisorCards 失败：', error?.message || error)
+    console.warn('[chatAdapter] getSupervisorCards failed:', error?.message || error)
     return []
   }
 }
 
-// 构造发给监督 session 的 prompt：本轮对话 + 现有卡片，要求输出更新后的完整卡片 JSON。
+// Build the supervisor prompt from the current turn and existing cards.
 function buildSupervisorPrompt(turnMessages, cards, sourceParts) {
   const transcript = normalizeMessages(turnMessages || [])
-    .map((m) => `${m.role === 'user' ? '用户' : 'AI'}：${m.content}`)
+    .map((m) => `${m.role === 'user' ? 'User' : 'AI'}: ${m.content}`)
     .join('\n')
   const cardsBlock =
     Array.isArray(cards) && cards.length
@@ -998,37 +1008,37 @@ function buildSupervisorPrompt(turnMessages, cards, sourceParts) {
               `- id: ${c.id || ''}\n  topic: ${c.topic || c.title}\n  category: ${c.category || ''}\n  title: ${c.title || ''}\n  body: ${c.body || ''}\n  partIDs: ${JSON.stringify(normalizePartIDs(c.partIDs))}`,
           )
           .join('\n')
-      : '（暂无）'
+      : '(none)'
   return [
-    '下面是用户与 AI 的本轮对话上下文，以及这个主对话过去已经沉淀出的上下文卡片。请只基于本轮对话对卡片做增量更新。',
+    'Below is the current turn between the user and AI, plus the context cards already extracted from this main conversation. Update the cards incrementally using only this turn.',
     '',
-    '要求：',
-    '1. 只输出更新后的完整 JSON 数组，每个元素形如 {"id":"","topic":"","category":"","title":"","body":"","partIDs":[]}。',
-    '2. 卡片代表一个边界清晰、可独立复用的研究子任务，而不是整个会话的大方向。判断是否更新旧卡片时，必须同时满足：研究对象/概念相同，用户当前目标或交付物相同，任务阶段连续。仅仅同属一个上位领域，不算同一主题。',
-    '3. 出现以下任一变化时，应追加一个新卡片，而不是扩写旧卡片：用户明确改变调研方向或研究对象；开始调研一个新理论、概念或框架；从论文检索转向理论综述、实验设计、方法分析、系统实现等不同目标；用户使用“另外、转向、接下来、我想了解、围绕某个新方向”等表达开启可独立成立的子任务。',
-    '3.1 用户要求“探索方向 N / 生成方向 N 方案”时，该方向必须生成独立卡片，不能因旧卡片已概览多个方向而跳过，也不能把它并回多方向概览卡。',
-    '4. 只有本轮是在补充、追问、验证或细化同一个研究对象且目标未改变时，才更新已有卡片；此时必须保留原来的 id、topic 和 partIDs，并追加真正支撑本轮更新的 source partID。',
-    '5. 拿不准是合并还是拆分时，优先拆分为新卡片，避免单张卡片不断膨胀。卡片数量由本轮实际包含的独立目标决定：一个目标生成一张，多个可独立复用的目标可以生成多张，不设固定数量上限。新卡片可以省略 id 或把 id 留空，topic 应使用“研究对象 + 任务目标”的稳定表述。',
-    '6. 与本轮无关的旧卡片原样保留在数组里。',
-    '7. category 应根据本轮内容的真实用途概括，可使用问题分析、修复方案、进展、论文调研、实验设计、文档总结等，也可以为新内容自拟准确分类，不受固定枚举限制。',
-    '8. title 一句话概括主题；body 用约 90–160 个中文字符完整介绍该主题，只保留该子任务的背景、核心信息和当前结论，不要把其他卡片主题揉进来。',
-    '9. partIDs 只能使用“本轮可关联 source parts”中给出的 partID，或保留已有卡片原有的 partIDs；不得编造。与本轮无关的旧卡片必须原样保留其 partIDs。',
-    '10. AI 回复中的 <contextpilot-artifact> 是正式 Markdown 文档内容，不是格式噪声。必须阅读其标题、章节和结论，并依据文档实际主题新增或更新卡片；不得因为回复是 Markdown、报告或制品而跳过本轮。',
-    '11. 输出前必须检查重复主题：如果两张卡片描述同一研究对象、同一方案组合和同一交付目标，即使 category、title 措辞或 id 不同，也必须合并为一张；保留更完整正文并合并 partIDs。',
-    '12. 不要输出 JSON 以外的任何文字（不要解释、不要 markdown 代码块标记）。',
+    'Requirements:',
+    '1. Output only the complete updated JSON array. Each item must look like {"id":"","topic":"","category":"","title":"","body":"","partIDs":[]}.',
+    '2. A card represents a clearly bounded, independently reusable research subtask, not the broad direction of the entire conversation. Update an existing card only when the research object/concept, the current user goal or deliverable, and the task stage are all continuous.',
+    '3. Add a new card instead of expanding an old one when the user changes the research direction/object, starts a new theory/concept/framework, shifts from literature search to theory review/study design/method analysis/system implementation, or opens a clearly independent subtask.',
+    '3.1 If the user asks to explore or generate Direction N, that direction must become an independent card. Do not skip it because an older overview mentions multiple directions, and do not merge it back into a multi-direction overview.',
+    '4. Update an existing card only when this turn supplements, questions, verifies, or refines the same research object without changing the goal. Keep its id, topic, and existing partIDs, and append only source partIDs that truly support the update.',
+    '5. When unsure whether to merge or split, prefer creating a new card so one card does not keep expanding. The number of cards should follow the number of independent goals in the turn; there is no fixed cap.',
+    '6. Keep old cards unrelated to this turn unchanged.',
+    '7. The category must accurately summarize the real purpose of the content. Use concise English labels such as Issue Analysis, Fix Plan, Progress, Literature Review, Study Design, Product Design, or Document Summary; custom accurate labels are allowed.',
+    '8. The title should summarize the topic in one phrase. The body should be 1-2 concise English sentences covering only this subtask’s background, key information, and current conclusion.',
+    '9. partIDs may only use IDs from Current linkable source parts, or retain partIDs already held by old cards. Never invent IDs.',
+    '10. <contextpilot-artifact> in the AI reply is formal Markdown document content, not formatting noise. Read its title, sections, and conclusions, then add or update cards according to the document’s actual topic.',
+    '11. Before output, remove duplicates. If two cards describe the same research object, solution combination, and deliverable, merge them into one card even if their categories or titles differ.',
+    '12. Do not output anything except JSON. No explanations and no Markdown fences.',
     '',
-    '过去卡片：',
+    'Existing cards:',
     cardsBlock,
     '',
-    '本轮对话上下文：',
+    'Current turn transcript:',
     transcript,
     '',
-    '本轮可关联 source parts（卡片必须用这里的 partID 关联原始对话）：',
+    'Current linkable source parts. Cards must use these partIDs to link back to the original turn:',
     sourceParts.length ? JSON.stringify(sourceParts) : '[]',
   ].join('\n')
 }
 
-// 从模型输出中提取卡片 JSON 数组（容错：处理 ```json 包裹、前后多余文字）。
+// Extract a card JSON array from model output, tolerating fences or extra text.
 function parseCardsFromText(text) {
   if (!text || typeof text !== 'string') return []
   let jsonText = text
@@ -1045,7 +1055,7 @@ function parseCardsFromText(text) {
       .map((c) => ({
         id: String(c.id || '').trim(),
         topic: normalizeCardTitle(c.topic || c.title),
-        category: String(c.category || '其他').trim(),
+        category: String(c.category || 'Other').trim(),
         title: normalizeCardTitle(c.title || c.topic),
         body: String(c.body || '').trim(),
         partIDs: normalizePartIDs(c.partIDs || c.part_ids),
@@ -1056,12 +1066,12 @@ function parseCardsFromText(text) {
   }
 }
 
-// 选中的卡片 → 注入主对话的上下文文本块。
+// Selected cards become the context block injected into the main conversation.
 function buildContextFromCards(selectedCards) {
   if (!Array.isArray(selectedCards) || selectedCards.length === 0) return ''
-  const blocks = selectedCards.map((c) => `【${c.title}】\n${c.body}`)
+  const blocks = selectedCards.map((c) => `[${c.title}]\n${c.body}`)
   return [
-    '以下是用户在工作台明确选定的上下文模块。回答当前问题时必须优先依据这些内容；不得忽略、替换或与未选中的卡片混用。若卡片信息不足以回答，请明确指出缺少的信息。',
+    'The following context cards were explicitly selected in the workbench. Prioritize them when answering the current question. Do not ignore, replace, or mix them with unselected cards. If the selected cards are insufficient, clearly state what information is missing.',
     ...blocks,
   ].join('\n\n')
 }
@@ -1081,7 +1091,7 @@ function normalizedCardTitle(value) {
   return String(value || '')
     .toLowerCase()
     .replace(/[\s\p{P}\p{S}]+/gu, '')
-    .replace(/(?:两个|项目|设计方案|方案|的|与)/g, '')
+    .replace(/(?:project|design|plan|solution|and|the|of)/g, '')
 }
 
 function cardTitleBigrams(value) {
@@ -1179,17 +1189,16 @@ function mergeLoadedContextCards(supervisorCards, storedCards, validPartIDs) {
         ? {
             id: saved.id || card.id,
             selected: Boolean(saved.selected),
-            priority: saved.priority || card.priority || '中',
-            source: saved.source || card.source || 'AI 总结',
+            priority: saved.priority || card.priority || 'Medium',
+            source: saved.source || card.source || 'AI Summary',
             time: saved.time || card.time,
             deleted: Boolean(saved.deleted),
             deletedAt: saved.deletedAt || null,
           }
         : {
-            // 主 session 尚未持久化到的监督新卡片，按新增卡片规则默认加入上下文。
             selected: true,
-            priority: card.priority || '中',
-            source: card.source || 'AI 总结',
+            priority: card.priority || 'Medium',
+            source: card.source || 'AI Summary',
           }),
       partIDs: filterExistingPartIDs(
         // 主 session 中的卡片已经通过写入前校验，是恢复时的关联真值；
@@ -1205,7 +1214,7 @@ function mergeLoadedContextCards(supervisorCards, storedCards, validPartIDs) {
     result.push({
       ...card,
       selected: Boolean(card.selected),
-      priority: card.priority || '中',
+      priority: card.priority || 'Medium',
       partIDs: filterExistingPartIDs(card.partIDs, validPartIDs),
     })
   }
@@ -1257,13 +1266,13 @@ function buildContextPromptParts({ prompt, selectedCards, attachments }) {
   const attachmentParts = Array.isArray(attachments)
     ? attachments.flatMap((attachment) => {
         if (attachment?.extractedText && (attachment?.mime === 'application/pdf' || /\.pdf$/i.test(attachment?.name || ''))) {
-          const truncationNote = attachment.textTruncated ? '\n\n[文件内容较长，以上为截取内容]' : ''
+          const truncationNote = attachment.textTruncated ? '\n\n[The file is long; the text above is an excerpt.]' : ''
           return [{
             type: 'text',
             text: [
-              `以下是 PDF 文件“${attachment.name || '未命名文件'}”提取出的文本内容`,
-              attachment.pageCount ? `（共 ${attachment.pageCount} 页）` : '',
-              `：\n\n${attachment.extractedText}${truncationNote}`,
+              `Extracted text from the PDF file "${attachment.name || 'Untitled file'}"`,
+              attachment.pageCount ? ` (${attachment.pageCount} pages)` : '',
+              `:\n\n${attachment.extractedText}${truncationNote}`,
             ].join(''),
             synthetic: true,
           }]
@@ -1325,7 +1334,7 @@ async function getLatestTurnPartReferences(client, sessionID, directory, signal)
           })),
       )
   } catch (error) {
-    console.warn('[chatAdapter] 获取本轮 source parts 失败：', error?.message || error)
+    console.warn('[chatAdapter] Failed to fetch source parts for this turn:', error?.message || error)
     return []
   }
 }
@@ -1440,7 +1449,7 @@ function toUIMessage(withParts) {
     .filter((part) => part?.type === 'file' && typeof part.url === 'string')
     .map((part) => ({
       id: part.id || `attachment-${Math.random().toString(36).slice(2, 8)}`,
-      name: part.filename || '附件',
+      name: part.filename || 'Attachment',
       mime: part.mime || 'application/octet-stream',
       kind: String(part.mime || '').startsWith('image/') ? 'image' : 'file',
       dataUrl: part.url,
@@ -1479,17 +1488,17 @@ function toUIMessage(withParts) {
 
 // 毫秒时间戳 → 相对时间（与 mock「2 分钟前」风格一致）。
 function formatRelative(ts) {
-  if (!ts || typeof ts !== 'number') return '未知'
+  if (!ts || typeof ts !== 'number') return 'Unknown'
   const diff = Date.now() - ts
-  if (diff < 0) return '刚刚'
+  if (diff < 0) return 'Just now'
   const min = Math.floor(diff / 60000)
-  if (min < 1) return '刚刚'
-  if (min < 60) return `${min} 分钟前`
+  if (min < 1) return 'Just now'
+  if (min < 60) return `${min} min ago`
   const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr} 小时前`
+  if (hr < 24) return `${hr} hr ago`
   const day = Math.floor(hr / 24)
-  if (day === 1) return '昨天'
-  if (day < 7) return `${day} 天前`
+  if (day === 1) return 'Yesterday'
+  if (day < 7) return `${day} days ago`
   const d = new Date(ts)
   return `${d.getMonth() + 1}-${d.getDate()}`
 }
@@ -1514,7 +1523,7 @@ export async function sendChatMessage({ sessionId, title, messages, signal, sele
 async function sendOpencodeMessage({ sessionId, title, messages, signal, selectedCards, chatConfig, directory }) {
   const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user')
   if (!latestUserMessage?.text?.trim()) {
-    throw new Error('没有可发送的用户消息。')
+    throw new Error('There is no user message to send.')
   }
 
   const projectDirectory = resolveProjectDirectory(directory)
@@ -1557,10 +1566,10 @@ async function sendOpencodeMessage({ sessionId, title, messages, signal, selecte
             method: 'POST',
           })
         } catch (abortError) {
-          console.warn('[chatAdapter] 同步请求超时后终止 session 失败：', abortError?.message || abortError)
+          console.warn('[chatAdapter] Failed to abort session after sync request timeout:', abortError?.message || abortError)
         }
       }
-      throw new Error(`模型生成超时（${Math.round(OPENCODE_CHAT_TIMEOUT_MS / 1000)} 秒未完成），请稍后重试或更换模型。`)
+      throw new Error(`Model generation timed out after ${Math.round(OPENCODE_CHAT_TIMEOUT_MS / 1000)} seconds. Please try again later or switch models.`)
     }
     throw error
   } finally {
@@ -1581,7 +1590,7 @@ async function ensureOpencodeSession(clientSessionId, title, signal, chatConfig,
     signal,
   })
   const id = response?.id
-  if (!id) throw new Error(`opencode 未返回会话 ID：${title || cacheKey}`)
+  if (!id) throw new Error(`opencode did not return a session ID: ${title || cacheKey}`)
 
   const session = { id }
   rememberOpencodeSession(cacheKey, session)
@@ -1627,7 +1636,7 @@ async function requestOpencode(path, options = {}) {
   } catch (error) {
     if (isNetworkError(error)) {
       throw new Error(
-        `无法连接 opencode 服务。请先启动 opencode headless server（默认地址 ${baseURL}），或设置 VITE_OPENCODE_BASE_URL 指向你的服务。`,
+        `Could not connect to the opencode service. Please start the opencode headless server (default ${baseURL}) or set VITE_OPENCODE_BASE_URL to your service URL.`,
       )
     }
     throw error
@@ -1637,7 +1646,7 @@ async function requestOpencode(path, options = {}) {
 async function sendOpenAICompatibleMessage({ messages, signal, chatConfig, selectedCards }) {
   const baseURL = env.VITE_OPENAI_BASE_URL
   if (!baseURL) {
-    throw new Error('缺少 VITE_OPENAI_BASE_URL，无法调用 OpenAI-compatible 模型接口。')
+    throw new Error('VITE_OPENAI_BASE_URL is missing, so the OpenAI-compatible model endpoint cannot be called.')
   }
 
   const url = `${trimTrailingSlash(baseURL)}${normalizePath(env.VITE_OPENAI_CHAT_PATH || OPENAI_COMPATIBLE_DEFAULT_PATH)}`
@@ -1705,7 +1714,7 @@ function extractOpencodeAssistantText(response, options = {}) {
     : response
   if (!assistant) {
     if (options.allowIncomplete) return ''
-    throw new Error('opencode 没有返回 assistant 消息。')
+    throw new Error('opencode did not return an assistant message.')
   }
   if (assistant.info?.error?.message) throw new Error(assistant.info.error.message)
   if (assistant.error?.message) throw new Error(assistant.error.message)
@@ -1717,7 +1726,7 @@ function extractOpencodeAssistantText(response, options = {}) {
     .join('\n\n')
 
   if (!text && options.allowIncomplete) return ''
-  if (!text) throw new Error('opencode 返回了消息，但没有文本内容。')
+  if (!text) throw new Error('opencode returned a message, but it contained no displayable text.')
   return text
 }
 
@@ -1733,13 +1742,13 @@ function extractOpenAICompatibleAssistantText(response) {
     if (text) return text
   }
 
-  throw new Error('模型接口没有返回可显示的文本。')
+  throw new Error('The model endpoint did not return displayable text.')
 }
 
 function formatRequestError(response, data, text) {
   const message =
     data?.error?.message || data?.message || data?.data?.message || text || `${response.status} ${response.statusText}`
-  return `模型请求失败：${message}`
+  return `Model request failed: ${message}`
 }
 
 function jsonHeaders(body) {
@@ -1783,13 +1792,13 @@ export function explicitlyRequestsMarkdownFile(prompt) {
   const text = String(prompt || '').trim().toLowerCase()
   if (!text) return false
 
-  const markdown = '(?:markdown|\\.md\\b|md\\s*(?:格式|文件|文档|报告))'
-  const action = '(?:生成|导出|输出|创建|制作|保存|写入|写成|写一份|整理|转换|转成|转为|generate|export|create|save|write|convert)'
-  const format = '(?:格式(?:为|是|用)?|保存为|输出为|导出为|转成|转为|as)'
-  const negation = '(?:不要|无需|不需要|禁止|别|停止|取消|do\\s+not|don[’\']?t|without)'
+  const markdown = '(?:markdown|\\.md\\b|md\\s*(?:file|document|report|format))'
+  const action = '(?:generate|export|output|create|make|save|write|organize|convert)'
+  const format = '(?:as|format(?:ted)?\\s+as|save\\s+as|export\\s+as|output\\s+as|convert\\s+to)'
+  const negation = '(?:do\\s+not|don[’\']?t|without|no\\s+need|avoid|forbid|stop|cancel)'
   if (new RegExp(`${negation}.{0,24}${markdown}|${markdown}.{0,24}${negation}`, 'i').test(text)) return false
   return new RegExp(
-    `${action}[^。！？!?\\n]{0,80}${markdown}|${markdown}[^。！？!?\\n]{0,80}${action}|${format}\\s*${markdown}`,
+    `${action}[^.!?\\n]{0,80}${markdown}|${markdown}[^.!?\\n]{0,80}${action}|${format}\\s*${markdown}`,
     'i',
   ).test(text)
 }
@@ -1807,13 +1816,13 @@ export function ensureMarkdownArtifactResponse(response, prompt) {
   const fenced = text.match(/^```(?:markdown|md)?\s*\n([\s\S]*?)\n```$/i)
   const content = String(fenced?.[1] || text).trim()
   const heading = content.match(/^\s*#{1,2}\s+(.+)$/m)?.[1]
-  const requested = String(prompt || '').match(/(?:文件名|命名为|保存为|导出为|输出为)[：:\s]*[`"“]?([^`"”\n]+?\.md)\b/i)?.[1]
-  const baseName = String(requested || heading || '生成文档')
+  const requested = String(prompt || '').match(/(?:filename|name(?:d)?\s+as|save\s+as|export\s+as|output\s+as)[:\s]*[`"]?([^`"\n]+?\.md)\b/i)?.[1]
+  const baseName = String(requested || heading || 'generated-document')
     .replace(/\.md$/i, '')
     .replace(/[\\/:*?"<>|]/g, '-')
     .replace(/\s+/g, '-')
     .slice(0, 60)
-    .replace(/-+$/g, '') || '生成文档'
+    .replace(/-+$/g, '') || 'generated-document'
 
   return `<contextpilot-artifact filename="${baseName}.md">\n${content}\n</contextpilot-artifact>`
 }
@@ -1825,46 +1834,46 @@ function buildChatSystemPrompt(chatConfig, selectedCards, prompt) {
   const allowMarkdownArtifact = explicitlyRequestsMarkdownFile(prompt)
   const permissionLabel = (key) => {
     const value = config.toolPermissions[key]
-    return value === 'allow' ? '允许' : value === 'confirm' ? '需先征得用户确认' : '禁止'
+    return value === 'allow' ? 'Allowed' : value === 'confirm' ? 'Ask for confirmation first' : 'Denied'
   }
-  const ruleBlock = config.rules.length ? config.rules.map((rule) => `- ${rule}`).join('\n') : '- 无额外规则'
+  const ruleBlock = config.rules.length ? config.rules.map((rule) => `- ${rule}`).join('\n') : '- No extra rules'
 
   return [
     basePrompt,
-    ...(cardContext ? ['', '【当前轮选中上下文】', cardContext] : []),
+    ...(cardContext ? ['', '[Selected context for this turn]', cardContext] : []),
     '',
-    '【当前会话对话底盘配置】',
-    `对话目标：${config.goal || '未设置，围绕用户当前问题推进。'}`,
-    `当前阶段：${config.stage}`,
-    '对话规则：',
+    '[Current conversation settings]',
+    `Conversation goal: ${config.goal || 'Not set. Continue around the user’s current question.'}`,
+    `Current stage: ${config.stage}`,
+    'Conversation rules:',
     ruleBlock,
-    '工具权限：',
-    ...Object.entries(CHAT_CONFIG_TOOL_LABELS).map(([key, label]) => `- ${label}：${permissionLabel(key)}`),
-    `验收标准：${config.acceptanceCriteria || '给出清晰、可执行的下一步。'}`,
-    `项目记忆：${config.projectMemory || '暂无。'}`,
-    '将以上配置视为本会话的持续约束；工具是否真正可用仍以运行环境实际授予的权限为准。',
+    'Tool permissions:',
+    ...Object.entries(CHAT_CONFIG_TOOL_LABELS).map(([key, label]) => `- ${label}: ${permissionLabel(key)}`),
+    `Acceptance criteria: ${config.acceptanceCriteria || 'Provide a clear, actionable next step.'}`,
+    `Project memory: ${config.projectMemory || 'None.'}`,
+    'Treat these settings as persistent constraints for this conversation. Actual tool availability still depends on the runtime permissions.',
     '',
-    '【响应效率规则】',
-    '- 优先尽快给出可用答案。工具预算按“当前这一轮用户请求”独立计算，过去轮次的调用不计入当前预算。',
-    `- 当前轮最多调用 ${OPENCODE_CHAT_MAX_TOOL_CALLS} 次工具，最多进行两轮工具动作；达到任一上限后必须立即基于已有证据给出正式答案。`,
-    '- 第一轮只做覆盖面检索，第二轮只核验最关键的来源；不要对同一问题连续改写关键词反复搜索。',
-    '- 联网发现信息使用 websearch，获取明确 URL 使用 webfetch；禁止使用 bash、curl 或脚本进行网络检索。联网权限为“允许”时应直接调用工具，不要再次要求用户回复“继续”或重复授权。',
-    '- 单个网页返回 403、404、429 或传输错误，只表示该来源不可访问，不代表系统没有联网。请改用 websearch 或其它权威来源；最终答案应准确说明具体来源失败，禁止笼统声称“当前环境没有联网”。',
-    '- 同一来源抓取失败后最多换一种方式重试一次；连续两次失败就停止抓取，根据已有证据作答并说明限制。',
-    '- 如果用户要求的资料在当前会话已经检索过，优先复用已有结果；只补查缺失的关键证据，不要从头重复检索。',
-    '- 不要把工具尝试过程、命令调试过程或内部计划写入最终答案。',
-    '- 达到工具或时间预算后立即综合已有结果，不要为了追求穷尽性持续搜索。',
+    '[Response efficiency rules]',
+    '- Prioritize a usable answer quickly. The tool budget applies only to the current user request; past turns do not count.',
+    `- Use at most ${OPENCODE_CHAT_MAX_TOOL_CALLS} tool calls and at most two tool-action rounds in this turn. Once either limit is reached, answer from the available evidence.`,
+    '- Use the first round for broad coverage and the second round only to verify the most important sources. Do not repeatedly rewrite search queries for the same issue.',
+    '- Use websearch for discovery and webfetch for known URLs. Do not use bash, curl, or scripts for web retrieval. If network permission is allowed, use it directly without asking the user to say “continue” again.',
+    '- A 403, 404, 429, or transfer error from one site only means that source is inaccessible. Try websearch or other authoritative sources, and describe the specific source failure accurately.',
+    '- After one source fails, retry it at most one different way. If it fails twice, stop fetching and answer with the available evidence and limitations.',
+    '- If the requested material has already been searched in this conversation, reuse existing results and only fill critical gaps.',
+    '- Do not include tool attempts, command debugging, or internal plans in the final answer.',
+    '- When the tool or time budget is reached, synthesize the available result immediately.',
     '',
-    '【Markdown 文件规则】',
+    '[Markdown file rules]',
     ...(allowMarkdownArtifact
       ? [
-          '- 当前用户消息已明确要求生成或导出 Markdown/.md 文件。若未指定项目路径，不要调用写文件工具，直接使用以下容器输出：<contextpilot-artifact filename="文件名.md">完整 Markdown 内容</contextpilot-artifact>。',
-          '- filename 必须简洁、安全且以 .md 结尾；容器内部必须是完整 Markdown，不要再套代码块。',
-          '- 只有用户明确给出项目内目标路径时才写入项目文件；写入权限为“需确认”时先请求一次确认。',
+          '- The current user message explicitly asks to generate or export a Markdown/.md file. If no project path is specified, do not call the write-file tool; output the document using this container: <contextpilot-artifact filename="filename.md">full Markdown content</contextpilot-artifact>.',
+          '- The filename must be concise, safe, and end with .md. The container body must be complete Markdown and must not be wrapped in another code block.',
+          '- Write to a project file only when the user provides an explicit target path inside the project. If write permission requires confirmation, ask once first.',
         ]
       : [
-          '- 当前用户消息没有明确要求生成 Markdown/.md 文件。禁止输出 <contextpilot-artifact> 容器，禁止创建、写入、保存或导出任何 .md 文件。',
-          '- 即使用户要求报告、总结、方案、清单或文档，也只在普通对话正文中回答；除非当前消息明确要求 Markdown 或 .md 文件。',
+          '- The current user message does not explicitly ask for a Markdown/.md file. Do not output a <contextpilot-artifact> container, and do not create, write, save, or export any .md file.',
+          '- Even if the user asks for a report, summary, plan, checklist, or document, answer in normal chat text unless the current message explicitly asks for Markdown or a .md file.',
         ]),
   ].join('\n')
 }

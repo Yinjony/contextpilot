@@ -1,7 +1,7 @@
 // 轻量级 ElMessage 风格通知（项目未引入 element-plus，这里提供一个 API 兼容的最小实现）。
 // 用法与 Element Plus 一致：
 //   ElMessage('提示文字')
-//   ElMessage({ message: '尚未连接 opencode', type: 'warning', duration: 3000 })
+//   ElMessage({ message: 'opencode is not connected yet', type: 'warning', duration: 3000 })
 //   ElMessage.warning('…') / ElMessage.success('…') / ElMessage.error('…') / ElMessage.info('…')
 
 const STYLE_ID = 'contextpilot-el-message-style'
@@ -136,7 +136,7 @@ function showToast({ type = 'info', message = '', duration = 3000, showClose = f
     const btn = document.createElement('button')
     btn.type = 'button'
     btn.className = 'ctx-msg-close'
-    btn.setAttribute('aria-label', '关闭')
+    btn.setAttribute('aria-label', 'Close')
     btn.innerHTML = closeSvg()
     btn.addEventListener('click', dismiss)
     el.appendChild(btn)

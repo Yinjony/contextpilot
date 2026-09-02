@@ -27,7 +27,7 @@ let rafId = 0
 const labels = computed(() => t('chart.performanceTest'))
 const dataPointCount = computed(() => (useLargeDataset.value ? 5000 : 500))
 const datasetCount = computed(() => (useLargeDataset.value ? 4 : 2))
-const estimatedRender = computed(() => `${Math.round(dataPointCount.value * datasetCount.value / 1000)}k 节点`)
+const estimatedRender = computed(() => `${Math.round(dataPointCount.value * datasetCount.value / 1000)}k nodes`)
 
 function buildData() {
   const count = dataPointCount.value
