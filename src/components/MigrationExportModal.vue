@@ -19,27 +19,27 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const t = {
-  title: '\u8fc1\u79fb\u6587\u6863\u751f\u6210\u5668',
-  idle: '\u7b49\u5f85\u5f00\u59cb\u5206\u6790',
-  idleDescription: '\u5206\u6790\u5f53\u524d\u9879\u76ee\u7684\u4e3b\u5bf9\u8bdd\uff0c\u63d0\u53d6\u53ef\u4ea4\u63a5\u7684\u7ecf\u9a8c\u4e0e\u4e0a\u4e0b\u6587\u3002',
-  analyze: '\u5f00\u59cb\u5206\u6790\u5e76\u83b7\u53d6\u5019\u9009\u5185\u5bb9',
-  analyzing: '\u6b63\u5728\u5206\u6790\u5bf9\u8bdd\u8bb0\u5f55\u2026',
-  selectTitle: '\u9009\u62e9\u8981\u5199\u5165\u8fc1\u79fb\u6587\u6863\u7684\u5185\u5bb9',
-  selectDescription: '\u4f60\u53ef\u4ee5\u6839\u636e\u5019\u9009\u5185\u5bb9\u8c03\u6574\u9009\u62e9\uff0c\u4ec5\u5df2\u9009\u62e9\u7684\u7c7b\u522b\u4f1a\u8fdb\u5165\u6587\u6863\u3002',
-  generate: '\u751f\u6210 Markdown \u9884\u89c8',
-  generating: '\u6b63\u5728\u751f\u6210\u8fc1\u79fb\u6587\u6863\u2026',
-  retry: '\u91cd\u65b0\u5206\u6790',
-  back: '\u8fd4\u56de\u9009\u62e9',
-  close: '\u5173\u95ed',
-  copy: '\u590d\u5236',
-  copied: '\u5df2\u590d\u5236',
-  export: '\u5bfc\u51fa .md',
-  edit: '\u7f16\u8f91',
-  preview: '\u9884\u89c8',
-  selected: '\u5df2\u9009\u62e9',
-  noEvidence: '\u672a\u53d1\u73b0\u8db3\u591f\u8bc1\u636e',
-  recommended: '\u5efa\u8bae\u4fdd\u7559',
-  documentName: '\u8fc1\u79fb\u6587\u6863\u540d\u79f0',
+  title: 'Migration Document Generator',
+  idle: 'Ready to start analysis',
+  idleDescription: 'Analyze the main conversations of this project and extract handoff-ready experience and context.',
+  analyze: 'Analyze and fetch candidates',
+  analyzing: 'Analyzing conversations\u2026',
+  selectTitle: 'Choose what goes into the migration document',
+  selectDescription: 'Adjust the selection as needed \u2014 only the selected categories will be written into the document.',
+  generate: 'Generate Markdown preview',
+  generating: 'Generating migration document\u2026',
+  retry: 'Re-analyze',
+  back: 'Back to selection',
+  close: 'Close',
+  copy: 'Copy',
+  copied: 'Copied',
+  export: 'Export .md',
+  edit: 'Edit',
+  preview: 'Preview',
+  selected: 'Selected',
+  noEvidence: 'Not enough evidence found',
+  recommended: 'Recommended',
+  documentName: 'Document name',
 }
 
 marked.setOptions({ breaks: true, gfm: true })
@@ -49,7 +49,7 @@ const candidates = ref(MIGRATION_CONTENT_TYPES.map((item) => ({ ...item, availab
 const selectedIDs = ref([])
 const temporarySessionID = ref('')
 const markdown = ref('')
-const documentTitle = ref('\u9879\u76ee - \u8fc1\u79fb\u6587\u6863')
+const documentTitle = ref('Project - Migration Document')
 const previewMode = ref('preview')
 const error = ref('')
 const copied = ref(false)
@@ -121,7 +121,7 @@ async function generatePreview() {
       directory: props.directory,
       signal: requestController.signal,
     })
-    documentTitle.value = (props.sessions.find((session) => session?.title)?.title || '\u9879\u76ee') + ' - \u8fc1\u79fb\u6587\u6863'
+    documentTitle.value = (props.sessions.find((session) => session?.title)?.title || 'Project') + ' - Migration Document'
     previewMode.value = 'preview'
     phase.value = 'preview'
   } catch (cause) {
@@ -167,7 +167,7 @@ function exportMarkdown() {
   if (!markdown.value) return
   const blob = new Blob([markdown.value], { type: 'text/markdown;charset=utf-8' })
   const link = document.createElement('a')
-  const safeName = (documentTitle.value || '\u8fc1\u79fb\u6587\u6863').replace(/[\\/:*?"<>|]/g, '-')
+  const safeName = (documentTitle.value || 'Migration Document').replace(/[\\/:*?"<>|]/g, '-')
   link.href = URL.createObjectURL(blob)
   link.download = safeName + '.md'
   link.click()

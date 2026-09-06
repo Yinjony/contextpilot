@@ -272,7 +272,8 @@ const metrics = computed(() => {
       <span class="empty-icon"><AppIcon name="layers" :size="22" /></span>
       <h3>{{ searchQuery ? 'No matching context cards' : 'No context cards yet' }}</h3>
       <p v-if="searchQuery">Try another keyword, or <span class="context-empty-action" role="button" tabindex="0" @click="clearSearch" @keydown.enter="clearSearch">clear search</span>.</p>
-      <p v-else>After the first message, the supervisor will summarize the turn into cards.</p>
+      <p v-else>After the first message, <br>
+        the supervisor will summarize the turn into cards.</p>
     </div>
     </template>
   </section>
