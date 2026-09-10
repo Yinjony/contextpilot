@@ -6,7 +6,7 @@ import net from 'node:net'
 import { mkdir, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
-// opencode headless 后端端口：默认 4096（与 src/model/chatAdapter.js 的默认 baseUrl 对齐）。
+// opencode headless 后端端口：默认 4096（与 src/model/opencode-bridge.js 的默认 baseUrl 对齐）。
 // 可用环境变量 OPENCODE_SERVE_PORT 覆盖；设 VITE_AUTO_START_OPENCODE=false 可彻底禁用自动启动。
 const OPENCODE_SERVE_PORT = process.env.OPENCODE_SERVE_PORT || '4096'
 const AUTO_START_DISABLED = process.env.VITE_AUTO_START_OPENCODE === 'false'

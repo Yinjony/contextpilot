@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import AppIcon from './AppIcon.vue'
-import { readProjectMarkdown } from '../model/chatAdapter.js'
+import { readProjectMarkdown } from '../model/opencode-bridge.js'
 
 const props = defineProps({
   message: {

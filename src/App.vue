@@ -7,7 +7,7 @@ import SessionConfigModal from './components/SessionConfigModal.vue'
 import WorkflowModal from './components/WorkflowModal.vue'
 import MigrationExportModal from './components/MigrationExportModal.vue'
 import { totalSessions, contextCards } from './data/workspace.js'
-import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, getRemoteBusySessionIds, getRemoteSessionUsage, abortRemoteGeneration, deleteRemoteSession, renameRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig, getDefaultProjectDirectory, dedupeContextCards, ensureMarkdownArtifactResponse } from './model/chatAdapter.js'
+import { chatModelLabel, sendChatMessage, sendChatMessageStream, chatStreams, isAbortError, loadHistory, getRemoteBusySessionIds, getRemoteSessionUsage, abortRemoteGeneration, deleteRemoteSession, renameRemoteSession, runSupervisorSummary, saveRemoteCards, getSupervisorCards, createDefaultChatConfig, normalizeChatConfig, saveSessionChatConfig, getDefaultProjectDirectory, dedupeContextCards, ensureMarkdownArtifactResponse } from './model/opencode-bridge.js'
 import { ElMessage } from './lib/notify.js'
 
 const PROJECT_ENVIRONMENTS_STORAGE_KEY = 'contextpilot:project-environments'

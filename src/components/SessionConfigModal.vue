@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, ref, watch, onBeforeUnmount } from 'vue'
 import AppIcon from './AppIcon.vue'
-import { createDefaultChatConfig, normalizeChatConfig } from '../model/chatAdapter.js'
+import { createDefaultChatConfig, normalizeChatConfig } from '../model/opencode-bridge.js'
 
 const props = defineProps({
   sessionTitle: { type: String, required: true },

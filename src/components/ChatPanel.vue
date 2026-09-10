@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import AppIcon from './AppIcon.vue'
 import ChatMessage from './ChatMessage.vue'
-import { createDefaultChatConfig, normalizeChatConfig } from '../model/chatAdapter.js'
+import { createDefaultChatConfig, normalizeChatConfig } from '../model/opencode-bridge.js'
 import { extractPdfText } from '../lib/pdf-text.js'
 
 const props = defineProps({

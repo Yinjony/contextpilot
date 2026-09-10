@@ -92,3 +92,6 @@ tmp/
 /%SystemDrive%/
 /docs/
 /src/model/opencode/
+/src/model/opencode/
+/opencode-bridge/
+/src/lib/

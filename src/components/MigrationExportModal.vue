@@ -8,7 +8,7 @@ import {
   discardMigrationSession,
   generateMigrationDocument,
   startMigrationAnalysis,
-} from '../model/chatAdapter.js'
+} from '../model/opencode-bridge.js'
 
 const props = defineProps({
   sessions: { type: Array, default: () => [] },
