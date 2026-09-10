@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { getActionIconAsset, getActionIconSvg, prefixSvgIds } from './actionIcons.js'
+import { getActionIconAsset, getActionIconSvg, prefixSvgIds } from '../method/actionIcons.js'
 
 const props = defineProps({
   type: { type: String, required: true },
