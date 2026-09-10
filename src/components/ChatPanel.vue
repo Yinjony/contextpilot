@@ -222,8 +222,8 @@ watch(
       <div>
         <h2>{{ title }}</h2>
       </div>
-      <span class="model-chip"><span class="dot pulse"></span>opencode · deepseek-v4-flash-free</span>
-<!--      <span class="model-chip"><span class="dot pulse"></span>{{ modelLabel }}</span>-->
+<!--      <span class="model-chip"><span class="dot pulse"></span>opencode · deepseek-v4-flash-free</span>-->
+      <span class="model-chip"><span class="dot pulse"></span>{{ modelLabel }}</span>
     </header>
 
     <div ref="messagesEl" class="messages">
