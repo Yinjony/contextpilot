@@ -3,7 +3,7 @@
 set -euo pipefail
 
 CONTEXTPILOT_DIR="${0:A:h:h}"
-OPENCODE_EXECUTABLE="/Users/yuanjiaxin/.opencode/bin/opencode"
+OPENCODE_EXECUTABLE="/%OPENCODE_DIRECTORY%/.opencode/bin/opencode"
 
 if ! /usr/bin/security find-generic-password -a "$USER" -s contextpilot-deepseek >/dev/null 2>&1; then
   echo "未在 macOS 钥匙串中找到 contextpilot-deepseek。"
