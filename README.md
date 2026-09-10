@@ -24,7 +24,7 @@ npm install
 
 ### Install the Modified OpenCode
 
-ContextPilot requires a modified build of OpenCode. Download the ZIP matching your machine from the [GitHub Releases](https://github.com/Yinjony/contextpilot/releases) page, **fully extract it**, then run the installer:
+ContextPilot requires a modified build of OpenCode. Download the ZIP matching your machine, **fully extract it**, then run the installer:
 
 | Machine | Download |
 | --- | --- |

@@ -4,7 +4,7 @@ import { buildTurnFallbackCard, normalizeCardTitle, repairCardTitle } from './su
 const OPENCODE_DEFAULT_BASE_URL = 'http://127.0.0.1:4096'
 const OPENCODE_DEFAULT_PROVIDER_ID = 'opencode'
 const OPENCODE_DEFAULT_MODEL_ID = 'deepseek-v4-flash-free'
-const OPENCODE_DEFAULT_DIRECTORY = 'C:\\Users\\LYin\\Projects\\contextpilot'
+const OPENCODE_DEFAULT_DIRECTORY = '%VITE_OPENCODE_DIRECTORY%'
 const OPENAI_COMPATIBLE_DEFAULT_PATH = '/chat/completions'
 const OPENCODE_CHAT_SYSTEM_PROMPT =
   'You are the main chat assistant inside ContextPilot. Follow the current conversation settings and answer the user directly, clearly, and actionably. All visible output must be in English.'
