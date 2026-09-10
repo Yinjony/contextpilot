@@ -32,14 +32,14 @@ ContextPilot requires a modified build of OpenCode. Download the ZIP matching yo
 | Intel Mac | `opencode-darwin-x64.zip` |
 | Windows x64 | `opencode-windows-x64.zip` |
 
-**macOS** (x64 or arm64): extract, then run `install-macos.command`:
+**macOS** (x64 or arm64): Run `install-macos.command`:
 
 ```bash
 chmod +x install-macos.command
 ./install-macos.command
 ```
 
-**Windows**: extract, then run `install-windows.cmd`:
+**Windows**: Run `install-windows.cmd`:
 
 ```shell
 install-windows.cmd
